@@ -1,0 +1,33 @@
+spectral_type,group,composition,minerals,density_est_gcm3,metal_fraction,silicate_fraction,carbon_fraction,ice_fraction,fraction_sum,pgm_enrichment,notes
+B,C-complex,"Hydrated silicates, carbon, organics, possible ices",phyllosilicates; magnetite; carbon; organics,1.3,0.01,0.3,0.3,0.2,0.81,1.0,Bluest C-complex; possible metamorphic overprint
+C,C-complex,"Carbonaceous: hydrated silicates, organics, carbon",phyllosilicates; carbon; organics,1.5,0.01,0.35,0.25,0.15,0.76,1.0,Most common asteroid type; CI/CM chondrite analogs
+Cb,C-complex,"Transitional C/B: carbonaceous, moderate hydration",phyllosilicates; carbon,1.4,0.01,0.32,0.28,0.18,0.79,1.0,Intermediate between B and C
+Cg,C-complex,"Cg-type: CM chondrite analog, strong UV dropoff",phyllosilicates; carbon; magnetite,1.5,0.02,0.38,0.22,0.12,0.74,1.0,Strong UV absorption feature
+Cgh,C-complex,"CH/CK analog: hydrated silicates, olivine",olivine; phyllosilicates; magnetite,1.6,0.03,0.4,0.2,0.1,0.73,1.0,0.7-μm absorption band; high water content
+Ch,C-complex,"CM2 analog: hydrated silicates, low albedo",phyllosilicates; magnetite; carbon,1.5,0.02,0.38,0.25,0.1,0.75,1.0,Strongest 0.7-μm feature in C-complex
+S,S-complex,"Stony: olivine, pyroxene, nickel-iron mixture",olivine; pyroxene; nickel-iron,2.7,0.15,0.75,0.01,0.0,0.91,1.0,Second-most common type; LL/L chondrite analogs
+Sa,S-complex,S/A transitional: olivine-dominated stony,olivine; pyroxene,2.8,0.12,0.8,0.01,0.0,0.93,1.0,High olivine / pyroxene ratio
+Sk,S-complex,S/K transitional stony,olivine; pyroxene; oxides,2.6,0.1,0.78,0.02,0.0,0.9,1.0,Intermediate S and K spectral features
+Sl,S-complex,S/L transitional: spinel-bearing stony,olivine; pyroxene; spinel,2.7,0.12,0.78,0.01,0.0,0.91,1.0,Intermediate S and L spectral features
+Sq,S-complex,S/Q transitional: LL/L ordinary chondrite analog,olivine; pyroxene; nickel-iron,2.8,0.15,0.78,0.01,0.0,0.94,1.0,Possible fresh/unweathered S surface
+Sr,S-complex,S/R transitional stony,pyroxene; olivine,2.9,0.12,0.82,0.01,0.0,0.95,1.0,Intermediate S and R spectral features
+Sv,S-complex,S/V transitional stony-basaltic,pyroxene; olivine; plagioclase,3.0,0.08,0.85,0.01,0.0,0.94,1.0,Intermediate S and V spectral features
+X,X-complex,X-type: possibly metallic or primitive (albedo ambiguous),nickel-iron; enstatite; troilite,3.3,0.3,0.5,0.05,0.0,0.85,1.5,"Requires albedo to distinguish M, E, or P sub-type.  v1.0.8: metal 0.40 → 0.30, tracking the M revision — an unresolved X sits between metal-rich M and near-metal-free P."
+Xc,X-complex,"Xc-type: low-albedo metallic, possibly carbonaceous",carbon; nickel-iron,2.5,0.25,0.35,0.2,0.0,0.8,1.2,Low albedo suggests carbonaceous metallic mix
+Xe,X-complex,"Xe-type (M-type analog): metal-rich, metal-silicate mix",nickel-iron; troilite; enstatite,3.8,0.45,0.45,0.01,0.0,0.91,2.0,High-albedo X; metal-rich but not a bare core.  v1.0.8: was 0.75 metal / 5.00 g/cm³ — tracked down alongside M for the same measured-density reason.
+Xk,X-complex,"Xk-type: E-chondrite analog, enstatite dominant",enstatite; nickel-iron; troilite,3.6,0.25,0.65,0.01,0.0,0.91,1.5,"E-chondrite analog; high albedo.  v1.0.8: metal 0.50 → 0.25 — EH/EL enstatite chondrites carry ~20-25 wt% metal, and 'enstatite dominant' cannot also be half metal."
+A,A-type,Dunite/olivine-rich: possible differentiated mantle fragment,olivine,3.2,0.05,0.9,0.01,0.0,0.96,0.5,Very strong 1-μm olivine band; rare type
+D,D-type,"Primitive: organics, anhydrous silicates, possible ices",organics; silicates; carbon,1.2,0.01,0.25,0.3,0.25,0.81,1.0,Featureless red spectrum; Trojan/outer-belt analog
+K,K-type,"CV/CO chondrite analog: olivine, pyroxene, oxides",olivine; pyroxene; magnetite,2.5,0.08,0.72,0.08,0.0,0.88,1.0,Intermediate C and S features; moderate albedo
+L,L-type,"Spinel-bearing: anhydrous silicates, high albedo",spinel; olivine; pyroxene,2.8,0.05,0.85,0.02,0.0,0.92,1.0,Unusual spinel absorption; possibly CV3 chondrite
+O,O-type,Olivine-orthopyroxene mixture (very rare),olivine; orthopyroxene,2.9,0.08,0.85,0.01,0.0,0.94,0.5,Only a handful of known O-types
+Q,Q-type,"Ordinary chondrite: olivine, pyroxene, metal",olivine; pyroxene; nickel-iron,3.0,0.2,0.72,0.02,0.0,0.94,1.0,Fresh/unweathered ordinary chondrite analog
+R,R-type,Olivine-pyroxene mantle fragment (rare),olivine; pyroxene,3.1,0.05,0.9,0.01,0.0,0.96,0.5,Very rare; possible differentiated mantle fragment
+T,T-type,"Primitive: organics, troilite, Fe-silicates",troilite; organics; silicates,1.8,0.05,0.4,0.25,0.1,0.8,1.0,Featureless red; possibly primitive body
+V,V-type,Basaltic crust fragment (HED meteorite analog),pyroxene; plagioclase; olivine,2.9,0.05,0.9,0.01,0.0,0.96,0.2,Vestoids / Vesta family; strong pyroxene bands
+M,X-complex,"Metallic (Tholen): metal-silicate mix, core-fragment affinity",nickel-iron; troilite; enstatite,3.9,0.5,0.45,0.01,0.0,0.96,2.0,"Tholen M-type ≈ Bus-DeMeo Xe; high IR albedo, low optical.  v1.0.8: was 0.80 metal / 5.30 g/cm³, the pre-Psyche 'exposed iron core' assumption.  16 Psyche's measured bulk density is ~3.8-3.9 g/cm³ (Elkins-Tanton et al. 2020, Siltala & Granvik 2021) — far below the 7.8 g/cm³ of iron meteorite — and metal content is now put at roughly 30-60%.  A solid-metal M-type is not supported by any measured density."
+E,X-complex,Enstatite (Tholen): aubrite/E-chondrite analog,enstatite; nickel-iron,3.2,0.1,0.85,0.01,0.0,0.96,1.5,Tholen E-type ≈ Bus-DeMeo Xk; very high albedo (>0.3).  v1.0.8: metal 0.30 → 0.10 — aubrites are enstatite achondrites and are very nearly metal-free.
+P,C-complex,"Primitive (Tholen): low albedo, organics + silicates",organics; silicates; carbon,1.8,0.02,0.35,0.25,0.15,0.77,1.0,Tholen P-type ≈ Bus-DeMeo Xc / D; outer-belt primitive
+F,C-complex,Flat-spectrum carbonaceous (Tholen): dehydrated CM,phyllosilicates; carbon,1.4,0.01,0.35,0.28,0.15,0.79,1.0,Tholen F-type ≈ Bus-DeMeo B; flat featureless spectrum
+G,C-complex,G-type (Tholen): C-complex with UV dropoff,phyllosilicates; carbon; magnetite,1.5,0.02,0.38,0.22,0.12,0.74,1.0,Tholen G-type ≈ Bus-DeMeo Cg; Ceres-like
+Unknown,Unknown,Unknown — insufficient spectral data,,,,,,,,1.0,No spectral classification available

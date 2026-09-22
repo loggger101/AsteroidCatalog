@@ -1,0 +1,20 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.venv/
+venv/
+
+# A built catalog is ~860 MB and is NOT a repository artifact.  It is also not
+# reproducible: JPL adds bodies daily, so a rebuilt catalog is a different
+# length and comparable with nothing already measured.  Keep your own copies,
+# and keep the `catalog_date` and `pipeline_version` stamps with them.
+asteroid_catalog_data/
+*.csv.gz
+asteroid_catalog.csv
+rejected_entries.csv
+
+# The cached SsODNet parquet, ~500 MB.
+ssoBFT-latest_Asteroid.parquet

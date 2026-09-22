@@ -1,0 +1,9 @@
+# Text is LF in the repository and checked out LF everywhere.
+* text=auto eol=lf
+
+# A BUILT CATALOG IS WRITTEN CRLF ON PURPOSE.  `to_csv` defaults its line
+# terminator to os.linesep, which makes a catalog written on Linux differ from
+# the same catalog written on Windows in every line for no data reason, so the
+# writers pin "\r\n".  Nothing here should renormalise a data file.
+*.csv -text
+*.parquet binary
