@@ -14,6 +14,22 @@ moving it is not evidence that a number changed.
 
 ---
 
+## 0.1.3 - 2026-09-22
+
+**`requirements.txt` is gone.** It listed the same five dependencies
+`pyproject.toml` declares, by hand, with nothing holding the two to each
+other -- and its own comment said *"pyproject.toml is the authority"*, which is
+a request for a checker rather than a checker.
+
+Nothing needed it. `pip install git+...`, `pip install -e .` and CI's
+`pip install -e ".[test]"` all read `pyproject.toml`; no test, tool, workflow
+or document referenced the file. The installed artifact is unchanged -- it was
+never packaged.
+
+No number moved; the data contract stays at **1.2.0**.
+
+---
+
 ## 0.1.2 - 2026-09-22
 
 **A redundancy audit of the split, and the trap that closing it opened.**
