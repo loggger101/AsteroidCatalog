@@ -1,0 +1,7 @@
+# Runtime dependencies.  pyproject.toml is the authority; this file exists so
+# `pip install -r requirements.txt` works on a clone without building.
+numpy>=1.24
+pandas>=2.0
+requests>=2.28
+tqdm>=4.64
+pyarrow>=12.0
