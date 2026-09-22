@@ -7,8 +7,8 @@ Count it rather than quoting a length here -- the ~76 figure that circulates
 in the upstream project is the number of DISTINCT `spectral_type` VALUES in a
 built catalog, which is a different thing and roughly twice as large.
 
-THE FRACTIONS DO NOT SUM TO 1
-AND MUST NOT BE MADE TO -- every real class sums to strictly less than one, and
+THE FRACTIONS DO NOT SUM TO 1 AND MUST NOT BE MADE TO -- every real class sums
+to strictly less than one, and
 the residual is what a consumer floors at a bulk-silicate value.  `Unknown` is
 the deliberate exception, with all four fractions None, so the residual is the
 whole body.
@@ -431,9 +431,6 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
     },
 }
 
-say(f"OK  Taxonomy lookup ready - {len(TAXONOMY_COMPOSITION)} spectral types defined")
-
-
 # ─────────────────────────────────────────────────────────────────────────────
 # PGM ENRICHMENT BY SPECTRAL TYPE  (v1.0.4)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -548,8 +545,3 @@ def pgm_enrichment_for_type(spec_type) -> float:
         return PGM_ENRICHMENT_BY_TYPE[s]
     # Fallback to first letter (e.g. 'Sq2' → 'S' → 1.0)
     return PGM_ENRICHMENT_BY_TYPE.get(s[0], 1.0)
-
-
-say(f"OK  PGM enrichment table ready - "
-      f"{len(PGM_ENRICHMENT_BY_TYPE)} non-baseline spectral types "
-      f"(M / Xe = 2.0x, V = 0.2x, A / R / O = 0.5x, others 1.0x)")

@@ -14,6 +14,30 @@ moving it is not evidence that a number changed.
 
 ---
 
+## 0.1.1 - 2026-09-22
+
+Two module-level banner prints left `taxonomy.py`: "Taxonomy lookup ready" and
+"PGM enrichment table ready".
+
+**They could never fire.** Verbosity is always set *after* import -- the CLI
+sets it in `main()`, a consumer sets it after `import asteroid_catalog` -- so
+by the time anything turns output on, those two statements have already run
+silently. They were dead code that looked alive.
+
+They are also stage banner text rather than library behaviour, so they moved to
+the economicspace adapter, where they still print. One home for the sentence,
+and a reachable one.
+
+No number moved; the data contract stays at **1.2.0**. `tools/extraction_probe.py`
+reports 25 checks, 107,521 values, 0 differing against the pre-split module,
+unchanged.
+
+Also adds `tools/extraction_probe.py` itself -- the probe that verified the
+extraction, kept because the method is the point. It needs the pre-split
+module, recovered from economicspace's history; its docstring says how.
+
+---
+
 ## 0.1.0 — 2026-09-22
 
 Extracted from Module 1 of
