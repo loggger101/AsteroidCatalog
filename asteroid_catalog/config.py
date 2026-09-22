@@ -248,6 +248,11 @@ def _resolve_cache_dir(config: "CatalogConfig") -> str:
     return path
 
 
+# ⚠️  `_fmt_limit` AND `_resolve_cache_dir` ARE CONSUMED ACROSS A REPOSITORY
+# BOUNDARY.  Nothing in this package calls either, so a dead-code sweep run
+# here will flag them; economicspace's Stage 1 adapter reaches both as
+# `asteroid_catalog.config.<name>`, rather than keeping its own copies.
+# `tests/test_consumer_contract.py` is what stops the deletion.
 def _fmt_limit(n: int) -> str:
     """Render a row cap for the banner; 0 is unlimited, not zero rows."""
     return "unlimited" if not n else f"{n:,}"
