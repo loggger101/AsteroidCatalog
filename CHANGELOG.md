@@ -14,6 +14,43 @@ moving it is not evidence that a number changed.
 
 ---
 
+## 0.1.2 - 2026-09-22
+
+**A redundancy audit of the split, and the trap that closing it opened.**
+
+The audit asked two questions of every top-level name the pre-split module
+bound: is it still reachable, and is it now defined more than once. **63 names
+carried, 0 dropped.** Two were defined twice, and they were opposite kinds:
+
+| | where it was dead | where it is used |
+|---|---|---|
+| `_PY` | economicspace's adapter | here, by `ssodnet`'s pyarrow hint |
+| `_fmt_limit` | **here** | economicspace's adapter, for its banner |
+
+Each is the same defect seen from one end: a split moves a helper's USERS
+without moving the helper, or the other way round, and what is left behind
+still imports, still parses, and is called by nothing.
+
+The adapter dropped its `_PY` and now reaches this package's `_fmt_limit`
+rather than keeping a copy, so each name has exactly one definition.
+
+🚨  **THAT MADE `_fmt_limit` A PRIVATE NAME CONSUMED ACROSS A REPOSITORY
+BOUNDARY, WHICH IS A NEW TRAP.** It is underscore-prefixed, absent from
+`__all__`, and called by nothing here -- so a dead-code sweep run in this
+repository flags it, and one did, on the day it was written. Deleting it
+breaks the consumer's first banner.
+
+`tests/test_consumer_contract.py` gains `PRIVATE_CONSUMER_SURFACE`: the four
+private names economicspace reaches through a submodule, each with the reason
+it is reached, each asserted to exist. Proved by deleting one and watching the
+suite name it. `config.py` carries a note where a sweep will land, so the
+finding explains itself rather than looking like dead code twice.
+
+Same arrangement `spacecost` uses for the private names economicspace's Stage 2
+reaches. No number moved; the data contract stays at **1.2.0**.
+
+---
+
 ## 0.1.1 - 2026-09-22
 
 Two module-level banner prints left `taxonomy.py`: "Taxonomy lookup ready" and
