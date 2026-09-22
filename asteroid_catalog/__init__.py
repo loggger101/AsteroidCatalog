@@ -93,7 +93,7 @@ from .enrich import enrich_composition
 from .build import build_catalog
 from .query import lookup_asteroid, filter_by_region, filter_by_spectral_group
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
 #: The DATA contract, stamped into every output row.  Mirrored by the
 #: economicspace adapter, which asserts the two are equal at import.  See
