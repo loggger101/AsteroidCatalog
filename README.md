@@ -7,8 +7,16 @@ cited composition estimate per taxonomy class. About 1.57 million bodies, one
 row each, one CSV. A body several sources know carries all of their data, and
 says which source supplied each value and whether the sources agree.
 
+**Most people should not build it.** Every published build is a
+[release](https://github.com/loggger101/AsteroidCatalog/releases): one frozen
+catalog per `data-YYYY-MM-DD` tag, gzipped CSV and Parquet, with a manifest
+that names its build date, data contract and checksums. Pin a tag and you have
+the same rows every time. See [Published releases](#published-releases).
+
+To build your own from the live sources:
+
 ```bash
-pip install git+https://github.com/loggger101/AsteroidCatalog@v0.1.0
+pip install git+https://github.com/loggger101/AsteroidCatalog@v0.3.0
 asteroid-catalog build --out ./data
 ```
 
@@ -46,6 +54,60 @@ ac.lookup_asteroid(df, "Bennu")
 
 ---
 
+## Published releases
+
+Each `data-YYYY-MM-DD` release on the
+[Releases page](https://github.com/loggger101/AsteroidCatalog/releases) is one
+build, frozen. Releases are never overwritten or rebuilt under the same tag.
+
+| asset | what it is |
+|---|---|
+| `asteroid_catalog.csv.gz` | the catalog exactly as the build wrote it (CRLF), gzipped deterministically |
+| `asteroid_catalog.parquet` | the same rows, typed: designations are strings, flag columns nullable booleans |
+| `rejected_entries.csv` | every row validation dropped, and why |
+| `taxonomy.json` | `TAXONOMY_COMPOSITION` and `PGM_ENRICHMENT_BY_TYPE` as this build used them, so the `comp_*` columns can be re-derived without installing the package |
+| `manifest.json` | release tag, `catalog_date`, `pipeline_version`, package version and commit, row count, bodies per source, and a sha256 for every asset and for the CSV inside the gzip |
+
+Download by tag, so you always get the same file:
+
+```
+https://github.com/loggger101/AsteroidCatalog/releases/download/<tag>/asteroid_catalog.csv.gz
+https://github.com/loggger101/AsteroidCatalog/releases/download/<tag>/manifest.json
+```
+
+```python
+import pandas as pd
+df = pd.read_parquet("asteroid_catalog.parquet")
+# or, from the CSV; designation MUST be read as a string
+df = pd.read_csv("asteroid_catalog.csv.gz", low_memory=False,
+                 dtype={"designation": str})
+```
+
+### How a release is made
+
+The **publish catalog** workflow (Actions > publish catalog > Run workflow)
+builds from the four live sources on a GitHub runner, then runs
+`asteroid-catalog package`, which **refuses to publish** a build that:
+
+- has fewer than 1.5 M bodies, or under 135 k measured diameters;
+- has any source known to fewer bodies than its floor (JPL 1.5 M, SsODNet
+  1.4 M, MP3C 1.2 M, NEOWISE 130 k): the signature of a fetch that failed
+  quietly;
+- has a null or duplicated designation, or more than one `catalog_date` or
+  `pipeline_version`, or a `pipeline_version` other than this package's;
+- is smaller than the previous release by more than 0.5% of rows, or 2% of any
+  source's bodies (the `allow_shrink` input overrides this one gate only).
+
+Every failed gate is listed and nothing is published. `dry_run` builds and
+gates without publishing. The same command works locally:
+
+```bash
+asteroid-catalog build --out ./data
+asteroid-catalog package ./data --out ./dist --tag data-2026-09-23 --previous manifest.json
+```
+
+---
+
 ## Four things to understand before you use a built catalog
 
 ### 1. It is not reproducible, and that is a property of the data
@@ -55,7 +117,9 @@ built last week, so **a result measured against one build must name the build
 it used**. Every row carries `catalog_date` and `pipeline_version`.
 
 This is also why `build_catalog` asks before overwriting an existing catalog:
-the file it would replace cannot be fetched again.
+the file it would replace cannot be fetched again. And it is why builds are
+published as [releases](#published-releases): a tag is a build you can name
+and fetch again.
 
 ### 2. Most diameters are derived, not measured
 
@@ -224,6 +288,7 @@ answers in the repo.
 ```bash
 asteroid-catalog build --out ./data          # everything, ~1.55 M bodies
 asteroid-catalog build --jpl-limit 5000 --no-ssodnet   # a fast sample
+asteroid-catalog package ./data --out ./dist --tag data-2026-09-23   # gate + release assets
 asteroid-catalog lookup Bennu --catalog ./data/asteroid_catalog.csv
 asteroid-catalog taxonomy M                  # one class
 asteroid-catalog taxonomy                    # all of them
@@ -276,7 +341,8 @@ survey planning or target selection.
 Nothing was re-typed. The package was built by slicing source line ranges, and
 the extraction was verified in-process against the original module: reference
 data leaf by leaf at raw IEEE bit patterns, and every pure function over a
-stride sample of a real 1.55-million-row catalog. economicspace consumes this
-package as its Stage 1.
+stride sample of a real 1.55-million-row catalog. economicspace consumes its
+published releases as its Stage 1: it downloads a pinned `data-*` release and
+does not build.
 
 MIT licensed. See [CITATIONS.md](CITATIONS.md) for what you owe the surveys.

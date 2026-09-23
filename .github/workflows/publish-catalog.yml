@@ -1,0 +1,108 @@
+name: publish catalog
+
+# Builds the catalog from the four live sources on a GitHub runner, gates it,
+# and publishes it as a data release tagged `data-<build date>`.  Consumers pin
+# one of those tags instead of building; see README > Published releases.
+#
+# Run it by hand: Actions > "publish catalog" > Run workflow.
+#
+# NOTHING IS PUBLISHED UNLESS EVERY GATE PASSES.  A build tolerates a failed
+# source and still succeeds, so `asteroid-catalog package` checks that each
+# source contributed, that the stamps are single-valued and current, and that
+# the catalog did not shrink against the previous release.  A failed gate fails
+# the run and leaves the Releases page as it was.
+#
+# A release is never overwritten.  If the tag exists the run stops; pass a
+# different tag (e.g. data-2026-09-23b) to publish a second build that day.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag. Blank = data-<build date>."
+        required: false
+        default: ""
+      dry_run:
+        description: "Build and gate, but do not publish."
+        type: boolean
+        default: false
+      allow_shrink:
+        description: "Publish even if smaller than the previous release."
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-catalog
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PYTHONUNBUFFERED: "1"
+      # Inputs reach the shell through the environment, never by ${{ }}
+      # substitution into a script, so a tag cannot inject a command.
+      TAG_INPUT: ${{ inputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install and test
+        run: |
+          python -m pip install --upgrade pip
+          pip install ".[test]"
+          pytest -q
+
+      - name: Build from the live sources
+        run: asteroid-catalog build --out build --cache-dir cache --yes
+
+      - name: Choose the tag
+        run: |
+          tag="$TAG_INPUT"
+          if [ -z "$tag" ]; then
+            tag="data-$(python -c "import csv; print(next(csv.DictReader(open('build/asteroid_catalog.csv', newline='')))['catalog_date'])")"
+          fi
+          if ! printf '%s' "$tag" | grep -Eq '^data-[0-9A-Za-z._-]+$'; then
+            echo "::error::tag '$tag' must look like data-2026-09-23"; exit 1
+          fi
+          if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null; then
+            echo "::error::tag $tag already exists; releases are never overwritten. Re-run with another tag."
+            exit 1
+          fi
+          echo "TAG=$tag" >> "$GITHUB_ENV"
+
+      - name: Fetch the previous release's manifest
+        run: |
+          prev=$(gh release list --limit 100 --exclude-drafts --json tagName,createdAt \
+                   --jq '[.[] | select(.tagName | startswith("data-"))] | sort_by(.createdAt) | reverse | .[0].tagName // ""')
+          if [ -n "$prev" ]; then
+            gh release download "$prev" --pattern manifest.json --dir previous
+            echo "Comparing against $prev"
+          else
+            echo "No previous data release; only the absolute floors apply."
+          fi
+
+      - name: Gate and package
+        run: |
+          args=(build --out dist --tag "$TAG" --commit "$GITHUB_SHA")
+          if [ -f previous/manifest.json ]; then args+=(--previous previous/manifest.json); fi
+          if [ "${{ inputs.allow_shrink }}" = "true" ]; then args+=(--allow-shrink); fi
+          asteroid-catalog package "${args[@]}"
+          cat dist/RELEASE_NOTES.md >> "$GITHUB_STEP_SUMMARY"
+          ls -l dist
+
+      - name: Publish
+        if: ${{ !inputs.dry_run }}
+        run: |
+          assets=$(find dist -type f ! -name RELEASE_NOTES.md | sort)
+          gh release create "$TAG" $assets \
+            --target "$GITHUB_SHA" \
+            --title "Catalog $TAG" \
+            --notes-file dist/RELEASE_NOTES.md

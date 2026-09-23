@@ -3,6 +3,7 @@
 
     asteroid-catalog build --out ./data
     asteroid-catalog build --jpl-limit 5000 --no-ssodnet
+    asteroid-catalog package ./data --out ./dist --tag data-2026-09-23
     asteroid-catalog lookup Bennu --catalog ./data/asteroid_catalog.csv
     asteroid-catalog taxonomy M
 
@@ -86,6 +87,30 @@ def _build(args) -> int:
         print("FAIL  the build produced no rows", file=sys.stderr)
         return 1
     print("%d rows -> %s" % (len(df), targets[0]))
+    return 0
+
+
+def _package(args) -> int:
+    import json
+
+    from .release import package_release
+
+    previous = None
+    if args.previous:
+        with open(args.previous, encoding="utf-8") as fh:
+            previous = json.load(fh)
+    try:
+        m = package_release(args.build_dir, args.out, args.tag,
+                            previous=previous, source_commit=args.commit,
+                            allow_shrink=args.allow_shrink)
+    except (ValueError, FileNotFoundError) as exc:
+        print("FAIL  %s" % exc, file=sys.stderr)
+        return 1
+    print("%s: %d rows, built %s, data contract %s -> %s"
+          % (m["release_tag"], m["rows"], m["catalog_date"],
+             m["pipeline_version"], args.out))
+    for name, count in m["sources"].items():
+        print("  %-10s %d" % (name, count))
     return 0
 
 
@@ -176,6 +201,18 @@ def main(argv=None) -> int:
         b.add_argument("--%s-limit" % name, type=int, metavar="N",
                        help="cap %s at N rows (0 = no cap)" % name.upper())
     b.set_defaults(func=_build)
+
+    k = sub.add_parser("package",
+                       help="gate a built catalog and write its release assets")
+    k.add_argument("build_dir", help="the directory `build` wrote to")
+    k.add_argument("--out", required=True, help="where to write the assets")
+    k.add_argument("--tag", required=True, help="the release tag, e.g. data-2026-09-23")
+    k.add_argument("--previous", help="the previous release's manifest.json, "
+                                      "to refuse a catalog that shrank")
+    k.add_argument("--commit", default="", help="the commit that built it")
+    k.add_argument("--allow-shrink", action="store_true",
+                   help="publish even if it is smaller than --previous")
+    k.set_defaults(func=_package)
 
     l = sub.add_parser("lookup", help="find a body in a built catalog")
     l.add_argument("query", help="designation, number or name")
