@@ -14,6 +14,37 @@ moving it is not evidence that a number changed.
 
 ---
 
+## 0.3.0 - 2026-09-23
+
+**The catalog is published, not just buildable.** A build cannot be repeated,
+since JPL adds bodies daily, so every consumer that builds its own has its own
+catalog. Builds are now published as GitHub Releases tagged `data-YYYY-MM-DD`,
+and a consumer pins a tag.
+
+- **`asteroid-catalog package`** (`release.py`) gates a build and writes the
+  release assets: `asteroid_catalog.csv.gz` (the build's CSV byte for byte,
+  gzipped with a zeroed header so the same CSV always gives the same sha256),
+  `asteroid_catalog.parquet`, `rejected_entries.csv`, `taxonomy.json` (the
+  composition tables the build used), and `manifest.json`.
+- **The gates refuse a build that lost a source.** Floors on total rows,
+  measured diameters and bodies per source, single-valued current stamps,
+  unique designations, and no shrink against the previous release. A build
+  tolerates a failed source by design; a published one must not.
+- **`publish catalog` workflow**, run by hand from the Actions tab: build on a
+  runner, gate, publish. `dry_run` and `allow_shrink` inputs. A tag that exists
+  stops the run; releases are never overwritten.
+
+**economicspace stops importing this package** once its master v1.34.0 lands:
+its Stage 1 installs a pinned `data-*` release instead, so it no longer mirrors
+`CatalogConfig` or `DATA_VERSION`, and a config field or contract change here
+no longer breaks it at import. `build_catalog_table`, `lookup_body` and the
+private names in `tests/test_consumer_contract.py` stay for now; retiring them
+is a separate decision.
+
+No number a build produces moved; the data contract stays at **1.3.0**.
+
+---
+
 ## 0.2.0 - 2026-09-22 — data contract **1.3.0**
 
 **An audit of every source against its live service, and a merge that joins
