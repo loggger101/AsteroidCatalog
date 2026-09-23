@@ -14,6 +14,116 @@ moving it is not evidence that a number changed.
 
 ---
 
+## 0.2.0 - 2026-09-22 — data contract **1.3.0**
+
+**An audit of every source against its live service, and a merge that joins
+bodies instead of designations.** Every source was pulled in full on
+2026-09-22 and joined back to JPL by hand. Six defects came out, all silent:
+each build succeeded and printed plausible counts.
+
+| defect | measured | fix |
+|---|---|---|
+| **MP3C never contributed.** Every URL the fetcher tried answered 404 or redirected; the service had moved to `dachs.oca.eu/tap` and renamed its tables. Documented as "regularly unreachable", so a wrong address read as an outage. | 0 rows, every build | new fetcher on `mp3c_main.best`: 1,335,502 bodies, 147,556 diameters, 436 masses, 139,961 family memberships, 1,031,612 proper-element sets |
+| **NEOWISE bodies joined nothing** when NEOWISE carries them under a provisional designation JPL has since numbered, a secondary designation, or its own spelling `"1996 GQ0"` (a zero cycle count nobody else writes). They were dropped at validation. | 10,627 of 143,318 bodies (7.4%) | re-keyed onto JPL's designation (below): 99.94% match |
+| **Duplicate bodies.** SsODNet rows keyed on a secondary designation carry their own orbit, so they survived validation beside the JPL row for the same body. | 182 in the 2026-08-11 build (`2001 FF217` beside `2015 KN450`) | same re-keying; 0 with the current ssoBFT |
+| **Duplicates culled, not combined.** The dedup kept the most complete row and dropped the rest, and NEOWISE's repeat fits were settled by row order. A sigma could also be filled from a different source than its value. | 27,864 NEOWISE bodies with 2–8 fits | rows are combined column by column; NEOWISE fits error-weighted; a value's sigma always comes from the value's source |
+| **`orbital_period_yr` was in days**, from both JPL (`per`) and SsODNet. | Ceres read 1679.85 | divided by 365.25 |
+| **`name` held designations.** ssoBFT fills `name` with the provisional designation of every unnamed body, and the merge copied it into JPL's empty cells. | 1,537,189 unnamed bodies "named"; 26,520 real names | designation-shaped names masked at the source; `lookup_asteroid` also searches the new `provisional_designation` |
+
+**Cross-source identity** (`identity.py`). Every supplement row is re-keyed
+onto JPL's designation before the join: first from JPL's own number, name and
+the primary provisional designation in `full_name`; then from the MPC's
+designation links in `mpcorb_extended.json.gz`, one cached ~180 MB file. The
+MPC links agreed with all 938 answers JPL's single-object API gave on a sample,
+with 0 disagreements. That API is not used: sequential lookups at ~5/s drew an
+HTTP 403 for the whole IP within about a thousand requests.
+
+**Combined, not first-come.** `diameter_km`, `albedo`, `absolute_magnitude_h`,
+`estimated_mass_kg` and `rotation_period_h` each gain `<stem>_provider`,
+`<stem>_n_sources`, `<stem>_spread` and `<stem>_sources_agree`, and every row
+gains `n_sources` and `sources`. Precedence is unchanged (JPL, SsODNet,
+NEOWISE, MP3C). Agreement is not independence, since the catalogs share NEOWISE
+upstream; the README says so where the columns are described.
+
+**New columns**: `provisional_designation`, `absolute_magnitude_h_sigma`,
+`albedo_sigma`, `estimated_mass_sigma_kg`, `neowise_n_fits`, `family`,
+`proper_semi_major_axis_au`, `proper_eccentricity`, `proper_inclination_deg`,
+plus the provenance columns above. JPL's `GM` now supplies a measured
+`estimated_mass_kg` for the 17 bodies that have one (Ceres, Vesta, Bennu, ...).
+
+**Also fixed**: `_extract_canonical_designation` turned a nullable-string NA
+into the literal `"<NA>"`, a ghost key; it is now missing.
+
+**Same-day A/B**: the 0.1.3 code and this one both run on the full
+2026-09-22 sources.
+
+| | 0.1.3 | 0.2.0 |
+|---|---|---|
+| bodies after validation | 1,566,600 | 1,566,616 (all 1,566,600 kept, +16) |
+| rejected for no orbit | 10,632 | 210 |
+| bodies with NEOWISE data | 132,691 | 143,015 |
+| MP3C rows | 0 | 1,335,502 |
+| measured diameters | 149,594 | 149,740 |
+| measured masses | 532 | 540 |
+| a measured diameter that changed value | | 0 of 149,594 |
+| `name` non-null | 1,563,628 | 26,521 |
+| columns | 64 | 95 |
+
+143,010 bodies are known to all four sources, 1,192,036 to three.
+
+**What the agreement columns found on day one**: SsODNet's albedos run 22%
+below the other three sources (median ratio 0.78), and NEOWISE's H is 0.28 mag
+brighter than JPL's. These are one effect: SsODNet re-derives albedo from
+current H, and the others quote NEOWISE-era fits. Values are left as they were
+(JPL precedence); the README documents it.
+
+**Source validation, the same day.** Each source was then checked against its
+own service and against the others:
+
+| check | result |
+|---|---|
+| completeness | JPL 1,566,683 of 1,566,683; ssoBFT 1,563,708 of 1,563,708; MP3C 1,335,502 of 1,335,502; NEOWISE 183,408 of 183,412, the 4 left out being the comets 29P, 167P and 324P |
+| JPL field mapping | 8 bodies against the SBDB object API: every physical field exact, every orbital field equal to the API's rounding |
+| units across sources | masses of Ceres, Vesta, Eros and Bennu agree to 0.2% in all three sources; SsODNet densities match JPL's to 1.5% except Eros (12%, a literature difference) |
+| re-keyed joins | re-keyed NEOWISE diameters reproduce JPL's or SsODNet's for the same body within 1% for 93-97%, better than direct matches; their larger H differences are NEOWISE's 2010-era H |
+| SsODNet orbits | 4,711 differ from JPL's by >1% in a; 98% are U = 7-9 orbits with a median 4-day arc, and H agrees exactly |
+
+It found five more things, fixed here:
+
+- **NEOWISE's assumed values were read as measured.** A `-` (or `F`) in a
+  `fit_code` slot means the parameter was assumed, but the number is still
+  there: beaming ~1.0 ± 0.2 on all 104,788 `DV--` rows, beaming 0 ± 0 on
+  `DVF-`, and IR albedo -0.999 as "no value". These are blanked now, as are
+  zero sigmas, which would have taken infinite weight.
+- **MP3C's placeholders are numbers.** H = 0 (342 bodies), H = 99.99 (96) and
+  diameter = 0 (77), where JPL has H 14.6-27 for the same bodies. Blanked.
+  They were not harmless: 26 bodies with no H from JPL took MP3C's H = 0 and
+  were sized at 5,000-5,600 km, larger than Pluto. They now have no H from any
+  source and are dropped for having no diameter.
+- **SsODNet's H sigma is not an uncertainty.** 1.41 M of its 1.56 M values are
+  exactly 0.001, 0.01, 0.1, 1 or 10, the precision H was quoted to. No longer
+  fetched; JPL's `H_sigma` is a real fit uncertainty.
+- **NEOWISE bodies under two designations** (214) took one designation's
+  value; they are now averaged with the rest of the body's fits.
+- The NEOWISE query's `type != 'comet'` clause matches nothing, since no row
+  has that type; the identifier clause is what excludes comets.  The comment
+  said otherwise.
+
+Left as the sources give them, and flagged by the agreement columns: 24 JPL
+albedos of exactly 1.000 (a fit at its ceiling; SsODNet gives 0.52-0.91 for
+the same bodies), and 961 rotation periods where JPL and SsODNet differ by
+exactly 2x or 0.5x (the half/double-period ambiguity).
+
+**Config**: `use_mpc_identifications` (default True) is new.
+`pipeline_version` moves to **1.3.0**.
+
+⚠️ **economicspace mirrors both.** Its Stage 1 adapter raises `SystemExit` at
+import when its `CatalogConfig` fields or `pipeline_version` differ from this
+package's, so it needs `use_mpc_identifications` added and its stamp moved to
+1.3.0 when it repins.
+
+---
+
 ## 0.1.3 - 2026-09-22
 
 **`requirements.txt` is gone.** It listed the same five dependencies

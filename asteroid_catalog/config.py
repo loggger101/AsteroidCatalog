@@ -91,7 +91,7 @@ class CatalogConfig:
     # source is silently tolerated by the pipeline; you don't need to flip the
     # toggle just because a host is down.
     use_jpl:      bool = True   # NASA JPL Small-Body Database     (orbital + physical)
-    use_mp3c:     bool = True   # MP3C @ Observatoire Côte d'Azur   (physical compilation)
+    use_mp3c:     bool = True   # MP3C @ Observatoire Côte d'Azur   (diameters, masses, families)
     use_ssodnet:  bool = True   # SsODNet ssoBFT (IMCCE)            (mass, density, taxonomy, …)
     use_neowise:  bool = True   # NEOWISE V2.0 via IRSA TAP         (IR diameters + albedos)
     # To add a new catalog: write a fetch_<name>(config) function and add a
@@ -112,7 +112,8 @@ class CatalogConfig:
     #     JPL SBDB      1,554,321 asteroids   (139,582 with a measured diameter)
     #     SsODNet        ~1,200,000 rows      (~500 MB parquet, cached)
     #     NEOWISE V2.0     183,412 rows       (143,318 unique bodies w/ diameter)
-    #     MP3C           varies; frequently unreachable
+    #     MP3C           1,335,502 bodies     (measured 2026-09-22; TAP at
+    #                                          dachs.oca.eu since it moved)
     #
     # 0 (unlimited) is the default because JPL is the only source of orbital
     # elements, so a body it does not return cannot be evaluated no matter what
@@ -140,6 +141,18 @@ class CatalogConfig:
     neowise_async_max_wait_s: int = 900
     mp3c_limit:      int = 0   # 0 = whatever MP3C will serve
     request_timeout: int = 300 # seconds per HTTP request before giving up (5 min)
+
+    # ─── CROSS-SOURCE IDENTITY  (v1.3.0) ─────────────────────────────────────
+    # The same body often sits under different designations in different
+    # sources (a provisional one in NEOWISE, JPL's number; or two provisional
+    # designations later linked).  The merge re-keys every supplement row onto
+    # JPL's designation, first from JPL's own numbers, provisional designations
+    # and names, then from the Minor Planet Center's designation links
+    # (mpcorb_extended.json.gz, ~180 MB, cached beside the SsODNet parquet for
+    # `cache_max_age_days`).  The MPC file places ~5,200 of the ~5,400 bodies
+    # the first step cannot on a full build.  False skips the download; those
+    # rows then join nothing, as before 1.3.0.
+    use_mpc_identifications: bool = True
 
     # ─── QUALITY GATES  (enforced in validate_and_filter) ────────────────────
     # `min_diameter_km` drops anything below this size.  Default 0.001 km =
@@ -219,7 +232,7 @@ class CatalogConfig:
     #                                       measured to say so
     #     versions.md > Module changelogs   this module's own stamp-by-stamp
     #                                       record: Stage 1 changelog
-    pipeline_version: str = "1.2.0"
+    pipeline_version: str = "1.3.0"
 
 # Instantiate.  Edit the field defaults above (inside the dataclass); DO NOT
 # mutate CONFIG fields here, which defeats having one editable source of truth.
