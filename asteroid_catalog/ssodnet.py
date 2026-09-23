@@ -27,7 +27,7 @@ from tqdm.auto import tqdm
 from ._log import say, warn
 
 from .config import CatalogConfig, _PY, _resolve_cache_dir
-from .designations import _extract_canonical_designation
+from .designations import _extract_canonical_designation, _looks_like_designation
 
 # ─────────────────────────────────────────────────────────────────────────────
 # SsODNet ssoBFT FETCHER  (IMCCE, Solar-system Best-estimate Table)
@@ -79,8 +79,11 @@ _SSODNET_CACHE_FILE  = "ssoBFT-latest_Asteroid.parquet"
 _SSODNET_WANTED = [
     "id", "number", "name",
     "diameter.value", "diameter.error.min", "diameter.error.max",
-    "albedo.value",
-    "mass.value",
+    "albedo.value", "albedo.error.min", "albedo.error.max",
+    "mass.value", "mass.error.min", "mass.error.max",
+    # NOT absolute_magnitude.H.error: 1.41 M of its 1.56 M values are exactly
+    # 0.001, 0.01, 0.1, 1 or 10 (measured 2026-09-22), i.e. the precision H
+    # was quoted to, not an uncertainty.  JPL's H_sigma is a fit uncertainty.
     "density.value",
     "taxonomy.class", "taxonomy.complex",
     "orbital_elements.semi_major_axis.value",
@@ -137,6 +140,8 @@ _SSODNET_RENAME = {
     "orbital_elements.node_longitude.value":           "longitude_asc_node_deg",
     "orbital_elements.periapsis_argument.value":       "arg_perihelion_deg",
     "orbital_elements.mean_anomaly.value":             "mean_anomaly_deg",
+    # IN DAYS, like JPL's `per`, and labelled years until 1.3.0.  Converted in
+    # the body of the fetcher.
     "orbital_elements.orbital_period.value":           "orbital_period_yr",
     "absolute_magnitude.H.value":                      "absolute_magnitude_h",
     # spins.period.value handled separately below; the list is reduced to a
@@ -144,8 +149,8 @@ _SSODNET_RENAME = {
 }
 
 _SSODNET_NUMERIC = [
-    "diameter_km", "diameter_sigma_km", "albedo",
-    "estimated_mass_kg", "density_gcm3",
+    "diameter_km", "diameter_sigma_km", "albedo", "albedo_sigma",
+    "estimated_mass_kg", "estimated_mass_sigma_kg", "density_gcm3",
     "semi_major_axis_au", "eccentricity", "inclination_deg",
     "perihelion_au", "aphelion_au", "longitude_asc_node_deg",
     "arg_perihelion_deg", "mean_anomaly_deg", "orbital_period_yr",
@@ -350,13 +355,19 @@ def fetch_ssodnet(config: CatalogConfig) -> pd.DataFrame:
         df["rotation_period_h"] = df["spins.period.value"].apply(_first_period)
         df = df.drop(columns=["spins.period.value"])
 
-    # Derive diameter_sigma_km from the asymmetric (min, max) error pair before
+    # Derive a scalar sigma from each asymmetric (min, max) error pair before
     # we drop the dotted columns.  Average is a reasonable scalar uncertainty.
-    if {"diameter.error.min", "diameter.error.max"}.issubset(df.columns):
-        sig = (df["diameter.error.min"].astype("float64").abs()
-               + df["diameter.error.max"].astype("float64").abs()) / 2.0
-        df["diameter_sigma_km"] = sig
-        df = df.drop(columns=["diameter.error.min", "diameter.error.max"])
+    # Every value that has a sigma carries it, because the merge keeps a value
+    # and its sigma together: a diameter from one catalog must not end up
+    # beside another catalog's error bar.
+    for stem, sigma_col in (("diameter", "diameter_sigma_km"),
+                            ("albedo", "albedo_sigma"),
+                            ("mass", "estimated_mass_sigma_kg")):
+        lo, hi = f"{stem}.error.min", f"{stem}.error.max"
+        if {lo, hi}.issubset(df.columns):
+            df[sigma_col] = (df[lo].astype("float64").abs()
+                             + df[hi].astype("float64").abs()) / 2.0
+            df = df.drop(columns=[lo, hi])
 
     df = df.rename(columns={k: v for k, v in _SSODNET_RENAME.items() if k in df.columns})
 
@@ -391,6 +402,18 @@ def fetch_ssodnet(config: CatalogConfig) -> pd.DataFrame:
     for col in _SSODNET_NUMERIC:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")
+
+    # ssoBFT's orbital period is in days, the same as JPL's.
+    if "orbital_period_yr" in df.columns:
+        df["orbital_period_yr"] = df["orbital_period_yr"] / 365.25
+
+    # `name` must stay an IAU NAME.  ssoBFT fills it with the provisional
+    # designation for every unnamed body, and because the merge fills gaps,
+    # that went straight into JPL's empty `name` cells: 1,537,189 unnamed
+    # bodies read as named in the 2026-08-11 build, against 26,520 real names.
+    # The designation is not lost; it is the row's key, and `ssodnet_id`.
+    if "name" in df.columns:
+        df["name"] = df["name"].astype("string").mask(_looks_like_designation(df["name"]))
 
     # If aphelion / perihelion are missing but a & e are present, derive them, 
     # cheap and helps with validator coverage.

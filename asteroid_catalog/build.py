@@ -25,6 +25,7 @@ from ._log import say, warn
 from .config import CONFIG, CatalogConfig
 from .derive import derive_missing_diameters
 from .enrich import enrich_composition
+from .identity import fetch_mpc_identifications
 from .jpl import fetch_jpl_sbdb
 from .merge import deduplicate_catalog, merge_sources
 from .mp3c import fetch_mp3c
@@ -75,7 +76,12 @@ def build_catalog(config: CatalogConfig = CONFIG) -> pd.DataFrame:
     say(f"\n     Source summary: {source_counts}")
 
     # ── Step 2, Merge ────────────────────────────────────────────────────────
-    merged = merge_sources(sources)
+    # The MPC's designation links, for supplement rows keyed on a designation
+    # JPL's own columns do not carry; see `use_mpc_identifications`.
+    n_nonempty = sum(1 for df in sources.values() if not df.empty)
+    links = (fetch_mpc_identifications(config)
+             if config.use_mpc_identifications and n_nonempty > 1 else None)
+    merged = merge_sources(sources, links=links)
     if merged.empty:
         warn("\nFAIL  Pipeline aborted - merge produced no data")
         return pd.DataFrame()
