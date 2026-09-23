@@ -23,6 +23,7 @@ from tqdm.auto import tqdm
 from ._log import say, warn
 
 from .config import CatalogConfig
+from .designations import _provisional_from_full_name
 
 # ─────────────────────────────────────────────────────────────────────────────
 # JPL SBDB FETCHER  (primary source)
@@ -38,6 +39,17 @@ _JPL_FIELDS = [
     "spkid",           # SPK kernel ID
     "pdes",            # primary provisional / numbered designation
     "name",            # name (if officially named)
+    # full_name, "433 Eros (A898 PA)".  Fetched for the part in parentheses:
+    # the body's primary PROVISIONAL designation, which `pdes` drops once the
+    # body is numbered.  NEOWISE and MP3C still carry thousands of bodies under
+    # the provisional designation they had when their tables were built, and
+    # this is what lets those rows join the number (see identity.py).
+    "full_name",
+    # GM, km^3/s^2.  A MEASURED mass (from spacecraft or binary dynamics), for
+    # the handful of bodies that have one: 17 on 2026-09-22.  Few, and exactly
+    # the bodies where a mass matters most.
+    "GM",
+    "H_sigma",         # 1-sigma uncertainty on H (mag); ~800 k bodies
     "neo",             # near-Earth object flag
     "pha",             # potentially hazardous flag
     "spec_B",          # Bus / Bus-DeMeo spectral classification
@@ -92,7 +104,11 @@ _JPL_FIELDS = [
     "moid",            # Earth minimum orbit intersection distance (AU)
     "class",           # orbit class code: MBA, APO, AMO, ATE, TNO, ...
     "soln_date",       # when the orbit solution was last updated
-    "per",             # orbital period (yr)
+    # per, the sidereal orbital period IN DAYS.  It was labelled years here, and
+    # written to `orbital_period_yr`, for every release until 1.3.0: Ceres
+    # read 1679.85.  Converted to years below.  (`per_y` is the years form,
+    # but the API rounds it to two digits even under full-prec.)
+    "per",
     "n",               # mean motion (deg/day)
     # H, absolute magnitude.  Added in v1.1.0 and it is the single highest-
     # coverage physical field in the whole pipeline: 1,553,817 of JPL's
@@ -133,6 +149,7 @@ _JPL_RENAME = {
     "per":            "orbital_period_yr",
     "n":              "mean_motion_deg_day",
     "H":              "absolute_magnitude_h",
+    "H_sigma":        "absolute_magnitude_h_sigma",
     "neo":            "is_neo",
     "pha":            "is_pha",
     "spkid":          "spk_id",
@@ -143,7 +160,8 @@ _JPL_NUMERIC = [
     "semi_major_axis_au", "eccentricity", "perihelion_au",
     "aphelion_au", "inclination_deg", "longitude_asc_node_deg",
     "arg_perihelion_deg", "mean_anomaly_deg", "orbital_period_yr",
-    "mean_motion_deg_day", "absolute_magnitude_h",
+    "mean_motion_deg_day", "absolute_magnitude_h", "absolute_magnitude_h_sigma",
+    "GM",
     # SBDB returns the epoch as a STRING ("2461200.5").  It must be coerced
     # here or it lands in the CSV as text, which is the float-typed-identifier
     # trap in the other direction: a number that never compares numerically.
@@ -154,6 +172,34 @@ _JPL_NUMERIC = [
     "orbit_condition_code", "observation_arc_days", "n_observations",
     "orbit_fit_rms_arcsec", "earth_moid_au",
 ]
+
+
+# Days per Julian year, the year the orbital-period convention uses.
+DAYS_PER_YEAR = 365.25
+
+# Newtonian G in km^3 kg^-1 s^-2 (CODATA 2018), to turn JPL's GM into a mass.
+G_KM3_PER_KG_S2 = 6.67430e-20
+
+
+def _jpl_derived_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """Unit fixes and the columns read out of other JPL fields.
+
+    * `orbital_period_yr` arrives in DAYS and is converted here.
+    * `provisional_designation` is read out of `full_name`, then `full_name`
+      is dropped: every part of it now has its own column.
+    * `estimated_mass_kg` is GM / G where JPL has a GM.  The column name is the
+      one every source writes a mass to; `mass_provider` says it was JPL.
+    """
+    if "orbital_period_yr" in df.columns:
+        df["orbital_period_yr"] = df["orbital_period_yr"] / DAYS_PER_YEAR
+    if "full_name" in df.columns:
+        df["provisional_designation"] = _provisional_from_full_name(df["full_name"])
+        df = df.drop(columns=["full_name"])
+    if "GM" in df.columns:
+        gm = pd.to_numeric(df["GM"], errors="coerce")
+        df["estimated_mass_kg"] = gm.where(gm > 0) / G_KM3_PER_KG_S2
+        df = df.drop(columns=["GM"])
+    return df
 
 
 def fetch_jpl_sbdb(config: CatalogConfig) -> pd.DataFrame:
@@ -174,7 +220,7 @@ def fetch_jpl_sbdb(config: CatalogConfig) -> pd.DataFrame:
     # this list, and a mean anomaly without its epoch is unusable, so omitting
     # it from the fallback would reintroduce the exact defect the full list
     # fixes, on precisely the runs where the full list already failed.
-    _SAFE_FIELDS = "pdes,name,spkid,neo,pha,diameter,diameter_sigma,albedo,rot_per,e,a,q,ad,i,om,w,ma,epoch,per,n,H,condition_code,data_arc,n_obs_used,rms,moid,class,soln_date"
+    _SAFE_FIELDS = "pdes,name,full_name,spkid,neo,pha,diameter,diameter_sigma,albedo,rot_per,e,a,q,ad,i,om,w,ma,epoch,per,n,H,condition_code,data_arc,n_obs_used,rms,moid,class,soln_date"
 
     base_params = {
         "sb-kind":   "a",           # asteroids only
@@ -273,6 +319,7 @@ def fetch_jpl_sbdb(config: CatalogConfig) -> pd.DataFrame:
                 if flag in df.columns:
                     df[flag] = df[flag].map({"Y": True, "N": False, True: True, False: False})
 
+            df = _jpl_derived_columns(df)
             df["source_jpl"] = True
             say(f"     OK  {len(df):,} records fetched from JPL SBDB ({attempt_name})")
             return df

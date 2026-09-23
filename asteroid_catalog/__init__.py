@@ -4,13 +4,21 @@
 Four public surveys, cross-matched on a canonical designation, validated, and
 enriched with a composition estimate per taxonomy class:
 
-    NASA JPL SBDB        the orbital backbone: elements, H, and what physical
-                         properties JPL carries.  ~1.55 M bodies
+    NASA JPL SBDB        the orbital backbone and the authority on identity:
+                         elements, H, designations, and what physical
+                         properties JPL carries.  ~1.57 M bodies
     IMCCE SsODNet ssoBFT best-of-literature diameter, albedo, mass, density,
                          rotation and taxonomy, cross-matched from ~3,000
-                         published catalogs.  ~1.2 M rows
-    NEOWISE V2.0         thermal-IR diameters and albedos.  ~183 k rows
-    MP3C                 a physical-properties compilation
+                         published catalogs.  ~1.56 M rows
+    NEOWISE V2.0         thermal-IR diameters and albedos.  183 k fits of
+                         143 k bodies, repeat fits combined
+    MP3C                 best diameter, albedo, mass and H, plus collisional
+                         family and proper elements.  ~1.34 M bodies
+
+Every supplement row is re-keyed onto JPL's designation before the join, so a
+body two sources spell differently becomes one row carrying both sources'
+data.  Each measured quantity says which source supplied it, how many sources
+report it, and whether they agree.
 
 Plus two things the surveys do not give you:
 
@@ -38,8 +46,10 @@ name the build it used.  `catalog_date` and `pipeline_version` are stamped into
 every row for exactly that reason.
 
 A SOURCE THAT FAILS IS TOLERATED, NOT HIDDEN.  An unreachable survey degrades
-the catalog rather than failing the build, because MP3C in particular is
-regularly unreachable.  But a source that fetched rows and matched NONE of them
+the catalog rather than failing the build.  (MP3C was documented as "regularly
+unreachable" for releases; it was reachable, at an address the fetcher did not
+use.  A tolerated failure hides a wrong address as well as it hides an
+outage.)  But a source that fetched rows and matched NONE of them
 to the backbone is always a bug in that fetcher, never an empty upstream table,
 and `merge_sources` says so on stderr whether or not you asked for progress
 output.  Read the per-source match counts, not the fetch counts.
@@ -93,7 +103,7 @@ from .enrich import enrich_composition
 from .build import build_catalog
 from .query import lookup_asteroid, filter_by_region, filter_by_spectral_group
 
-__version__ = "0.1.3"
+__version__ = "0.2.0"
 
 #: The DATA contract, stamped into every output row.  Mirrored by the
 #: economicspace adapter, which asserts the two are equal at import.  See

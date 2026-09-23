@@ -63,9 +63,31 @@ definition belongs to the Minor Planet Center rather than to JPL. It runs 0
 
 ### MP3C (Observatoire de la Côte d'Azur)
 
-Physical-properties compilation, used as a supplement.
+Physical-properties compilation, used as a supplement: best diameter, albedo,
+mass and H per body, plus collisional family and proper elements.
 
-- `https://mp3c.oca.eu/` (REST and TAP interfaces; both are tried)
+- TAP service: `https://dachs.oca.eu/tap`, tables `mp3c_main.best`,
+  `mp3c_main.body` and `mp3c_main.name`
+- Documentation: `https://mp3c.oca.eu/doc/tap/`
+- The service asks that you record the database version you used:
+  `SELECT * FROM mp3c_main.version`
+
+MP3C asks to be acknowledged by name rather than through a single paper;
+`https://mp3c.oca.eu/citations/` lists publications that have done so.
+
+### Minor Planet Center (cross-source identity)
+
+Designations that JPL's own columns cannot place are resolved through the MPC's
+designation links: the `Number`, `Name`, `Principal_desig` and `Other_desigs`
+fields of `mpcorb_extended.json.gz`.
+
+- `https://minorplanetcenter.net/Extended_Files/mpcorb_extended.json.gz`
+
+Acknowledge the MPC as the source of the links, for example with the wording
+widely used for MPC data (check the MPC's current policy before publishing):
+
+> This research has made use of data and/or services provided by the
+> International Astronomical Union's Minor Planet Center.
 
 ---
 

@@ -43,9 +43,14 @@ def lookup_asteroid(catalog: pd.DataFrame, query: str) -> pd.DataFrame:
         catalog["designation"].astype(str).str.upper().str.contains(
             q, na=False, regex=False)
     )
-    if "name" in catalog.columns:
-        mask |= catalog["name"].astype(str).str.upper().str.contains(
-            q, na=False, regex=False)
+    # `provisional_designation` so a numbered body is still found by the
+    # designation it was discovered under ("1999 RQ36" finds Bennu).  Until
+    # 1.3.0 that worked by accident, through SsODNet designations leaking into
+    # `name`.
+    for col in ("name", "provisional_designation"):
+        if col in catalog.columns:
+            mask |= catalog[col].astype(str).str.upper().str.contains(
+                q, na=False, regex=False)
 
     results = catalog[mask]
     if results.empty:

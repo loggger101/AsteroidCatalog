@@ -184,8 +184,11 @@ def fetch_neowise(config: CatalogConfig) -> pd.DataFrame:
     # ADQL.  `neowise_limit` caps the pull; 0 drops the TOP clause and takes the
     # whole table, which is only ~183 k rows / ~19 MB / ~30 s, small enough
     # that capping it buys almost nothing and costs measured diameters.
-    # WHERE clause filters comets server-side and skips rows without ANY
-    # identifier, saves bandwidth and avoids a useless dedup pass later.
+    # WHERE clause skips rows without an asteroid identifier.  That is what
+    # actually excludes comets: checked 2026-09-22, no row has type 'comet'
+    # (the types are neos, mainbelt, hildas, jupiter_trojans, centaurs, ...),
+    # and the 4 rows the identifier clause drops are the comets 29P, 167P and
+    # 324P, which carry only `comet_desig`.  183,412 rows in, 183,408 fetched.
     # ORDER BY asteroid_number so small-N runs include the low-numbered
     # (most famous) bodies: Ceres, Vesta, etc.
     top = f"TOP {int(config.neowise_limit)} " if config.neowise_limit else ""
@@ -384,6 +387,141 @@ def fetch_neowise(config: CatalogConfig) -> pd.DataFrame:
     if "designation" in df.columns:
         df["designation"] = _extract_canonical_designation(df["designation"])
 
+    n_rows = len(df)
+    df = mask_unfitted_neowise(df)
+    df = combine_neowise_fits(df)
+
     df["source_neowise"] = True
-    say(f"     OK  {len(df):,} records fetched from NEOWISE V2.0")
+    say(f"     OK  {n_rows:,} records fetched from NEOWISE V2.0, "
+        f"{len(df):,} bodies after combining repeat fits")
     return df
+
+
+# fit_code has one slot per fitted parameter, in this order; "-" (or "F", a
+# fixed beaming) in a slot means that parameter was ASSUMED for the fit, not
+# measured by it.
+_NEOWISE_FIT_SLOTS = (
+    (0, "D", ("diameter_km", "diameter_sigma_km")),
+    (1, "V", ("albedo", "albedo_sigma")),
+    (2, "B", ("neowise_beaming_param", "neowise_beaming_param_sigma")),
+    (3, "I", ("albedo_ir", "albedo_ir_sigma")),
+)
+
+
+def mask_unfitted_neowise(df: pd.DataFrame) -> pd.DataFrame:
+    """Blank every value NEOWISE assumed rather than measured, and its sentinels.
+
+    ⚠️  AN UNFITTED SLOT STILL CARRIES A NUMBER, AND IT LOOKS LIKE DATA.
+    Measured over the whole table on 2026-09-22: the 104,788 `DV--` rows carry
+    a beaming parameter of ~1.0 +/- 0.2, which is the assumption the fit was
+    run with; `DVF-` rows carry beaming 0 +/- 0; unfitted IR albedos include
+    -0.999, the survey's "no value".  Kept, they average into a body's
+    beaming as if measured, and a -0.999 drags a mean negative.
+
+    Also blanks any negative value and any sigma of exactly 0 (8 rows), which
+    would otherwise take infinite weight when fits are combined.
+    """
+    if df.empty:
+        return df
+    df = df.copy()
+    code = (df["neowise_fit_code"].astype("string").str.ljust(4, "-")
+            if "neowise_fit_code" in df.columns else None)
+    for pos, letter, cols in _NEOWISE_FIT_SLOTS:
+        if code is not None:
+            unfitted = code.str[pos] != letter
+            for c in cols:
+                if c in df.columns:
+                    df.loc[unfitted.fillna(False), c] = np.nan
+        val, sig = cols
+        if val in df.columns and sig in df.columns:
+            bad = (df[val] < 0) | (df[sig] < 0)
+            df.loc[bad, [val, sig]] = np.nan
+            df.loc[df[sig] == 0, sig] = np.nan
+    return df
+
+
+# (value, sigma) pairs that are averaged across a body's fits.  Everything else
+# is taken from the best-constrained fit (smallest diameter sigma).
+_NEOWISE_MEASURED = (
+    ("diameter_km",           "diameter_sigma_km"),
+    ("albedo",                "albedo_sigma"),
+    ("albedo_ir",             "albedo_ir_sigma"),
+    ("neowise_beaming_param", "neowise_beaming_param_sigma"),
+)
+
+
+def combine_neowise_fits(df: pd.DataFrame) -> pd.DataFrame:
+    """One row per body: repeat fits averaged, not one kept and the rest lost.
+
+    NEOWISE V2.0 carries 183,408 rows for 143,318 bodies; 27,864 bodies have
+    more than one fit (different epochs, fit codes, or published analyses),
+    with a median diameter spread of 11.6%.  Keeping one row per body, as the
+    dedup did before 1.3.0, threw the rest away and let row order pick the
+    survivor.
+
+    Each (value, sigma) pair in `_NEOWISE_MEASURED` becomes the inverse-
+    variance weighted mean of the fits that report a positive sigma, or the
+    plain mean where none does.  The combined sigma is the LARGER of the
+    formal error of that mean and the weighted scatter between the fits.  The
+    fits are not independent (several are re-analyses of the same detections),
+    so the formal error alone would claim precision the data do not have.
+
+    `neowise_n_fits` records how many fits went in; the text columns join
+    their distinct values with "|" so no reference or fit code is lost.
+    """
+    if df.empty or "designation" not in df.columns:
+        return df
+    df = df[df["designation"].notna()].copy()
+    # Re-runnable: the merge calls this again after re-keying, when one body's
+    # fits may arrive as two already-combined rows (two designations).  The
+    # formal sigma of a combined row is its weight, so the maths carries over;
+    # the fit counts add.
+    if "neowise_n_fits" not in df.columns:
+        df["neowise_n_fits"] = 1
+    counts = df.groupby("designation", sort=False).size()
+    multi = df["designation"].map(counts) > 1
+    single, rep = df[~multi].copy(), df[multi].copy()
+    if rep.empty:
+        return single.reset_index(drop=True)
+
+    # Row that stands for the body in every column not averaged below.
+    rank = rep["diameter_sigma_km"] if "diameter_sigma_km" in rep.columns \
+        else pd.Series(0.0, index=rep.index)
+    rep = rep.assign(_rank=rank.fillna(np.inf)).sort_values(
+        ["designation", "_rank"], kind="stable").drop(columns="_rank")
+    g = rep.groupby("designation", sort=False)
+    out = g.first()                       # first non-null per column
+
+    for val, sig in _NEOWISE_MEASURED:
+        if val not in rep.columns:
+            continue
+        x = pd.to_numeric(rep[val], errors="coerce")
+        s = pd.to_numeric(rep[sig], errors="coerce") if sig in rep.columns \
+            else pd.Series(np.nan, index=rep.index)
+        ok = x.notna()
+        w = (1.0 / s.pow(2)).where(ok & (s > 0))
+        has_w = w.notna().groupby(rep["designation"]).transform("any")
+        # Fits without a sigma get no say when any fit of that body has one;
+        # when none has, every fit counts equally.
+        w = w.where(has_w, ok.astype(float)).fillna(0.0)
+        wsum = w.groupby(rep["designation"]).sum()
+        mean = (w * x.fillna(0.0)).groupby(rep["designation"]).sum() / wsum
+        dev2 = (w * (x - rep["designation"].map(mean)).pow(2)).fillna(0.0)
+        scatter = np.sqrt(dev2.groupby(rep["designation"]).sum() / wsum)
+        formal = np.sqrt(1.0 / wsum).where(
+            has_w.groupby(rep["designation"]).first())
+        out[val] = mean.where(wsum > 0)
+        out[sig] = pd.concat([formal, scatter], axis=1).max(axis=1).where(wsum > 0)
+
+    for col in ("neowise_fit_code", "neowise_reference", "neowise_orbit_class"):
+        if col in rep.columns:
+            out[col] = g[col].agg(
+                lambda v: "|".join(dict.fromkeys(
+                    p for t in v.dropna() for p in str(t).split("|"))) or np.nan)
+    if "neowise_stacked" in rep.columns:
+        out["neowise_stacked"] = g["neowise_stacked"].agg(
+            lambda v: bool(v.eq(True).any()))
+    out["neowise_n_fits"] = g["neowise_n_fits"].sum()
+
+    combined = pd.concat([single, out.reset_index()], ignore_index=True)
+    return combined[list(single.columns)]
