@@ -180,7 +180,7 @@ def taxonomy_group(spec_type) -> str:
     if spec_type is None or (not isinstance(spec_type, str) and pd.isna(spec_type)):
         return "Unknown"
     s = str(spec_type).strip()
-    if not s or s.lower() in ("nan", "none", "na", "-"):
+    if not s or s.lower() in ("nan", "none", "na", "<na>", "-"):
         return "Unknown"
     s = s[0].upper() + s[1:].lower()
     entry = TAXONOMY_COMPOSITION.get(s) or TAXONOMY_COMPOSITION.get(s[0])
@@ -206,7 +206,7 @@ def groups_of(df: pd.DataFrame) -> pd.Series:
     for col in ("spectral_type", "spectral_type_tholen"):
         if col in df.columns:
             c = df[col].astype("string").str.strip()
-            c = c.mask(c.isin(["", "nan", "None", "NaN", "none", "NA", "-"]))
+            c = c.mask(c.isin(["", "nan", "None", "NaN", "none", "NA", "<NA>", "-"]))
             t = t.where(t.notna(), c)
     codes, uniques = pd.factorize(t, use_na_sentinel=False)
     groups = np.array([taxonomy_group(u) for u in uniques], dtype=object)

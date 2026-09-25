@@ -73,7 +73,11 @@ def enrich_composition(df: pd.DataFrame) -> pd.DataFrame:
         .astype(str)
         .str.strip()
         .replace({"nan": pd.NA, "None": pd.NA, "": pd.NA, "-": pd.NA,
-                  "NaN": pd.NA, "none": pd.NA, "NA": pd.NA})
+                  "NaN": pd.NA, "none": pd.NA, "NA": pd.NA,
+                  # pandas < 3 renders a missing value as "<NA>" under
+                  # astype(str); left in, it became a class called "<na>"
+                  # and skipped every inference downstream.
+                  "<NA>": pd.NA})
     )
 
     # Capitalise to match Bus-DeMeo convention (e.g. "sq" → "Sq")
