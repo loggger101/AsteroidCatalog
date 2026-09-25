@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Reading a built catalog: lookup by identifier, slice by orbit or class.
-
-`lookup_asteroid` is also exported as `lookup_body`, and the alias is not
-cosmetic -- see its docstring.
-"""
+"""Reading a built catalog: lookup by identifier, slice by orbit or class."""
 
 import json
 import os
