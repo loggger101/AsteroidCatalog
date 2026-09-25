@@ -176,8 +176,38 @@ def _ssodnet_cache_is_fresh(path: str, max_age_days: float) -> bool:
     return age_days <= max_age_days
 
 
+# The bulk download is ~500 MB from one host, and the host has bad minutes:
+# the first `data-2026-09-25` publish run lost SsODNet to a single timeout
+# 135 s in, with JPL, NEOWISE and MP3C all fine, and the release gate refused
+# the build.  A transient failure is retried; a 4xx or a local error is not.
+_SSODNET_DOWNLOAD_ATTEMPTS = 3
+_SSODNET_RETRY_WAIT_S = 30.0
+
+
 def _download_ssodnet_parquet(dest: str, config: CatalogConfig) -> bool:
-    """Stream-download the ssoBFT parquet to `dest` with a tqdm progress bar."""
+    """Download the ssoBFT parquet to `dest`, retrying transient failures.
+
+    Up to `_SSODNET_DOWNLOAD_ATTEMPTS` tries, waiting 30 s then 60 s between
+    them.  Timeouts, dropped connections and HTTP 5xx/429 are retried; a
+    4xx or anything local (a full disk, a locked file) is not, because it
+    will fail the same way again.
+    """
+    for attempt in range(1, _SSODNET_DOWNLOAD_ATTEMPTS + 1):
+        ok, retryable = _download_ssodnet_once(dest, config)
+        if ok:
+            return True
+        if not retryable or attempt == _SSODNET_DOWNLOAD_ATTEMPTS:
+            return False
+        wait = _SSODNET_RETRY_WAIT_S * attempt
+        say(f"     RETRY SsODNet download in {wait:.0f} s "
+            f"(attempt {attempt + 1} of {_SSODNET_DOWNLOAD_ATTEMPTS})")
+        _time.sleep(wait)
+    return False
+
+
+def _download_ssodnet_once(dest: str, config: CatalogConfig) -> Tuple[bool, bool]:
+    """One streamed download attempt: (succeeded, worth retrying)."""
+    retryable = False
     try:
         with requests.get(
             _SSODNET_PARQUET_URL,
@@ -202,22 +232,29 @@ def _download_ssodnet_parquet(dest: str, config: CatalogConfig) -> bool:
                         pbar.update(len(chunk))
             # Windows can briefly hold the freshly-closed file open via the
             # indexer or AV, retry the atomic rename a few times before giving up.
-            import time
             for _ in range(8):
                 try:
                     os.replace(tmp, dest)
                     break
                 except PermissionError:
-                    time.sleep(0.5)
+                    _time.sleep(0.5)
             else:
                 os.replace(tmp, dest)  # final attempt → raises if still locked
-        return True
+        return True, False
     except requests.exceptions.Timeout:
         say("     FAIL  SsODNet download timed out")
+        retryable = True
     except requests.exceptions.ConnectionError as exc:
         say(f"     FAIL  SsODNet unreachable ({str(exc)[:80]})")
+        retryable = True
     except requests.exceptions.HTTPError as exc:
-        say(f"     FAIL  SsODNet HTTP {exc.response.status_code}")
+        code = exc.response.status_code if exc.response is not None else 0
+        say(f"     FAIL  SsODNet HTTP {code}")
+        retryable = code >= 500 or code == 429
+    except requests.exceptions.RequestException as exc:
+        # A transfer cut off mid-stream (ChunkedEncodingError and kin).
+        say(f"     FAIL  SsODNet download interrupted: {type(exc).__name__}")
+        retryable = True
     except Exception as exc:
         say(f"     FAIL  SsODNet download error: {type(exc).__name__}: {exc}")
     # Clean partial file on failure so a retry doesn't trip the freshness check
@@ -225,7 +262,7 @@ def _download_ssodnet_parquet(dest: str, config: CatalogConfig) -> bool:
         os.remove(dest + ".part")
     except OSError:
         pass
-    return False
+    return False, retryable
 
 
 def fetch_ssodnet(config: CatalogConfig) -> pd.DataFrame:

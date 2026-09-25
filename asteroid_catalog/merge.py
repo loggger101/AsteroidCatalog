@@ -338,6 +338,12 @@ def _resolve_measured(merged: pd.DataFrame, order: List[str]) -> pd.DataFrame:
                 merged.loc[drop_d, "diameter_provider"] = pd.NA
                 refused[drop_d] = no_sigma[drop_d]
                 own_ok[drop_d] = False     # nothing left to pair with
+                # Counted here, not off `diameter_screened_out`, which also
+                # holds what the H screen refused.
+                say(f"        diameter: {int(drop_d.sum()):,} dropped beside a "
+                    f"better-supported mass (a binary's system mass beside its "
+                    f"primary's size); e.g. "
+                    f"{merged.loc[drop_d, 'designation'].head(5).tolist()}")
         usable = has & ~refused
         pick = _first(usable, rank)
         at = np.maximum(pick, 0)
@@ -384,12 +390,6 @@ def _resolve_measured(merged: pd.DataFrame, order: List[str]) -> pd.DataFrame:
                 merged.loc[swap, "diameter_provider"] = names[pick][swap]
             say(f"        mass: {int(swap.sum()):,} published beside their own "
                 f"source's diameter instead of the backbone's")
-            if "diameter_screened_out" in merged.columns:
-                n_drop = int(merged["diameter_screened_out"].notna().sum())
-                if n_drop:
-                    say(f"        diameter: {n_drop:,} dropped as the PRIMARY's size "
-                        f"beside a better-supported system mass; e.g. "
-                        f"{merged.loc[merged['diameter_screened_out'].notna(), 'designation'].head(5).tolist()}")
 
         merged.drop(columns=[c for c in vcols + scols if c in merged.columns],
                     inplace=True)

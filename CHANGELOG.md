@@ -115,6 +115,23 @@ of their measured sizes. 4 bodies are left without a mass, all Tholen "U".
 
 `pipeline_version` moves to **1.4.0**.
 
+**Published as [`data-2026-09-25`](https://github.com/loggger101/AsteroidCatalog/releases/tag/data-2026-09-25)**,
+the first 1.4.0 release: 1,567,469 bodies, built from `140942b`, audit clean.
+Hygiea's share of main-belt mass is back to 0.034, from the 0.041 that JPL's
+one-figure GM had given it. The first attempt at it was refused by the release
+gate: SsODNet's ~500 MB download timed out once, 135 s in, the build went ahead
+without it, and the gate stopped it at 0 SsODNet bodies. A re-run published.
+Since then, and changing no number a build produces:
+
+- **the SsODNet download retries** a timeout, a dropped connection or an HTTP
+  5xx/429 up to three times, 30 s then 60 s apart; a 4xx or a local error
+  fails at once (`tests/test_ssodnet_download.py`);
+- the merge's progress line for dropped diameters counts only the
+  mass-diameter arbitration's drops, where it had also counted diameters the
+  H check refused (25 reported, most of them H refusals);
+- both workflows use `actions/checkout@v5` and `actions/setup-python@v6`,
+  which run on Node 24; GitHub had begun forcing the Node 20 majors onto it.
+
 ---
 
 ## 0.3.0 - 2026-09-23
