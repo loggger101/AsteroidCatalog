@@ -398,6 +398,13 @@ designation column, and the NaN handling in the distinct-value optimisation.
 Every one of those was a rule written in prose first, and cost a release before
 anything ran it.
 
+`tests/test_physics.py` does the same for the physical limits: every case in it
+is a row of the `data-2026-09-23` release that was impossible or unrealistic
+(De Sitter at 495 g/cm³, Interamnia's one-figure JPL mass, TNO binaries, NEOs
+sized off the belt), reduced to the columns that made it wrong. For a built
+catalog, `python tools/audit_catalog.py <catalog>` runs the release gate plus
+the checks no limit can decide.
+
 ---
 
 ## Provenance

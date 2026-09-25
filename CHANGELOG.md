@@ -95,7 +95,7 @@ source. New values: `diameter_source = "derived_mass"` and
 `spectral_type_source = "orbit"`.
 
 **The release gate** (`release.physical_problems`) refuses a build carrying any
-of it; `data-2026-09-23` fails on four counts. **`tools/audit_catalog.py`** runs
+of it; `data-2026-09-23` fails on six counts. **`tools/audit_catalog.py`** runs
 the gate and the checks no limit can decide on any build or release, and the
 publish workflow writes its report to the job summary. `taxonomy.json` gains
 `DENSITY_LIMITS_GCM3`.
@@ -105,6 +105,13 @@ carries 1.447e22 kg, the Pluto–Charon system; MP3C has Pluto's 1.30e22. Both a
 possible, so no limit can choose, and precedence keeps SsODNet's. 4,755 bodies
 have sources more than 1 mag apart in H, and 714 have rotation periods exactly
 2x apart; the audit lists them.
+
+**Verified on the live sources**, by three dry runs of the publish workflow
+on 2026-09-25 (no release published): the final one built 1,567,469 bodies,
+passed every gate including the physical one, and its audit lists the 25
+heaviest bodies at their literature masses (Eris 1.649e22 kg, Haumea 4.04e21,
+Ceres 9.384e20, Vesta 2.590e20, Pallas 2.053e20) and H-sized TNOs within ~15%
+of their measured sizes. 4 bodies are left without a mass, all Tholen "U".
 
 `pipeline_version` moves to **1.4.0**.
 

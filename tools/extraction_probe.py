@@ -1,6 +1,13 @@
 # -*- coding: utf-8 -*-
 """Does the package compute what the module computed?
 
+⚠️  THIS PROBES THE 0.1.x EXTRACTION, NOT TODAY'S CODE.  From 0.4.0 (data
+contract 1.4.0) the package deliberately differs from the pre-split module:
+the albedo tables, the merge's physical screens, the density/mass
+reconciliation and the class Z are all new.  Run against 0.4.0 or later, it
+reports those differences, and they are intended; check out v0.3.0 to re-run
+the extraction proof as it was.
+
 STAGE 1 CANNOT BE RE-RUN TO ANSWER THIS.  JPL adds bodies daily, so a rebuilt
 catalog is a different length and comparable with nothing already measured, and
 the file it would overwrite is the 862 MB input every other stage reads.  So
