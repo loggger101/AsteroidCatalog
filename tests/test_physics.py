@@ -300,3 +300,17 @@ def test_the_gate_is_part_of_check_release():
     assert any("bulk density" in p for p in check_release(df, floors={
         "rows": 0, "measured_diameters": 0, "JPL SBDB": 0, "SsODNet": 0,
         "NEOWISE": 0, "MP3C": 0}))
+
+
+def test_pairing_and_dropping_need_no_diameter_sigma():
+    """No source here carries a diameter sigma; the column never exists."""
+    jpl = {"designation": ["15", "2006 CH69"], "semi_major_axis_au": [2.64, 44.0],
+           "absolute_magnitude_h": [5.43, 6.58], "diameter_km": [231.689, np.nan],
+           "spectral_type": ["S", np.nan]}
+    ssod = {"designation": ["15", "2006 CH69"], "diameter_km": [271.3, np.nan],
+            "estimated_mass_kg": [3.197e19, 8.3e17]}
+    mp3c = {"designation": ["2006 CH69"], "diameter_km": [50.0],
+            "estimated_mass_kg": [8.3e17]}
+    out = _merge(jpl, ssod, None, mp3c)
+    assert out.loc["15", "diameter_km"] == 271.3
+    assert pd.isna(out.loc["2006 CH69", "diameter_km"])

@@ -313,7 +313,8 @@ def _resolve_measured(merged: pd.DataFrame, order: List[str]) -> pd.DataFrame:
                 merged["diameter_screened_out"] = _names(
                     diam[1] & drop_d[:, None], diam[2]).to_numpy()
             if drop_d.any():
-                merged.loc[drop_d, ["diameter_km", "diameter_sigma_km"]] = np.nan
+                merged.loc[drop_d, [c for c in ("diameter_km", "diameter_sigma_km")
+                                    if c in merged.columns]] = np.nan
                 merged.loc[drop_d, "diameter_provider"] = pd.NA
                 refused[drop_d] = no_sigma[drop_d]
                 own_ok[drop_d] = False     # nothing left to pair with
@@ -357,7 +358,8 @@ def _resolve_measured(merged: pd.DataFrame, order: List[str]) -> pd.DataFrame:
                     & (d_new != merged["diameter_km"].to_numpy("float64")))
             if swap.any():
                 merged.loc[swap, "diameter_km"] = d_new[swap]
-                merged.loc[swap, "diameter_sigma_km"] = diam[3][rows, at][swap]
+                if "diameter_sigma_km" in merged.columns:
+                    merged.loc[swap, "diameter_sigma_km"] = diam[3][rows, at][swap]
                 merged.loc[swap, "diameter_provider"] = names[pick][swap]
             say(f"        mass: {int(swap.sum()):,} published beside their own "
                 f"source's diameter instead of the backbone's")
