@@ -269,6 +269,19 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "ice_fraction":      0.25,
         "notes": "Featureless red spectrum; Trojan/outer-belt analog",
     },
+    "Z": {
+        "group": "D-type",
+        "composition": "Very red primitive: organics, anhydrous silicates, possible ices",
+        "minerals": ["organics", "silicates", "carbon"],
+        "density_est_gcm3":  1.20,
+        "metal_fraction":    0.01,
+        "silicate_fraction": 0.25,
+        "carbon_fraction":   0.30,
+        "ice_fraction":      0.25,
+        "notes": "Mahlke et al. (2022) Z: redder than D, D-like; composition "
+                 "taken as D.  v1.4.0: until then Z fell to Unknown, and 32 "
+                 "bodies (Trojans such as 1172 Aneas, 118 km) carried no mass.",
+    },
     "K": {
         "group": "K-type",
         "composition": "CV/CO chondrite analog: olivine, pyroxene, oxides",
