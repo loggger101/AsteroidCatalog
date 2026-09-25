@@ -97,6 +97,8 @@ from .derive import (
     ALBEDO_FALLBACK,
     ALBEDO_BY_SPECTRAL_TYPE,
     ALBEDO_BY_SEMI_MAJOR_AXIS_AU,
+    ALBEDO_BY_SEMI_MAJOR_AXIS_AU_NEO,
+    ALBEDO_BEYOND_JUPITER_BY_H,
 )
 from .validate import validate_and_filter
 from .enrich import enrich_composition
@@ -171,6 +173,7 @@ __all__ = [
     # reference data
     "TAXONOMY_COMPOSITION", "PGM_ENRICHMENT_BY_TYPE", "pgm_enrichment_for_type",
     "ALBEDO_FALLBACK", "ALBEDO_BY_SPECTRAL_TYPE", "ALBEDO_BY_SEMI_MAJOR_AXIS_AU",
+    "ALBEDO_BY_SEMI_MAJOR_AXIS_AU_NEO", "ALBEDO_BEYOND_JUPITER_BY_H",
     # sources
     "fetch_jpl_sbdb", "fetch_ssodnet", "fetch_neowise", "fetch_mp3c",
     "JPL_SBDB_URL",

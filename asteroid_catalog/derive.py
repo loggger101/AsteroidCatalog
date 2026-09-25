@@ -138,28 +138,70 @@ ALBEDO_BY_SPECTRAL_TYPE: Dict[str, float] = {
 # so sized off their orbital bin at a quarter of an enstatite surface's
 # albedo).  The 1.4.0 sample has 32, median 0.583.
 
-# Median measured geometric albedo by semi-major axis, over the 138,437 bodies
-# with a JPL albedo (2026-08-08).  THIS is the branch that sizes most of the
-# catalog: 1,310,985 bodies of the 2026-09-23 release have nothing but H and an
-# orbit.  (The taxonomy table above sizes 105,873, not "rarely" as this comment
-# said until 1.4.0.)  Re-checked 2026-09-25 against the data-2026-09-23
-# release's JPL albedos: every bin, and ALBEDO_FALLBACK, reproduces exactly.
+# Median measured geometric albedo by semi-major axis.  THIS is the branch
+# that sizes most of the catalog: 1,310,985 bodies of the 2026-09-23 release
+# have nothing but H and an orbit.
 #
 # The gradient is the well-known compositional zoning of the belt, S-complex
-# inner, C-complex outer, and it is strong enough to be worth binning for:
-# 0.2885 at 1.3-2.0 AU against 0.0660 in the outer belt is a factor of 4.4 in
-# albedo, which is a factor of 2.1 in derived diameter and 9.4 in derived mass.
-# Bin edges are the classical Kirkwood-gap boundaries, not fitted.
+# inner, C-complex outer.  Bin edges are the Kirkwood gaps (3:1 at 2.50 AU,
+# 5:2 at 2.82, 2:1 at 3.27), the Hildas' outer edge, and Jupiter's aphelion.
+#
+# SPLIT BY POPULATION IN 1.4.0.  The 1.1.0 table binned on a alone, and the
+# re-check against the data-2026-09-23 release's JPL albedos found three
+# populations sharing a bin they do not share an albedo with:
+#
+#   * NEOs are darker than the belt at the same a, by 1.3-1.8x: 0.170 against
+#     0.4135 at 1.3-2.0 AU, 0.137 against 0.190 in the inner belt.  The old
+#     1.3-2.0 value, 0.2885, was a blend of NEOs and Hungarias that fits
+#     neither: 38,367 NEOs were sized off the belt, up to 1.3x too small
+#     (2.2x too light), and 30,232 Hungarias 1.2x too large.
+#   * The "Centaur / TNO" bin, a >= 5.2, was 1,228 of 1,231 Jupiter Trojans
+#     (a 5.2-5.5): 0.069 is a Trojan median, and half the Trojans sat on the
+#     other side of the edge in the Hilda bin at 0.061.
+#   * Beyond Jupiter, JPL has 68 albedos (mostly NEOWISE Centaurs, 0.0595);
+#     SsODNet has the Herschel and Spitzer TNO albedos, 125 more.  So that
+#     one bin takes every provider: 0.088 over 193.  Elsewhere it is JPL's
+#     albedos, as before, so the table stays on the H the `albedo` column
+#     carries (README section 4).
+#
+# (a_min, a_max, median p_V, label); `n` is the measured sample.
 ALBEDO_BY_SEMI_MAJOR_AXIS_AU: Tuple[Tuple[float, float, float, str], ...] = (
-    # (a_min, a_max, median p_V, label)
-    (0.000,  1.300, 0.1870, "NEA"),                    # n=296
-    (1.300,  2.000, 0.2885, "Mars-crosser / inner"),   # n=906
-    (2.000,  2.500, 0.1890, "inner belt"),             # n=29,921
-    (2.500,  2.820, 0.0860, "middle belt"),            # n=45,912
-    (2.820,  3.270, 0.0660, "outer belt"),             # n=57,161
-    (3.270,  3.700, 0.0570, "Cybele"),                 # n=1,126
-    (3.700,  5.200, 0.0610, "Hilda / Trojan"),         # n=1,884
-    (5.200,  1e9,   0.0690, "Centaur / TNO"),          # n=1,228
+    (0.000,  1.300, 0.1870, "Aten / Apollo"),          # n=296 (all NEOs)
+    (1.300,  2.000, 0.4135, "Hungaria / Mars-crosser"),  # n=498
+    (2.000,  2.500, 0.1900, "inner belt"),             # n=29,638
+    (2.500,  2.820, 0.0860, "middle belt"),            # n=45,778
+    (2.820,  3.270, 0.0660, "outer belt"),             # n=57,089
+    (3.270,  3.700, 0.0570, "Cybele"),                 # n=1,118
+    (3.700,  4.600, 0.0550, "Hilda"),                  # n=1,154
+    (4.600,  5.500, 0.0700, "Jupiter Trojan"),         # n=1,891
+    (5.500,  1e9,   0.0880, "Centaur / TNO"),          # n=193, every provider
+)
+
+# The same, for near-Earth objects (JPL `neo`, q < 1.3 AU), which take it in
+# preference wherever they have a row.  Beyond 2.82 AU they are few (83) and
+# pooled: they are the dark, often cometary, end of the population.
+# BEYOND JUPITER, BY H, NOT ONE VALUE.  Past 5.5 AU the brighter bodies are
+# the BIG ones, and big trans-Neptunian objects are icier and brighter: over
+# the 193 measured, the median runs 0.147 at H 3-6 (n=64) down to 0.0585 past
+# H 8 (n=86), the size-albedo trend of the Herschel "TNOs are Cool" survey.
+# One value (0.088) sized 532037 Chiminigagua (H 3.09) at 1,219 km against
+# ~740 measured, and made it the eighth-heaviest body in the catalog.  The
+# `Centaur / TNO` row of the table above is the fallback for a body with no H.
+# (h_max, median p_V, label), first match wins.
+ALBEDO_BEYOND_JUPITER_BY_H: Tuple[Tuple[float, float, str], ...] = (
+    (3.0,   0.4481, "dwarf planet, H <= 3"),           # n=7
+    (6.0,   0.1468, "large TNO, H 3-6"),               # n=64
+    (7.0,   0.0871, "TNO, H 6-7"),                     # n=23
+    (8.0,   0.0755, "TNO, H 7-8"),                     # n=13
+    (1e9,   0.0585, "small TNO / Centaur, H > 8"),     # n=86
+)
+
+ALBEDO_BY_SEMI_MAJOR_AXIS_AU_NEO: Tuple[Tuple[float, float, float, str], ...] = (
+    (0.000,  1.300, 0.1870, "NEO, Aten / Apollo"),     # n=296
+    (1.300,  2.000, 0.1700, "NEO, 1.3-2.0 AU"),        # n=407
+    (2.000,  2.500, 0.1370, "NEO, inner belt"),        # n=282
+    (2.500,  2.820, 0.0620, "NEO, middle belt"),       # n=135
+    (2.820,  1e9,   0.0370, "NEO, outer"),             # n=83
 )
 
 # Overall median across the whole measured sample.  Last resort only: used for
@@ -241,10 +283,21 @@ def _albedo_for_derivation(df: pd.DataFrame) -> Tuple[pd.Series, pd.Series]:
     # ── 3. Orbital bin ────────────────────────────────────────────────────────
     if "semi_major_axis_au" in df.columns:
         a = pd.to_numeric(df["semi_major_axis_au"], errors="coerce")
-        for a_min, a_max, p_v, _lbl in ALBEDO_BY_SEMI_MAJOR_AXIS_AU:
-            band = albedo.isna() & a.notna() & (a >= a_min) & (a < a_max)
-            albedo.loc[band] = p_v
-            label[band] = "orbit_albedo"
+        neo = (df["is_neo"].fillna(False).astype(bool) if "is_neo" in df.columns
+               else pd.Series(False, index=df.index))
+        if "absolute_magnitude_h" in df.columns:
+            h = pd.to_numeric(df["absolute_magnitude_h"], errors="coerce")
+            outer = albedo.isna() & (a >= ALBEDO_BY_SEMI_MAJOR_AXIS_AU[-1][0]) & h.notna()
+            for h_max, p_v, _lbl in ALBEDO_BEYOND_JUPITER_BY_H:
+                band = outer & albedo.isna() & (h <= h_max)
+                albedo.loc[band] = p_v
+                label[band] = "orbit_albedo"
+        for table, who in ((ALBEDO_BY_SEMI_MAJOR_AXIS_AU_NEO, neo),
+                           (ALBEDO_BY_SEMI_MAJOR_AXIS_AU, ~neo | neo)):
+            for a_min, a_max, p_v, _lbl in table:
+                band = albedo.isna() & who & a.notna() & (a >= a_min) & (a < a_max)
+                albedo.loc[band] = p_v
+                label[band] = "orbit_albedo"
 
     # ── 4. Whole-sample median ────────────────────────────────────────────────
     last = albedo.isna()

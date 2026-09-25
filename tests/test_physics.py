@@ -71,7 +71,7 @@ def test_no_class_estimate_is_itself_impossible():
 
 @pytest.mark.parametrize("raw,group", [
     ("S(iv)", "S-complex"), ("Bk", "C-complex"), ("X:", "X-complex"),
-    ("sq", "S-complex"), ("Z", "Unknown"), (None, "Unknown"), ("", "Unknown"),
+    ("sq", "S-complex"), ("Z", "D-type"), ("U", "Unknown"), (None, "Unknown"), ("", "Unknown"),
 ])
 def test_taxonomy_group_reads_classes_as_sources_spell_them(raw, group):
     assert taxonomy_group(raw) == group
@@ -332,3 +332,73 @@ def test_class_albedo_table_covers_the_subclasses_sources_use():
     for cls in ("Ds", "Dl", "Ls", "Kl", "E", "Z"):
         assert cls in ALBEDO_BY_SPECTRAL_TYPE
     assert all(0 < v < 1 for v in ALBEDO_BY_SPECTRAL_TYPE.values())
+
+
+def test_a_diameter_must_fit_the_bodys_h():
+    """2010 BK37: 1.95 km beside H 23.97 is p_V 0.0001; 2015 JF11: 0.17 km
+    beside H 17.6 is p_V 5.6.  The other source's diameter fits."""
+    jpl = {"designation": ["2010 BK37", "2015 JF11"], "semi_major_axis_au": [2.6, 2.5],
+           "absolute_magnitude_h": [23.97, 17.6], "diameter_km": [1.947, 0.17]}
+    ssod = {"designation": ["2015 JF11"], "diameter_km": [2.86]}
+    out = _merge(jpl, ssod)
+    assert pd.isna(out.loc["2010 BK37", "diameter_km"])
+    assert out.loc["2010 BK37", "diameter_screened_out"] == "JPL SBDB"
+    assert out.loc["2015 JF11", "diameter_km"] == 2.86
+    assert out.loc["2015 JF11", "diameter_provider"] == "SsODNet"
+
+
+def test_an_albedo_darker_than_any_surface_is_refused():
+    jpl = {"designation": ["2010 HK22"], "semi_major_axis_au": [1.5],
+           "absolute_magnitude_h": [23.76], "albedo": [0.0007]}
+    out = _merge(jpl)
+    assert pd.isna(out.loc["2010 HK22", "albedo"])
+    assert out.loc["2010 HK22", "albedo_screened_out"] == "JPL SBDB"
+
+
+def test_neos_and_the_outer_system_size_off_their_own_albedo():
+    from asteroid_catalog.derive import (ALBEDO_BY_SEMI_MAJOR_AXIS_AU as BELT,
+                                         ALBEDO_BY_SEMI_MAJOR_AXIS_AU_NEO as NEO)
+    df = pd.DataFrame({"designation": ["neo", "hungaria", "trojan", "tno"],
+                       "absolute_magnitude_h": [18.0, 15.0, 12.0, 7.0],
+                       "semi_major_axis_au": [1.8, 1.9, 5.25, 44.0],
+                       "is_neo": [True, False, False, False]})
+    out = ac.derive_missing_diameters(df, ac.CONFIG).set_index("designation")
+    p = out["albedo_assumed_for_diameter"]
+    assert p["neo"] == NEO[1][2] and p["hungaria"] == BELT[1][2]
+    assert p["neo"] < p["hungaria"], "NEOs are darker than the belt at the same a"
+    assert p["trojan"] == 0.07 and p["tno"] == 0.0871, "H 7.0 is in the 6-7 bin"
+
+
+def test_big_tnos_are_sized_off_big_tnos():
+    """532037 Chiminigagua, H 3.09: 1,219 km at one TNO albedo, ~740 measured."""
+    df = pd.DataFrame({"designation": ["532037", "small"], "semi_major_axis_au": [49.0, 40.0],
+                       "absolute_magnitude_h": [3.09, 9.5]})
+    out = ac.derive_missing_diameters(df, ac.CONFIG).set_index("designation")
+    assert 650 < out.loc["532037", "diameter_km"] < 900
+    assert out.loc["small", "albedo_assumed_for_diameter"] < out.loc["532037", "albedo_assumed_for_diameter"]
+
+
+def test_the_diameter_drop_keeps_the_h_screens_record():
+    jpl = {"designation": ["x"], "semi_major_axis_au": [44.0],
+           "absolute_magnitude_h": [6.58], "diameter_km": [0.01]}
+    ssod = {"designation": ["x"], "estimated_mass_kg": [8.3e17]}
+    mp3c = {"designation": ["x"], "diameter_km": [50.0], "estimated_mass_kg": [8.3e17]}
+    out = _merge(jpl, ssod, None, mp3c).loc["x"]
+    assert set(out["diameter_screened_out"].split(";")) == {"JPL SBDB", "MP3C"}
+
+
+def test_every_body_with_a_diameter_gets_a_class_and_a_mass():
+    """A measured diameter with no albedo and no class was Unknown, massless."""
+    jpl = {"designation": ["2012 XB112", "1172"], "semi_major_axis_au": [1.1, 5.17],
+           "absolute_magnitude_h": [32.5, 8.3], "diameter_km": [0.0025, 118.0],
+           "spectral_type": [np.nan, "Z"]}
+    out = _build(jpl)
+    assert out["estimated_mass_kg"].notna().all()
+    assert out.loc["1172", "comp_group"] == "D-type"
+    assert out.loc["2012 XB112", "spectral_type_source"] == "albedo_assumed"
+
+
+def test_a_zero_sigma_is_no_sigma():
+    jpl = {"designation": ["1"], "semi_major_axis_au": [2.5],
+           "absolute_magnitude_h": [15.0], "absolute_magnitude_h_sigma": [0.0]}
+    assert pd.isna(_merge(jpl).loc["1", "absolute_magnitude_h_sigma"])

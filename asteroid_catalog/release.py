@@ -148,8 +148,9 @@ def physical_problems(df: pd.DataFrame) -> List[str]:
     """
     import numpy as np
     from .physics import (
-        ALBEDO_CEILING, DENSITY_LIMITS_ANY_GCM3, bulk_density_gcm3,
-        rotation_is_impossible, smallest_diameter_km,
+        ALBEDO_CEILING, ALBEDO_FLOOR, DENSITY_LIMITS_ANY_GCM3, IMPLIED_ALBEDO_RANGE,
+        albedo_from_h_and_diameter, bulk_density_gcm3, rotation_is_impossible,
+        smallest_diameter_km,
     )
 
     def num(col):
@@ -177,6 +178,16 @@ def physical_problems(df: pd.DataFrame) -> List[str]:
                    "estimated_mass_kg is not density_gcm3 x volume")
     if "albedo" in df.columns:
         report(num("albedo") >= ALBEDO_CEILING, "albedo of %g or more" % ALBEDO_CEILING)
+        report(num("albedo") < ALBEDO_FLOOR, "albedo below %g" % ALBEDO_FLOOR)
+    if "absolute_magnitude_h" in df.columns and "diameter_km" in df.columns:
+        measured = (df["diameter_source"].eq("measured") if "diameter_source" in df.columns
+                    else pd.Series(True, index=df.index))
+        p = pd.Series(albedo_from_h_and_diameter(num("absolute_magnitude_h"), diam),
+                      index=df.index)
+        lo_p, hi_p = IMPLIED_ALBEDO_RANGE
+        report(measured & ((p < lo_p) | (p > hi_p)),
+               "a measured diameter that H puts at an albedo outside %g-%g"
+               % (round(lo_p, 4), round(hi_p, 2)))
     if "rotation_period_h" in df.columns:
         # Judged on what is KNOWN of the size, as the merge judges it: a
         # measured diameter, else the size at albedo 1.  A derived diameter

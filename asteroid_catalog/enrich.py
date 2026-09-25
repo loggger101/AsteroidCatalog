@@ -39,7 +39,7 @@ def enrich_composition(df: pd.DataFrame) -> pd.DataFrame:
     Steps:
       1. Normalise spectral_type strings  (Title-case, strip blank-ish values).
       2a. Where spectral_type is absent, fall back to spectral_type_tholen.
-      2a'. Beyond 5.5 AU, an untyped body is D, from its orbit (1.4.0).
+      2a'. From 4.6 AU out, an untyped body is D, from its orbit (1.4.0).
       2b. Where it's STILL absent, infer a coarse type from geometric albedo.
       2c. Where there is no measured albedo either, fall back to the albedo
           ASSUMED when the diameter was derived from H (v1.1.0).
@@ -47,7 +47,7 @@ def enrich_composition(df: pd.DataFrame) -> pd.DataFrame:
             • "source"         → arrived from a fetcher (JPL spec_B, SsODNet
                                  taxonomy.class, MP3C taxonomy, …)
             • "tholen"         → filled from spectral_type_tholen (step 2a)
-            • "orbit"          → D, for an untyped body beyond Jupiter (2a')
+            • "orbit"          → D, for an untyped Trojan or beyond (2a')
             • "albedo"         → inferred from measured albedo (step 2b)
             • "albedo_assumed" → inferred from the assumed albedo behind an
                                  H-derived diameter (step 2c), the weakest
@@ -113,15 +113,16 @@ def enrich_composition(df: pd.DataFrame) -> pd.DataFrame:
         if n_thol:
             say(f"       Spectral type filled from Tholen for {n_thol:,} entries")
 
-    # ── 2a'. Beyond Jupiter, the orbit says more than the albedo (1.4.0) ────
+    # ── 2a'. From the Trojans out, the orbit says more than the albedo ─────
     # The albedo inference below reads a bright surface as basalt (V) or stone
     # (S), which is right in the main belt and wrong past Jupiter, where a
     # bright surface is fresh ICE.  In the 2026-09-23 release it typed Pluto,
     # Haumea, Makemake and Sedna as V (2.9 g/cm3, 90% silicate, PGM-depleted
     # basaltic crust) and Quaoar and Gonggong as S, and gave all 8,127 H-sized
-    # TNOs and Centaurs a main-belt C.  Every body beyond Jupiter's aphelion
-    # with no classification from a source now takes D, the table's ice- and
-    # organic-rich outer-Solar-System class, labelled "orbit".  A class a
+    # TNOs and Centaurs a main-belt C.  Every body from the Trojans out
+    # (physics.OUTER_SOLAR_SYSTEM_AU) with no classification from a source now
+    # takes D, the table's ice- and organic-rich outer-Solar-System class and
+    # the Trojans' commonest, labelled "orbit".  A class a
     # source measured is never overridden.
     if "semi_major_axis_au" in df.columns:
         a_au = pd.to_numeric(df["semi_major_axis_au"], errors="coerce")
@@ -163,16 +164,31 @@ def enrich_composition(df: pd.DataFrame) -> pd.DataFrame:
     # 1.4 M H-derived bodies would all land on TAXONOMY_COMPOSITION["Unknown"],
     # whose fractions are None, so they would carry no density, no mass, and be
     # skipped by Stage 4 for having no mass at all.
-    if "albedo_assumed_for_diameter" in df.columns:
-        assumed = pd.to_numeric(df["albedo_assumed_for_diameter"], errors="coerce")
-        assume_mask = df["spectral_type"].isna() & assumed.notna()
+    assumed = (pd.to_numeric(df["albedo_assumed_for_diameter"], errors="coerce")
+               if "albedo_assumed_for_diameter" in df.columns
+               else pd.Series(np.nan, index=df.index, dtype="float64"))
 
-        df.loc[assume_mask, "spectral_type"]        = assumed[assume_mask].apply(_infer_from_albedo)
-        df.loc[assume_mask, "spectral_type_source"] = "albedo_assumed"
-        n_ass = int(assume_mask.sum())
-        if n_ass:
-            say(f"       Spectral type inferred from the ASSUMED albedo for "
-                  f"{n_ass:,} entries (H-derived diameters)")
+    # A MEASURED diameter with no albedo and no class had nothing to infer
+    # from, landed on Unknown, and carried no mass (27 bodies in 2026-09-23).
+    # The albedo its orbit bin assumes for everyone else stands in, under the
+    # same weakest label.
+    measured_alb = (pd.to_numeric(df["albedo"], errors="coerce") > 0
+                    if "albedo" in df.columns else pd.Series(False, index=df.index))
+    gap = df["spectral_type"].isna() & assumed.isna() & ~measured_alb
+    if gap.any() and "semi_major_axis_au" in df.columns:
+        from .derive import _albedo_for_derivation
+        cols = ["semi_major_axis_au"] + [c for c in ("is_neo",) if c in df.columns]
+        orbit_p, _ = _albedo_for_derivation(df.loc[gap, cols])
+        assumed = assumed.where(~gap, orbit_p)
+
+    assume_mask = df["spectral_type"].isna() & assumed.notna()
+    df.loc[assume_mask, "spectral_type"]        = assumed[assume_mask].apply(_infer_from_albedo)
+    df.loc[assume_mask, "spectral_type_source"] = "albedo_assumed"
+    n_ass = int(assume_mask.sum())
+    if n_ass:
+        say(f"       Spectral type inferred from the ASSUMED albedo for "
+              f"{n_ass:,} entries (H-derived diameters, and measured ones "
+              f"with no albedo)")
 
     # ── 3. Look up composition fields ────────────────────────────────────────
     # `minerals` and `notes` are included because for a mining-profitability

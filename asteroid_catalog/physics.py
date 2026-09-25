@@ -99,12 +99,27 @@ DENSITY_LIMITS_ANY_GCM3 = DENSITY_LIMITS_GCM3["Unknown"]
 # bodies), and derive.py already refused to size a body from one.  The floor is
 # only used to judge an albedo the catalog would otherwise have to INVENT (see
 # enrich.py): nothing in the Solar System is darker than ~0.02, and 0.01 leaves
-# margin under the darkest NEOWISE fits.
+# margin under the darkest NEOWISE fits.  Since 1.4.0 a MEASURED albedo under
+# the floor is refused as well: the 2026-09-23 release carried 43, down to
+# 0.0007 (2010 HK22), darker than any whole body ever measured.
 ALBEDO_CEILING = 1.0
 ALBEDO_FLOOR = 0.01
 
 # D_km = H_DIAMETER_CONSTANT / sqrt(p_V) * 10**(-H/5); see derive.py.
 H_DIAMETER_CONSTANT = 1329.0
+
+# A MEASURED DIAMETER MUST BE THE SIZE OF THE BODY WHOSE H IT SITS BESIDE.
+# Together they imply an albedo, and it must be one a surface can have, to
+# within the H error: catalogue H values differ by 0.1-0.3 mag routinely and
+# by ~0.75 at the NEOWISE-era worst (README section 4).  So the implied albedo
+# may run from ALBEDO_FLOOR to ALBEDO_CEILING widened by 0.75 mag each way,
+# 0.005 to 2.0.  Outside that the diameter belongs to another body (a mislinked
+# detection: 2010 BK37 is 1.95 km beside an H of 23.97, p_V 0.0001) or is a
+# failed fit (303876, SsODNet 14.6 km at p_V 0.0027 with every source agreeing
+# on H); 18 in the 2026-09-23 release.
+H_DIAMETER_TOLERANCE_MAG = 0.75
+IMPLIED_ALBEDO_RANGE = (ALBEDO_FLOOR * 10 ** (-0.4 * H_DIAMETER_TOLERANCE_MAG),
+                        ALBEDO_CEILING * 10 ** (0.4 * H_DIAMETER_TOLERANCE_MAG))
 
 # ─────────────────────────────────────────────────────────────────────────────
 # ROTATION
@@ -125,9 +140,14 @@ H_DIAMETER_CONSTANT = 1329.0
 SPIN_LIMIT_MIN_DIAMETER_KM = 10.0
 G_SI = 6.67430e-11
 
-# Anything beyond Jupiter's aphelion (5.46 AU) is a Centaur or a TNO: an icy,
-# organic-rich body, whatever its albedo says.  See enrich.py.
-OUTER_SOLAR_SYSTEM_AU = 5.5
+# From the Jupiter Trojans outward (a >= 4.6 AU, the Hilda/Trojan boundary),
+# an untyped body is taken as D: icy and organic-rich past Jupiter, whatever
+# its albedo says, and D is the Trojans' commonest class.  Of the 1,559
+# Trojans with a source class in the 2026-09-23 release, 36.5% are D and 24.6%
+# C-complex (most of them P, the D-like end); albedo inference had typed all
+# 14,879 untyped ones C.  The Hildas inside 4.6 AU are C-complex first (37%)
+# and keep the inference.  See enrich.py.
+OUTER_SOLAR_SYSTEM_AU = 4.6
 OUTER_SOLAR_SYSTEM_CLASS = "D"
 
 

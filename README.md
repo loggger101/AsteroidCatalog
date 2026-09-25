@@ -277,7 +277,7 @@ Since 1.4.0, source by source and before precedence picks a value:
 After enrichment, **every row satisfies `estimated_mass_kg = density_gcm3 ×
 π/6 × diameter_km³`.** An H-derived diameter that a measured mass refutes is
 re-derived from the mass at the class density (`diameter_source =
-"derived_mass"`). Bodies beyond 5.5 AU with no measured class are typed `D`
+"derived_mass"`). Bodies from the Trojans out (a ≥ 4.6 AU) with no measured class are typed `D`
 (`spectral_type_source = "orbit"`), not by albedo.
 
 The release gate refuses a build that breaks any of this, and

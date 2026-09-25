@@ -29,8 +29,9 @@ from ._log import say, warn
 from .designations import _extract_canonical_designation
 from .identity import build_alias_map, resolve_designations
 from .physics import (
-    ALBEDO_CEILING, bulk_density_gcm3, density_limits, groups_of,
-    rotation_is_impossible, smallest_diameter_km,
+    ALBEDO_CEILING, ALBEDO_FLOOR, IMPLIED_ALBEDO_RANGE, albedo_from_h_and_diameter,
+    bulk_density_gcm3, density_limits, groups_of, rotation_is_impossible,
+    smallest_diameter_km,
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -152,10 +153,13 @@ def deduplicate_catalog(
 # ⚠️  PRECEDENCE PICKS AMONG POSSIBLE VALUES ONLY  (data contract 1.4.0).  Until
 # 1.3.0 the first source with a value won, whatever the value was, and the
 # 2026-09-23 release published a 29.7 km body at 495 g/cm3 because MP3C was
-# the only source with a mass for it.  Three fields are now screened, source
+# the only source with a mass for it.  Four fields are now screened, source
 # by source, BEFORE precedence applies (limits and their reasons in physics.py):
 #
-#   albedo              1 or more is a fit at its ceiling, not a surface
+#   diameter_km         with the catalog's H it must imply an albedo some
+#                       surface could have (IMPLIED_ALBEDO_RANGE)
+#   albedo              1 or more is a fit at its ceiling, under 0.01 darker
+#                       than any whole body measured
 #   estimated_mass_kg   a sigma as large as the value is no determination; a
 #                       mass that puts the body outside its group's possible
 #                       bulk density, with the source's own diameter and with
@@ -175,13 +179,14 @@ def deduplicate_catalog(
 # of every published estimate, the spacecraft masses JPL quotes included (the
 # two agree to 0.2% on Ceres, Vesta, Eros and Bennu).
 MEASURED_FIELDS: Dict[str, dict] = {
+    "absolute_magnitude_h": {"stem": "h",               "sigma": "absolute_magnitude_h_sigma",
+                             "kind": "diff",  "tolerance": 0.30},
     "diameter_km":          {"stem": "diameter",        "sigma": "diameter_sigma_km",
-                             "kind": "ratio", "tolerance": 0.10},
+                             "kind": "ratio", "tolerance": 0.10,
+                             "screen": "h_diameter"},
     "albedo":               {"stem": "albedo",          "sigma": "albedo_sigma",
                              "kind": "ratio", "tolerance": 0.25,
                              "screen": "albedo"},
-    "absolute_magnitude_h": {"stem": "h",               "sigma": "absolute_magnitude_h_sigma",
-                             "kind": "diff",  "tolerance": 0.30},
     "estimated_mass_kg":    {"stem": "mass",            "sigma": "estimated_mass_sigma_kg",
                              "kind": "ratio", "tolerance": 0.25,
                              "screen": "density", "prefer": ["SsODNet"]},
@@ -259,6 +264,10 @@ def _resolve_measured(merged: pd.DataFrame, order: List[str]) -> pd.DataFrame:
         S = _matrix(merged, scols) if scols else None
         if spec["kind"] == "ratio":
             V[~(V > 0)] = np.nan           # a non-positive size is no measurement
+        if S is not None:
+            # A sigma of 0 claims infinite precision; it means "not given"
+            # (559 JPL H sigmas and 2 diameter sigmas in 2026-09-23).
+            S[~(S > 0)] = np.nan
         has = ~np.isnan(V)
         count = has.sum(axis=1)
         stem = spec["stem"]
@@ -272,7 +281,14 @@ def _resolve_measured(merged: pd.DataFrame, order: List[str]) -> pd.DataFrame:
         if screen and groups is None:
             groups = groups_of(merged)
         if screen == "albedo":
-            refused = has & (V >= ALBEDO_CEILING)
+            refused = has & ((V >= ALBEDO_CEILING) | (V < ALBEDO_FLOOR))
+        elif screen == "h_diameter":
+            h_cat = (pd.to_numeric(merged["absolute_magnitude_h"], errors="coerce")
+                     .to_numpy("float64") if "absolute_magnitude_h" in merged.columns
+                     else np.full(n, np.nan))
+            p = albedo_from_h_and_diameter(h_cat[:, None], V)
+            lo_p, hi_p = IMPLIED_ALBEDO_RANGE
+            refused = has & ~np.isnan(p) & ((p < lo_p) | (p > hi_p))
         elif screen == "spin":
             _, ceiling = density_limits(groups)
             smallest = smallest_diameter_km(
@@ -305,13 +321,17 @@ def _resolve_measured(merged: pd.DataFrame, order: List[str]) -> pd.DataFrame:
             # alone gives the PRIMARY's diameter, at implied albedos up to 1.8
             # (the diameter goes, and is derived again downstream).
             stuck = impossible.any(axis=1) & ~(has & ~refused).any(axis=1)
-            d_support = (merged["diameter_n_sources"].to_numpy()
-                         if "diameter_n_sources" in merged.columns else np.zeros(n))
+            # Support is the diameters still standing: one the H screen
+            # refused does not vote.
+            d_support = diam[1].sum(axis=1) if diam is not None else np.zeros(n)
             m_support = (has & ~no_sigma).sum(axis=1)
             drop_d = stuck & (m_support > d_support) & (diam is not None)
-            if diam is not None:
-                merged["diameter_screened_out"] = _names(
-                    diam[1] & drop_d[:, None], diam[2]).to_numpy()
+            if diam is not None and drop_d.any():
+                # Added to what the H screen already refused, not over it.
+                prev = merged["diameter_screened_out"].astype("string").fillna("")
+                new = _names(diam[1] & drop_d[:, None], diam[2]).fillna("").to_numpy()
+                both = (prev + ";" + new).str.strip(";")
+                merged["diameter_screened_out"] = both.replace("", pd.NA).to_numpy()
             if drop_d.any():
                 merged.loc[drop_d, [c for c in ("diameter_km", "diameter_sigma_km")
                                     if c in merged.columns]] = np.nan
@@ -344,7 +364,8 @@ def _resolve_measured(merged: pd.DataFrame, order: List[str]) -> pd.DataFrame:
 
         if field == "diameter_km":
             dS = S if S is not None else np.full_like(V, np.nan)
-            diam = (V, has, order, dS)
+            kept = np.where(refused, np.nan, V)     # never pair a refused diameter
+            diam = (kept, has & ~refused, order, dS)
         if screen == "density" and diam is not None:
             # PUBLISH A MASS BESIDE THE DIAMETER IT WAS MEASURED WITH.  A
             # source's density is its mass over ITS diameter, and ssoBFT's

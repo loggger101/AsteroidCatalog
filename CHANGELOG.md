@@ -32,7 +32,7 @@ real in a real source and taken because its source came first:
 | **Impossible source densities.** SsODNet Ch-types at 4.8–5.2 g/cm³ (Hedda, Aline), P-types at 5.3 (Camelia, Aidamina), a D-type at 6.3 | 20 above the carbonaceous ceiling | dropped; the class estimate stands in |
 | **Albedos at a fit's ceiling.** JPL's 1.000 (24) and SsODNet's 1.10 for Makemake | 25 | refused; the next source's value is used |
 | **Rotation faster than breakup.** JPL periods under 1.5 h on 10–18 km bodies, where SsODNet has 48–180 h | 27 | refused for bodies ≥10 km at their class's density ceiling |
-| **Icy bodies typed as rock.** Albedo inference made Pluto, Haumea, Makemake and Sedna basalt (V, 2.9 g/cm³), Quaoar and Gonggong S, and every H-sized TNO a main-belt C | 8,312 untyped bodies beyond 5.5 AU | an untyped body beyond 5.5 AU is D, `spectral_type_source = "orbit"`; a measured class is never overridden |
+| **Icy bodies typed as rock.** Albedo inference made Pluto, Haumea, Makemake and Sedna basalt (V, 2.9 g/cm³), Quaoar and Gonggong S, and every H-sized TNO a main-belt C | 8,312 untyped bodies beyond 5.5 AU; 14,879 untyped Trojans typed C where D is their commonest class | an untyped body from the Trojans out (a ≥ 4.6 AU) is D, `spectral_type_source = "orbit"`; a measured class is never overridden |
 
 **Every calculation and assumption re-checked against that release.** Each
 derived column was recomputed from its own inputs across all 1,566,618 rows:
@@ -49,6 +49,23 @@ exactly on the release's JPL albedos.  Three things did not survive:
 | **The class albedo table sizes few bodies** ("fires rarely") | it sizes 105,873, typed mostly by SsODNet, while its medians came from 1,897 JPL-typed bodies: D 0.051 against 0.082 on 2,127 bodies, T 0.065 against 0.111, K 0.142 against 0.184, V 0.388 against 0.336; subclasses like Ds (0.127) fell to their root letter's 0.051 | recomputed on the labels it is applied to: 47 classes with n ≥ 5 over 65,159 bodies; E-types (32, median 0.583) are no longer sized as dark |
 | **A class lookup matches the source's spelling** | "SQ" and "SA" missed "Sq" and "Sa" and sized off the S median: 663 bodies 6% too large, 20% too heavy | capitalised as enrich_composition capitalises |
 | **p_V ≥ 0.35 means V** | of 4,191 bright bodies with a source class, 916 are V and 2,473 S-complex: right 22% of the time, and V carries basaltic crust's metal and a 0.2× PGM factor | bright bodies are S; the C/S split at 0.10 is right for 84.0% (the best split, 0.13, 85.2%) |
+
+**A second pass**, over what the first could not see, found eight more:
+
+| assumption | what the release says | fix |
+|---|---|---|
+| **One orbit bin fits everyone at that a** | NEOs are 1.3–1.8x darker than the belt at the same a (0.170 against 0.4135 at 1.3–2.0 AU); the 0.2885 there was a blend fitting neither | a NEO table beside the belt table: 38,367 NEOs were up to 2.2x too light, 30,232 Hungarias 1.7x too heavy |
+| **a ≥ 5.2 AU is Centaur/TNO** | 1,228 of the bin's 1,231 measured bodies were Jupiter Trojans; half the Trojans sat in the Hilda bin | Hilda (3.7–4.6, 0.055), Trojan (4.6–5.5, 0.070), beyond 5.5 AU |
+| **One albedo beyond Jupiter** | the median runs 0.147 at H 3–6 down to 0.0585 past H 8; at 0.069, 532037 Chiminigagua was 1,219 km against ~740 measured, the 8th-heaviest body | albedo by H past 5.5 AU (`ALBEDO_BEYOND_JUPITER_BY_H`), over every provider's 193 |
+| **A measured diameter is this body's** | 18 beside an H that puts them at p_V 0.0001–5.6: a mislinked detection (2010 BK37, 1.95 km at H 23.97) or a failed fit | refused outside p_V 0.005–2.0 (the albedo range widened by 0.75 mag); the next source's, or H's, stands in |
+| **A measured albedo is a surface** | 43 below 0.01, down to 0.0007 | refused below 0.01, half the darkest body measured |
+| **Untyped Trojans are C** | D is the Trojans' commonest class (36.5% of 1,559 typed; C-complex 24.6%, mostly P) | D from the orbit from 4.6 AU out |
+| **Every body with a diameter has a mass** | 63 did not: 32 Mahlke "Z" (very red, D-like, Trojans up to 118 km) unknown to the class table, 27 measured diameters with no albedo or class | class `Z` (as D); the orbit-bin albedo types the 27. The 4 Tholen "U" (unclassifiable) stay Unknown |
+| **A sigma is an uncertainty** | 559 JPL H sigmas and 2 diameter sigmas are 0 | a zero sigma is no sigma |
+
+The gate now also refuses an albedo below 0.01 and a measured diameter outside
+the H-implied range, and `tools/audit_catalog.py` lists the 25 heaviest bodies
+with the provenance of every number, since they dominate any mass total.
 
 Two assumptions checked and kept, with what they cost: C and S class
 densities (1.5, 2.7) sit inside the measured spread (medians 1.64 over 83

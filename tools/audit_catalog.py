@@ -59,8 +59,9 @@ def suspects(df: pd.DataFrame):
                 mass_meas & (rho > 5.0)))
 
     p = pd.Series(albedo_from_h_and_diameter(h, diam), index=df.index)
-    out.append(("measured diameter and H imply an albedo above 1.5", measured_d & (p > 1.5)))
-    out.append(("measured diameter and H imply an albedo below 0.005", measured_d & (p < 0.005)))
+    # Inside the gate's 0.005-2.0 but beyond any surface without an H error.
+    out.append(("measured diameter and H imply an albedo above 1", measured_d & (p > 1.0)))
+    out.append(("measured diameter and H imply an albedo below 0.01", measured_d & (p < 0.01)))
 
     for stem, factor in (("diameter", 1.0), ("albedo", 2.0), ("mass", 1.0),
                          ("rotation_period", 1.0)):
@@ -87,6 +88,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("catalog", help="asteroid_catalog.csv[.gz] or .parquet")
     ap.add_argument("--examples", type=int, default=5)
+    ap.add_argument("--top", type=int, default=25, help="heaviest bodies to list")
     args = ap.parse_args(argv)
 
     df = _read(args.catalog)
@@ -108,6 +110,20 @@ def main(argv=None) -> int:
         if mask.any():
             print("  - %-66s %8s   e.g. %s" % (label, format(int(mask.sum()), ","),
                                              des[mask].head(args.examples).tolist()))
+    # The heaviest bodies dominate any mass total, so each release shows who
+    # they are and where every number came from: the rows to eyeball first.
+    if {"estimated_mass_kg", "diameter_km", "density_gcm3"} <= set(df.columns):
+        top = df.assign(_m=_col(df, "estimated_mass_kg")).nlargest(args.top, "_m")
+        total = _col(df, "estimated_mass_kg").sum()
+        print("\nHEAVIEST %d  (share of the catalog's total mass, %.4g kg)" % (args.top, total))
+        for _, r in top.iterrows():
+            print("  %-10s %-14s %9.3e kg %-9s %6.3f  D %8.1f km %-9s  rho %5.2f  %-4s %s" % (
+                r.get("designation", ""), str(r.get("name", ""))[:14],
+                r["_m"], str(r.get("mass_provider", "") or "derived")[:9],
+                r["_m"] / total, r["diameter_km"],
+                str(r.get("diameter_provider", "") or r.get("diameter_source", ""))[:9],
+                r["density_gcm3"], str(r.get("spectral_type", ""))[:4],
+                r.get("spectral_type_source", "")))
     return 1 if impossible else 0
 
 
