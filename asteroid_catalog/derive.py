@@ -57,8 +57,8 @@ from .config import CatalogConfig
 # exist and why nothing here ever overwrites a measurement.
 #
 # ⚠️  AND THE ALBEDO SAMPLE BELOW IS BIASED, in the optimistic direction.  Both
-# tables are medians over the 138,437 bodies that HAVE a measured albedo, and
-# those measurements are overwhelmingly NEOWISE, a thermal-infrared survey.
+# tables are medians over bodies that HAVE a measured albedo, and those
+# measurements are overwhelmingly NEOWISE, a thermal-infrared survey.
 # At a fixed H a darker body must be larger, and a larger warmer body is easier
 # for a thermal survey to detect, so the measured sample over-represents dark
 # bodies relative to the 1.4 M that were never measured.  A median that is too
@@ -67,58 +67,83 @@ from .config import CatalogConfig
 # same move CLAUDE.md rejects for IN_SPACE_UTILITY.  Quantifying it needs a
 # debiased size-frequency model, which this module does not have.
 
-# Median measured geometric albedo per spectral type.  DERIVED, not asserted:
-# computed 2026-08-08 over every JPL SBDB asteroid with 0 < albedo < 1 and a
-# Bus-DeMeo (spec_B) or, failing that, Tholen (spec_T) classification: 1,897
-# bodies.  Sample size is carried on each row because it varies by two orders
-# of magnitude across the table and a reader deserves to see which entries are
-# solid.  Types with n < 5 are deliberately ABSENT rather than guessed; they
-# fall through the chain in `_albedo_for_derivation` below.
+# Median measured geometric albedo per spectral type.  DERIVED, not asserted.
+#
+# RECOMPUTED FOR 1.4.0 ON THE LABELS IT IS APPLIED TO.  The 1.1.0 table was
+# medians over the 1,897 bodies carrying a JPL (spec_B / spec_T) class, but it
+# sizes the bodies whose class came from ANY source, and by the 2026-09-23
+# release that was 105,873 bodies, most of them typed by SsODNet.  On those
+# labels the old medians were off by up to 72%: D 0.0509 against 0.0820 over
+# 2,127 bodies, T 0.0645 against 0.111, K 0.142 against 0.184, V 0.388 against
+# 0.336, and subclasses the old table lacked fell to their root letter (Ds,
+# median 0.1265, sized as D at 0.0509: 58% too large).
+#
+# Now: every class with n >= 5 among the 65,159 bodies of the data-2026-09-23
+# release with a source-given class and a measured 0 < albedo < 1, the albedo
+# being the catalog's own (`albedo`, JPL-first, i.e. NEOWISE-era; see README
+# section 4).  Classes are spelled as enrich_composition capitalises them.
+# Classes with n < 5 are ABSENT rather than guessed; they fall through the chain
+# in `_albedo_for_derivation` below, first to their root letter.
 ALBEDO_BY_SPECTRAL_TYPE: Dict[str, float] = {
-    "A":   0.2980,   # n=16
-    "B":   0.0670,   # n=65
-    "C":   0.0540,   # n=195
-    "Cb":  0.0520,   # n=35
-    "Cg":  0.0490,   # n=9
-    "Cgh": 0.0720,   # n=15
-    "Ch":  0.0504,   # n=136
-    "D":   0.0509,   # n=39
-    "F":   0.0466,   # n=20
-    "K":   0.1423,   # n=34
-    "L":   0.1680,   # n=35
-    "Ld":  0.1610,   # n=12
-    "M":   0.1310,   # n=15
-    "O":   0.1905,   # n=6
-    "P":   0.0435,   # n=22
-    "Q":   0.2475,   # n=10
-    "S":   0.2439,   # n=534
-    "Sa":  0.2650,   # n=33
-    "Sk":  0.2340,   # n=19
-    "Sl":  0.2240,   # n=51
-    "Sq":  0.2760,   # n=59
-    "Sr":  0.3180,   # n=17
-    "T":   0.0645,   # n=16
-    "V":   0.3880,   # n=36
-    "X":   0.0855,   # n=156
-    "Xc":  0.0750,   # n=61
-    "Xe":  0.2090,   # n=27
-    "Xk":  0.0955,   # n=42
+    "A":    0.2620,   # n=709
+    "Ad":   0.1820,   # n=113
+    "B":    0.0670,   # n=3,723
+    "Bk":   0.0850,   # n=102
+    "C":    0.0620,   # n=22,018
+    "Cb":   0.0550,   # n=82
+    "Cd":   0.0575,   # n=10
+    "Cg":   0.0530,   # n=19
+    "Cgh":  0.0630,   # n=48
+    "Cgx":  0.0880,   # n=134
+    "Ch":   0.0520,   # n=398
+    "Cl":   0.1880,   # n=5
+    "Co":   0.0560,   # n=8
+    "Cx":   0.0590,   # n=197
+    "D":    0.0820,   # n=2,127
+    "Dl":   0.1775,   # n=58
+    "Ds":   0.1265,   # n=278
+    "E":    0.5828,   # n=32
+    "K":    0.1840,   # n=1,046
+    "Kl":   0.1190,   # n=434
+    "L":    0.2030,   # n=1,781
+    "Ld":   0.1730,   # n=25
+    "Ls":   0.2220,   # n=258
+    "M":    0.1330,   # n=139
+    "O":    0.1345,   # n=10
+    "P":    0.0520,   # n=255
+    "Q":    0.2520,   # n=335
+    "Qv":   0.1968,   # n=8
+    "R":    0.3165,   # n=14
+    "S":    0.2340,   # n=20,057
+    "S:":   0.2320,   # n=12
+    "Sa":   0.2515,   # n=46
+    "Sk":   0.2335,   # n=22
+    "Sl":   0.2310,   # n=55
+    "Sq":   0.2440,   # n=157
+    "Sr":   0.2614,   # n=26
+    "Sv":   0.2875,   # n=20
+    "T":    0.1110,   # n=47
+    "V":    0.3355,   # n=2,038
+    "X":    0.0800,   # n=7,932
+    "Xc":   0.0880,   # n=73
+    "Xd":   0.0740,   # n=83
+    "Xe":   0.1990,   # n=43
+    "Xk":   0.1055,   # n=64
+    "Xl":   0.1340,   # n=17
+    "Xt":   0.1115,   # n=68
+    "Z":    0.0650,   # n=33
 }
 
-# ⚠️  E-types are the known casualty of the n >= 5 rule.  Only four measured
-# E-types carry a JPL taxonomy, so "E" is absent, its root letter is itself, and
-# an E-type with no measured albedo therefore falls all the way to its orbital
-# bin, which will be far too dark for an enstatite surface (real E-types run
-# p_V ~ 0.4-0.5) and will size the body much too large.  It is left absent
-# rather than filled from literature so that the table stays one thing, 
-# medians over this catalog; instead of a mixture nobody can audit.  E-types
-# with a MEASURED albedo are unaffected, and that is most of the ones that
-# matter.  Same applies to G and R.
+# E-types were the known casualty of the 1.1.0 table (four measured, so absent,
+# so sized off their orbital bin at a quarter of an enstatite surface's
+# albedo).  The 1.4.0 sample has 32, median 0.583.
 
-# Median measured geometric albedo by semi-major axis, same 138,437-body
-# sample.  THIS is the branch that actually sizes the catalog: a body with a
-# taxonomy almost always has a diameter too, so the taxonomy table above fires
-# rarely, while ~1.4 M bodies have nothing but H and an orbit.
+# Median measured geometric albedo by semi-major axis, over the 138,437 bodies
+# with a JPL albedo (2026-08-08).  THIS is the branch that sizes most of the
+# catalog: 1,310,985 bodies of the 2026-09-23 release have nothing but H and an
+# orbit.  (The taxonomy table above sizes 105,873, not "rarely" as this comment
+# said until 1.4.0.)  Re-checked 2026-09-25 against the data-2026-09-23
+# release's JPL albedos: every bin, and ALBEDO_FALLBACK, reproduces exactly.
 #
 # The gradient is the well-known compositional zoning of the belt, S-complex
 # inner, C-complex outer, and it is strong enough to be worth binning for:
@@ -195,9 +220,14 @@ def _albedo_for_derivation(df: pd.DataFrame) -> Tuple[pd.Series, pd.Series]:
             tabulated still sizes off its complex rather than dropping out of
             the catalog.
             """
-            if not isinstance(t, str) or not t:
+            if not isinstance(t, str) or not t.strip():
                 return np.nan
+            # Capitalised as enrich_composition capitalises (1.4.0).  Sources
+            # write "SQ" and "SA" as well as "Sq" and "Sa"; the exact lookup
+            # missed them and fell to the S median, sizing 663 bodies of the
+            # 2026-09-23 release 6% too large (20% too heavy).
             s = t.strip()
+            s = s[0].upper() + s[1:].lower()
             if s in ALBEDO_BY_SPECTRAL_TYPE:
                 return ALBEDO_BY_SPECTRAL_TYPE[s]
             # Root letter, matching the fallback _lookup() already uses for

@@ -256,8 +256,10 @@ Since 1.4.0, source by source and before precedence picks a value:
 
 - **A mass must give the body a possible bulk density,** 0.25 g/cm³ up to the
   zero-porosity grain density of the densest rock its class could be: 3.6 for
-  C-complex, D and T, 5.0 for stony classes, 8.0 for X-complex and untyped
-  (`asteroid_catalog/physics.py`). A mass whose sigma is as large as itself
+  the carbonaceous classes (C-complex, D, and the CV/CO analogues K and L),
+  8.0, iron, for everything else, since stony-irons reach 7.8 with a silicate
+  spectrum (`asteroid_catalog/physics.py`). An S-type at 6 g/cm³ is kept, and
+  the audit lists it as implausible. A mass whose sigma is as large as itself
   is no determination and is refused too.
 - **SsODNet is preferred for mass.** JPL's `GM` covers 17 bodies, carries no
   uncertainty, and is superseded for Hygiea and Interamnia.

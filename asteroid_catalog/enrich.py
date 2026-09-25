@@ -133,11 +133,17 @@ def enrich_composition(df: pd.DataFrame) -> pd.DataFrame:
                 f"(a > {OUTER_SOLAR_SYSTEM_AU} AU) for {int(outer.sum()):,} entries")
 
     # ── 2b. Infer from albedo where type is still missing ────────────────────
+    # Checked 1.4.0 against the 65,159 bodies of the 2026-09-23 release that
+    # carry both a source class and a measured albedo.  Split at 0.10, C versus
+    # stony is right for 84.0% (the best split, 0.13, reaches 85.2%, not worth
+    # moving a boundary the literature uses).  The third bucket, p >= 0.35 ->
+    # V, was right for 22%: 916 of 4,191 such bodies are V and 2,473 are
+    # S-complex, and V carries basaltic crust's metal fraction and a 0.2x
+    # PGM factor.  Bright bodies are S now.
     def _infer_from_albedo(a: float) -> str:
         """Coarse spectral-type inference from geometric albedo."""
         if a < 0.10: return "C"     # dark      → carbonaceous
-        if a < 0.35: return "S"     # moderate  → stony
-        return "V"                  # bright    → basaltic or E-type
+        return "S"                  # otherwise → stony
 
     if "albedo" in df.columns:
         alb = pd.to_numeric(df["albedo"], errors="coerce")
@@ -251,8 +257,8 @@ def enrich_composition(df: pd.DataFrame) -> pd.DataFrame:
     # A MEASUREMENT is judged against the class a SOURCE gave, never against
     # one this function inferred from an albedo: an inference is not grounds
     # to overrule a measurement.  A source density outside its group's
-    # possible range (physics.py) is dropped; SsODNet carries C-types at
-    # 6.2 g/cm3 and a D-type at 6.3.
+    # possible range (physics.py) is dropped; SsODNet carries Ch-types at
+    # 4.8-5.2 g/cm3, P-types at 5.3 and a D-type at 6.3.
     sourced = df["spectral_type_source"].isin(["source", "tholen"])
     lo_m, hi_m = density_limits(df["comp_group"].where(sourced, "Unknown"))
     bad_rho = rho_src.notna() & ~((rho_src >= lo_m) & (rho_src <= hi_m))

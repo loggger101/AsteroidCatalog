@@ -11,9 +11,10 @@ others:
     10 Hygiea         1.05e20 kg                        2.97 g/cm3 JPL GM = 7.0
 
 Every one of them was a real value in a real source, and the merge took it
-because its source came first.  None of the four is possible: nothing is
+because its source came first.  The first three are impossible: nothing is
 denser than iron, and a carbonaceous body is not denser than the densest
-carbonaceous rock.  (JPL's GM for Hygiea and Interamnia are quoted to ONE
+carbonaceous rock.  Hygiea's is possible and superseded, which is a matter of
+precedence (merge.py), not of limits.  (JPL's GM for Hygiea and Interamnia are quoted to ONE
 significant figure, 7.0 and 5.0 km^3/s^2, and are superseded by the
 literature SsODNet compiles.)
 
@@ -38,18 +39,28 @@ from .taxonomy import TAXONOMY_COMPOSITION
 # ─────────────────────────────────────────────────────────────────────────────
 # A body's bulk density is its grain density times (1 - porosity), and porosity
 # cannot be negative, so NO BODY IS DENSER THAN THE ROCK IT IS MADE OF.  The
-# ceiling for a spectral group is therefore the grain density of the densest
-# meteorite that group could be made of, at zero porosity (grain densities from
-# Consolmagno, Britt & Macke 2008, Chemie der Erde 68, 1; Macke 2010):
+# ceiling for a spectral group is the grain density of the densest meteorite
+# that could show that group's spectrum, at zero porosity.
 #
-#   carbonaceous & primitive   CI 2.46, CM 2.90, CR 3.1, CO/CV/CK 3.4-3.6
-#       (C-complex, D, T)      -> 3.6
-#   stony                      ordinary chondrites 3.5-3.7, mesosiderites
-#       (S-complex, Q, K, L,     ~4.3, pallasites ~4.8: a stony-iron still
-#        A, O, R, V)             shows a silicate spectrum
-#                              -> 5.0
-#   X-complex & untyped        could be solid iron-nickel, 7.9
-#                              -> 8.0
+#   carbonaceous               CI 2.43 (Orgueil), CM 2.92 (2.74-3.26), CO/CV
+#       (C-complex, D, and       ~3.0-3.6 (Consolmagno, Britt & Macke 2008,
+#        K and L, the CV/CO      Chemie der Erde 68, 1; Macke et al. 2011,
+#        analogues)              MAPS 46, 1842)
+#                              -> 3.6
+#       The CB chondrites reach 5.66 (Bencubbin), but they are 60-70% metal
+#       and are not what a C-complex spectrum is matched to.
+#
+#   everything else            8.0: iron-nickel is 7.9, and stony-irons span
+#                              nearly all of the range with a silicate
+#                              spectrum still possible (pallasites 4.1-7.8,
+#                              mesosiderites 3.1-7.2, the latter linked to
+#                              V-types).  So an S- or V-type at 6 g/cm3 is
+#                              IMPLAUSIBLE, and the audit lists it, but not
+#                              impossible, and the pipeline keeps it.
+#
+#   ⚠️  1.4.0 as first written capped the stony groups at 5.0 on "pallasites
+#   ~4.8"; checked against the literature before release, pallasites run to
+#   7.8.  A limit here must be a physical impossibility, not a surprise.
 #
 # The floor is the same for everyone: the most porous small bodies measured are
 # comet nuclei and TNO binaries at ~0.3-0.5 g/cm3 (67P 0.53, Tempel 1 ~0.4),
@@ -60,20 +71,22 @@ from .taxonomy import TAXONOMY_COMPOSITION
 # group's limits and a class added there needs no entry here unless it opens a
 # new group; `test_every_taxonomy_group_has_density_limits` checks that.
 DENSITY_FLOOR_GCM3 = 0.25
+_CARBONACEOUS_CEILING = 3.6
+_IRON_CEILING = 8.0
 DENSITY_LIMITS_GCM3 = {
-    "C-complex": (DENSITY_FLOOR_GCM3, 3.6),
-    "D-type":    (DENSITY_FLOOR_GCM3, 3.6),
-    "T-type":    (DENSITY_FLOOR_GCM3, 3.6),
-    "S-complex": (DENSITY_FLOOR_GCM3, 5.0),
-    "Q-type":    (DENSITY_FLOOR_GCM3, 5.0),
-    "K-type":    (DENSITY_FLOOR_GCM3, 5.0),
-    "L-type":    (DENSITY_FLOOR_GCM3, 5.0),
-    "A-type":    (DENSITY_FLOOR_GCM3, 5.0),
-    "O-type":    (DENSITY_FLOOR_GCM3, 5.0),
-    "R-type":    (DENSITY_FLOOR_GCM3, 5.0),
-    "V-type":    (DENSITY_FLOOR_GCM3, 5.0),
-    "X-complex": (DENSITY_FLOOR_GCM3, 8.0),
-    "Unknown":   (DENSITY_FLOOR_GCM3, 8.0),
+    "C-complex": (DENSITY_FLOOR_GCM3, _CARBONACEOUS_CEILING),
+    "D-type":    (DENSITY_FLOOR_GCM3, _CARBONACEOUS_CEILING),
+    "K-type":    (DENSITY_FLOOR_GCM3, _CARBONACEOUS_CEILING),
+    "L-type":    (DENSITY_FLOOR_GCM3, _CARBONACEOUS_CEILING),
+    "T-type":    (DENSITY_FLOOR_GCM3, _IRON_CEILING),   # troilite-bearing; analogue unsettled
+    "S-complex": (DENSITY_FLOOR_GCM3, _IRON_CEILING),
+    "Q-type":    (DENSITY_FLOOR_GCM3, _IRON_CEILING),
+    "A-type":    (DENSITY_FLOOR_GCM3, _IRON_CEILING),
+    "O-type":    (DENSITY_FLOOR_GCM3, _IRON_CEILING),
+    "R-type":    (DENSITY_FLOOR_GCM3, _IRON_CEILING),
+    "V-type":    (DENSITY_FLOOR_GCM3, _IRON_CEILING),
+    "X-complex": (DENSITY_FLOOR_GCM3, _IRON_CEILING),
+    "Unknown":   (DENSITY_FLOOR_GCM3, _IRON_CEILING),
 }
 # The limits for a body whose class is not known: anything but iron-and-more.
 DENSITY_LIMITS_ANY_GCM3 = DENSITY_LIMITS_GCM3["Unknown"]

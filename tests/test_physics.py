@@ -211,7 +211,7 @@ def test_mass_is_density_times_volume_in_every_row():
 
 
 def test_a_source_density_impossible_for_its_class_is_dropped():
-    """SsODNet carries C-types at 6.2 g/cm3 with no mass of their own."""
+    """A C-type at 6.25 g/cm3 is denser than any carbonaceous rock."""
     jpl = {"designation": ["799"], "semi_major_axis_au": [2.54],
            "diameter_km": [47.185], "spectral_type": ["C"]}
     ssod = {"designation": ["799"], "density_gcm3": [6.25]}
@@ -261,7 +261,8 @@ def test_icy_bodies_are_not_typed_as_basalt():
     out = _build(jpl)
     assert out.loc["136472", "spectral_type"] == "D"
     assert out.loc["136472", "spectral_type_source"] == "orbit"
-    assert out.loc["4", "spectral_type"] == "V", "main-belt inference is unchanged"
+    assert out.loc["4", "spectral_type"] == "S", \
+        "a bright main-belt body is stony by inference: V was right 22% of the time"
 
 
 def test_a_source_class_beyond_jupiter_is_kept():
@@ -314,3 +315,20 @@ def test_pairing_and_dropping_need_no_diameter_sigma():
     out = _merge(jpl, ssod, None, mp3c)
     assert out.loc["15", "diameter_km"] == 271.3
     assert pd.isna(out.loc["2006 CH69", "diameter_km"])
+
+
+def test_a_subclass_in_capitals_sizes_off_its_own_median():
+    """"SQ" is Sq (p_V 0.276), not S (0.2439): 663 bodies in 2026-09-23."""
+    from asteroid_catalog.derive import ALBEDO_BY_SPECTRAL_TYPE
+    df = pd.DataFrame({"designation": ["a", "b"], "absolute_magnitude_h": [15.0, 15.0],
+                       "semi_major_axis_au": [2.3, 2.3], "spectral_type": ["SQ", "Sq"]})
+    out = ac.derive_missing_diameters(df, ac.CONFIG)
+    assert (out["albedo_assumed_for_diameter"] == ALBEDO_BY_SPECTRAL_TYPE["Sq"]).all()
+
+
+def test_class_albedo_table_covers_the_subclasses_sources_use():
+    """Ds sized as D (0.051) was 58% too large; its own median is 0.1265."""
+    from asteroid_catalog.derive import ALBEDO_BY_SPECTRAL_TYPE
+    for cls in ("Ds", "Dl", "Ls", "Kl", "E", "Z"):
+        assert cls in ALBEDO_BY_SPECTRAL_TYPE
+    assert all(0 < v < 1 for v in ALBEDO_BY_SPECTRAL_TYPE.values())

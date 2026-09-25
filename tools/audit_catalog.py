@@ -52,6 +52,12 @@ def suspects(df: pd.DataFrame):
     out.append(("measured mass outside its class's possible density",
                 mass_meas & ((rho < lo) | (rho > hi))))
 
+    # Possible, but denser than any asteroid whose mass is known to 25%
+    # (Psyche, Kalliope and Kleopatra run 3.4-4.2): a stony-iron at best,
+    # more often a mass or a diameter that is off.
+    out.append(("measured mass implies more than 5 g/cm3 (possible, implausible)",
+                mass_meas & (rho > 5.0)))
+
     p = pd.Series(albedo_from_h_and_diameter(h, diam), index=df.index)
     out.append(("measured diameter and H imply an albedo above 1.5", measured_d & (p > 1.5)))
     out.append(("measured diameter and H imply an albedo below 0.005", measured_d & (p < 0.005)))

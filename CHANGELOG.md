@@ -29,10 +29,39 @@ real in a real source and taken because its source came first:
 | **Masses with no determination.** 153 Hilda: 3.04e18 ± 7.04e19 kg | 4 | a sigma as large as the value is refused |
 | **Mass, diameter and density disagreed in the same row.** The density was SsODNet's or the class table's, the mass another's | 486 rows | `estimated_mass_kg = density_gcm3 × volume` in every row; a measured mass sets the density |
 | **H-derived diameters a measured mass refutes.** 2003 QY90: 5.2e17 kg on 257 km, 0.06 g/cm³ | 14 of 20 | re-derived from the mass at the class density, `diameter_source = "derived_mass"` |
-| **Impossible source densities.** SsODNet C-types at 6.2 g/cm³, a D-type at 6.3 | 21 outside their class's range | dropped; the class estimate stands in |
+| **Impossible source densities.** SsODNet Ch-types at 4.8–5.2 g/cm³ (Hedda, Aline), P-types at 5.3 (Camelia, Aidamina), a D-type at 6.3 | 20 above the carbonaceous ceiling | dropped; the class estimate stands in |
 | **Albedos at a fit's ceiling.** JPL's 1.000 (24) and SsODNet's 1.10 for Makemake | 25 | refused; the next source's value is used |
 | **Rotation faster than breakup.** JPL periods under 1.5 h on 10–18 km bodies, where SsODNet has 48–180 h | 27 | refused for bodies ≥10 km at their class's density ceiling |
 | **Icy bodies typed as rock.** Albedo inference made Pluto, Haumea, Makemake and Sedna basalt (V, 2.9 g/cm³), Quaoar and Gonggong S, and every H-sized TNO a main-belt C | 8,312 untyped bodies beyond 5.5 AU | an untyped body beyond 5.5 AU is D, `spectral_type_source = "orbit"`; a measured class is never overridden |
+
+**Every calculation and assumption re-checked against that release.** Each
+derived column was recomputed from its own inputs across all 1,566,618 rows:
+H-derived diameters, orbit-bin albedos, composition lookups, PGM factors,
+class densities and derived masses reproduce to the last bit; q, Q, period and
+mean motion to JPL's rounding (1e-7); 1329 km is 2 AU × 10^(V☉/5) = 1329.09;
+Ceres, Vesta, Eros and Bennu come out at their spacecraft mass, period and
+spin; SsODNet's asymmetric errors are offsets (median 24% of a diameter), not
+bounds.  The orbit-bin albedo medians and the 0.078 fallback reproduce
+exactly on the release's JPL albedos.  Three things did not survive:
+
+| assumption | what the release says | fix |
+|---|---|---|
+| **The class albedo table sizes few bodies** ("fires rarely") | it sizes 105,873, typed mostly by SsODNet, while its medians came from 1,897 JPL-typed bodies: D 0.051 against 0.082 on 2,127 bodies, T 0.065 against 0.111, K 0.142 against 0.184, V 0.388 against 0.336; subclasses like Ds (0.127) fell to their root letter's 0.051 | recomputed on the labels it is applied to: 47 classes with n ≥ 5 over 65,159 bodies; E-types (32, median 0.583) are no longer sized as dark |
+| **A class lookup matches the source's spelling** | "SQ" and "SA" missed "Sq" and "Sa" and sized off the S median: 663 bodies 6% too large, 20% too heavy | capitalised as enrich_composition capitalises |
+| **p_V ≥ 0.35 means V** | of 4,191 bright bodies with a source class, 916 are V and 2,473 S-complex: right 22% of the time, and V carries basaltic crust's metal and a 0.2× PGM factor | bright bodies are S; the C/S split at 0.10 is right for 84.0% (the best split, 0.13, 85.2%) |
+
+Two assumptions checked and kept, with what they cost: C and S class
+densities (1.5, 2.7) sit inside the measured spread (medians 1.64 over 83
+bodies, 2.79 over 48); X-complex's 3.3 is above its measured median of 2.21
+(33 bodies), so an H-sized X-type's derived mass runs ~50% heavy. That class
+carries the metal fraction the mining layer values, so it is left as a
+modelling decision, not changed here.
+
+The density ceilings were checked against the meteorite literature before
+release: carbonaceous grain densities top out at ~3.6 (CO/CV), but stony-irons
+reach 7.8 (pallasites) and 7.2 (mesosiderites, linked to V-types), so the
+stony classes are capped at iron's 8.0, not the 5.0 first written.  An S-type at
+6 g/cm³ is implausible and the audit lists it; it is not impossible.
 
 **New columns**: `albedo_screened_out`, `mass_screened_out`,
 `rotation_period_screened_out` and `diameter_screened_out`, naming the sources
