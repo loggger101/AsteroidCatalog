@@ -129,6 +129,9 @@ def test_the_taxonomy_ships_exactly(tmp_path):
     shipped = json.loads((tmp_path / "dist" / TAXONOMY_JSON).read_text(encoding="utf-8"))
     assert shipped["TAXONOMY_COMPOSITION"] == ac.TAXONOMY_COMPOSITION
     assert shipped["PGM_ENRICHMENT_BY_TYPE"] == ac.PGM_ENRICHMENT_BY_TYPE
+    from asteroid_catalog.physics import DENSITY_LIMITS_GCM3
+    assert {k: tuple(v) for k, v in shipped["DENSITY_LIMITS_GCM3"].items()} \
+        == DENSITY_LIMITS_GCM3
 
 
 def test_the_parquet_keeps_designations_as_strings(tmp_path):

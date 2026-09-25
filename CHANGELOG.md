@@ -14,6 +14,109 @@ moving it is not evidence that a number changed.
 
 ---
 
+## 0.4.0 - 2026-09-25 — data contract **1.4.0**
+
+**Nothing physically impossible is published.** An audit of the
+`data-2026-09-23` release found values no body can have, every one of them
+real in a real source and taken because its source came first:
+
+| defect | in `data-2026-09-23` | fix |
+|---|---|---|
+| **Impossible masses.** MP3C's 6.76e18 kg for 1686 De Sitter (29.7 km) is 495 g/cm³; its 5.43e18 kg for 152 Atala, 51 g/cm³. | 26 bodies outside 0.25–8 g/cm³ | each source's mass is checked against the densest rock its class could be (`physics.py`) before precedence applies |
+| **JPL masses quoted to one figure.** SBDB `GM` gives Hygiea 7.0 and Interamnia 5.0 km³/s² (1.05e20 and 7.49e19 kg): Interamnia a B-type at 5.0 g/cm³, Hygiea 20% heavy | 2 of 17 JPL masses | mass precedence is SsODNet first: ssoBFT combines every published mass, JPL's spacecraft ones included (0.2% agreement on Ceres, Vesta, Eros, Bennu) |
+| **A mass beside another catalog's diameter.** SsODNet's mass over JPL's radiometric diameter put Eunomia at 4.9 g/cm³; SsODNet's own 271 km (adaptive optics) gives 3.1 | 349 of 487 SsODNet masses sat beside a diameter >2% from their own | a mass is published with its own source's diameter |
+| **System masses beside primary diameters.** Six TNO binaries: SsODNet and MP3C give the system's mass, MP3C alone the primary's size, at implied albedos up to 1.8 | 6 | when every mass contradicts the diameter, the quantity fewer sources report is dropped |
+| **Masses with no determination.** 153 Hilda: 3.04e18 ± 7.04e19 kg | 4 | a sigma as large as the value is refused |
+| **Mass, diameter and density disagreed in the same row.** The density was SsODNet's or the class table's, the mass another's | 486 rows | `estimated_mass_kg = density_gcm3 × volume` in every row; a measured mass sets the density |
+| **H-derived diameters a measured mass refutes.** 2003 QY90: 5.2e17 kg on 257 km, 0.06 g/cm³ | 14 of 20 | re-derived from the mass at the class density, `diameter_source = "derived_mass"` |
+| **Impossible and unrealistic densities.** SsODNet Ch-types at 4.8–5.2 g/cm³ (Hedda, Aline), P-types at 5.3, a D-type at 6.3; S-, M- and X-types at 5.4–6.9 (Kallisto, Heidelberga, Prymno), above any asteroid ever measured | 20 above the carbonaceous ceiling, 12 above the measured record | dropped; the class estimate stands in |
+| **Albedos at a fit's ceiling.** JPL's 1.000 (24) and SsODNet's 1.10 for Makemake | 25 | refused; the next source's value is used |
+| **Rotation faster than breakup.** JPL periods under 1.5 h on 10–18 km bodies, where SsODNet has 48–180 h | 27 | refused for bodies ≥10 km at their class's density ceiling |
+| **Icy bodies typed as rock.** Albedo inference made Pluto, Haumea, Makemake and Sedna basalt (V, 2.9 g/cm³), Quaoar and Gonggong S, and every H-sized TNO a main-belt C | 8,312 untyped bodies beyond 5.5 AU; 14,879 untyped Trojans typed C where D is their commonest class | an untyped body from the Trojans out (a ≥ 4.6 AU) is D, `spectral_type_source = "orbit"`; a measured class is never overridden |
+
+**Every calculation and assumption re-checked against that release.** Each
+derived column was recomputed from its own inputs across all 1,566,618 rows:
+H-derived diameters, orbit-bin albedos, composition lookups, PGM factors,
+class densities and derived masses reproduce to the last bit; q, Q, period and
+mean motion to JPL's rounding (1e-7); 1329 km is 2 AU × 10^(V☉/5) = 1329.09;
+Ceres, Vesta, Eros and Bennu come out at their spacecraft mass, period and
+spin; SsODNet's asymmetric errors are offsets (median 24% of a diameter), not
+bounds.  The orbit-bin albedo medians and the 0.078 fallback reproduce
+exactly on the release's JPL albedos.  Three things did not survive:
+
+| assumption | what the release says | fix |
+|---|---|---|
+| **The class albedo table sizes few bodies** ("fires rarely") | it sizes 105,873, typed mostly by SsODNet, while its medians came from 1,897 JPL-typed bodies: D 0.051 against 0.082 on 2,127 bodies, T 0.065 against 0.111, K 0.142 against 0.184, V 0.388 against 0.336; subclasses like Ds (0.127) fell to their root letter's 0.051 | recomputed on the labels it is applied to: 47 classes with n ≥ 5 over 65,159 bodies; E-types (32, median 0.583) are no longer sized as dark |
+| **A class lookup matches the source's spelling** | "SQ" and "SA" missed "Sq" and "Sa" and sized off the S median: 663 bodies 6% too large, 20% too heavy | capitalised as enrich_composition capitalises |
+| **p_V ≥ 0.35 means V** | of 4,191 bright bodies with a source class, 916 are V and 2,473 S-complex: right 22% of the time, and V carries basaltic crust's metal and a 0.2× PGM factor | bright bodies are S; the C/S split at 0.10 is right for 84.0% (the best split, 0.13, 85.2%) |
+
+**A second pass**, over what the first could not see, found eight more:
+
+| assumption | what the release says | fix |
+|---|---|---|
+| **One orbit bin fits everyone at that a** | NEOs are 1.3–1.8x darker than the belt at the same a (0.170 against 0.4135 at 1.3–2.0 AU); the 0.2885 there was a blend fitting neither | a NEO table beside the belt table: 38,367 NEOs were up to 2.2x too light, 30,232 Hungarias 1.7x too heavy |
+| **a ≥ 5.2 AU is Centaur/TNO** | 1,228 of the bin's 1,231 measured bodies were Jupiter Trojans; half the Trojans sat in the Hilda bin | Hilda (3.7–4.6, 0.055), Trojan (4.6–5.5, 0.070), beyond 5.5 AU |
+| **One albedo beyond Jupiter** | the median runs 0.147 at H 3–6 down to 0.0585 past H 8; at 0.069, 532037 Chiminigagua was 1,219 km against ~740 measured, the 8th-heaviest body | albedo by H past 5.5 AU (`ALBEDO_BEYOND_JUPITER_BY_H`), over every provider's 193 |
+| **A measured diameter is this body's** | 18 beside an H that puts them at p_V 0.0001–5.6: a mislinked detection (2010 BK37, 1.95 km at H 23.97) or a failed fit | refused outside p_V 0.005–2.0 (the albedo range widened by 0.75 mag); the next source's, or H's, stands in |
+| **A measured albedo is a surface** | 43 below 0.01, down to 0.0007 | refused below 0.01, half the darkest body measured |
+| **Untyped Trojans are C** | D is the Trojans' commonest class (36.5% of 1,559 typed; C-complex 24.6%, mostly P) | D from the orbit from 4.6 AU out |
+| **Every body with a diameter has a mass** | 63 did not: 32 Mahlke "Z" (very red, D-like, Trojans up to 118 km) unknown to the class table, 27 measured diameters with no albedo or class | class `Z` (as D); the orbit-bin albedo types the 27. The 4 Tholen "U" (unclassifiable) stay Unknown |
+| **A sigma is an uncertainty** | 559 JPL H sigmas and 2 diameter sigmas are 0 | a zero sigma is no sigma |
+
+The gate now also refuses an albedo below 0.01 and a measured diameter outside
+the H-implied range, and `tools/audit_catalog.py` lists the 25 heaviest bodies
+with the provenance of every number, since they dominate any mass total.
+
+Two assumptions checked and kept, with what they cost: C and S class
+densities (1.5, 2.7) sit inside the measured spread (medians 1.64 over 83
+bodies, 2.79 over 48); X-complex's 3.3 is above its measured median of 2.21
+(33 bodies), so an H-sized X-type's derived mass runs ~50% heavy. That class
+carries the metal fraction the mining layer values, so it is left as a
+modelling decision, not changed here.
+
+The density ceilings were checked against the meteorite literature and the
+measured record before release. Carbonaceous grain densities top out at about
+3.6 (CO/CV), a physical limit. For every other class the ceiling is 5.0, and
+that is the measured record, not physics: stony-irons could reach 7.8, but no
+asteroid has been measured above about 4.2, and the densest of the 32 masses
+known to 5% is 3.54. The release gate keeps iron's 8.0 as the absolute bound.
+Past 5.5 AU, composition comes from D whatever class a source gave: Ixion's
+colour-class "S" had made it 2.7 g/cm³ and 5.05e20 kg.
+
+**New columns**: `albedo_screened_out`, `mass_screened_out`,
+`rotation_period_screened_out` and `diameter_screened_out`, naming the sources
+whose value was refused. A refused value still counts in `<stem>_n_sources` and
+`<stem>_spread`, which describe what the sources say.
+
+**Meanings that moved**: `density_measured` is True only for a density that rests
+on measurements alone, a measured mass over a measured diameter or a source's
+density. `diameter_provider` for a body with a measured mass is its mass's
+source. New values: `diameter_source = "derived_mass"` and
+`spectral_type_source = "orbit"`.
+
+**The release gate** (`release.physical_problems`) refuses a build carrying any
+of it; `data-2026-09-23` fails on six counts. **`tools/audit_catalog.py`** runs
+the gate and the checks no limit can decide on any build or release, and the
+publish workflow writes its report to the job summary. `taxonomy.json` gains
+`DENSITY_LIMITS_GCM3`.
+
+**Not fixed, and why**: a binary's mass in ssoBFT is often the system's. Pluto
+carries 1.447e22 kg, the Pluto–Charon system; MP3C has Pluto's 1.30e22. Both are
+possible, so no limit can choose, and precedence keeps SsODNet's. 4,755 bodies
+have sources more than 1 mag apart in H, and 714 have rotation periods exactly
+2x apart; the audit lists them.
+
+**Verified on the live sources**, by three dry runs of the publish workflow
+on 2026-09-25 (no release published): the final one built 1,567,469 bodies,
+passed every gate including the physical one, and its audit lists the 25
+heaviest bodies at their literature masses (Eris 1.649e22 kg, Haumea 4.04e21,
+Ceres 9.384e20, Vesta 2.590e20, Pallas 2.053e20) and H-sized TNOs within ~15%
+of their measured sizes. 4 bodies are left without a mass, all Tholen "U".
+
+`pipeline_version` moves to **1.4.0**.
+
+---
+
 ## 0.3.0 - 2026-09-23
 
 **The catalog is published, not just buildable.** A build cannot be repeated,

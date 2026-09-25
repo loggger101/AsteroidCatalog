@@ -97,13 +97,15 @@ from .derive import (
     ALBEDO_FALLBACK,
     ALBEDO_BY_SPECTRAL_TYPE,
     ALBEDO_BY_SEMI_MAJOR_AXIS_AU,
+    ALBEDO_BY_SEMI_MAJOR_AXIS_AU_NEO,
+    ALBEDO_BEYOND_JUPITER_BY_H,
 )
 from .validate import validate_and_filter
 from .enrich import enrich_composition
 from .build import build_catalog
 from .query import lookup_asteroid, filter_by_region, filter_by_spectral_group
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
 #: The DATA contract, stamped into every output row.  Mirrored by the
 #: economicspace adapter, which asserts the two are equal at import.  See
@@ -171,6 +173,7 @@ __all__ = [
     # reference data
     "TAXONOMY_COMPOSITION", "PGM_ENRICHMENT_BY_TYPE", "pgm_enrichment_for_type",
     "ALBEDO_FALLBACK", "ALBEDO_BY_SPECTRAL_TYPE", "ALBEDO_BY_SEMI_MAJOR_AXIS_AU",
+    "ALBEDO_BY_SEMI_MAJOR_AXIS_AU_NEO", "ALBEDO_BEYOND_JUPITER_BY_H",
     # sources
     "fetch_jpl_sbdb", "fetch_ssodnet", "fetch_neowise", "fetch_mp3c",
     "JPL_SBDB_URL",

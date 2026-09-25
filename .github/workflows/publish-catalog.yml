@@ -63,6 +63,15 @@ jobs:
       - name: Build from the live sources
         run: asteroid-catalog build --out build --cache-dir cache --yes
 
+      # The audit is informational: the gate that refuses an impossible
+      # value runs in `package`.  It lists what the gate cannot decide.
+      - name: Audit
+        run: |
+          echo '## Audit' >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          python tools/audit_catalog.py build/asteroid_catalog.csv | tee -a "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
       - name: Choose the tag
         run: |
           tag="$TAG_INPUT"

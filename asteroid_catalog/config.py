@@ -232,7 +232,7 @@ class CatalogConfig:
     #                                       measured to say so
     #     versions.md > Module changelogs   this module's own stamp-by-stamp
     #                                       record: Stage 1 changelog
-    pipeline_version: str = "1.3.0"
+    pipeline_version: str = "1.4.0"
 
 # Instantiate.  Edit the field defaults above (inside the dataclass); DO NOT
 # mutate CONFIG fields here, which defeats having one editable source of truth.

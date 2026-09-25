@@ -138,6 +138,69 @@ def source_counts(df: pd.DataFrame) -> Dict[str, int]:
     return {name: int(vc.get(name, 0)) for name in SOURCE_NAMES}
 
 
+def physical_problems(df: pd.DataFrame) -> List[str]:
+    """Every physically impossible value in a catalog, counted, with examples.
+
+    The pipeline screens these out (physics.py); this is the gate that proves
+    it did, on the rows about to be published.  The limits are the loosest
+    ones, any class's, so a failure here is an impossible value and never a
+    judgement call.  A catalog without the columns is not judged on them.
+    """
+    import numpy as np
+    from .physics import (
+        ALBEDO_CEILING, ALBEDO_FLOOR, DENSITY_LIMITS_ANY_GCM3, IMPLIED_ALBEDO_RANGE,
+        albedo_from_h_and_diameter, bulk_density_gcm3, rotation_is_impossible,
+        smallest_diameter_km,
+    )
+
+    def num(col):
+        return (pd.to_numeric(df[col], errors="coerce") if col in df.columns
+                else pd.Series(np.nan, index=df.index))
+
+    def report(mask, what):
+        mask = pd.Series(mask, index=df.index).fillna(False).astype(bool)
+        if mask.any():
+            ex = (df.loc[mask, "designation"].astype(str).head(5).tolist()
+                  if "designation" in df.columns else [])
+            problems.append("%s: %d rows, e.g. %s" % (what, int(mask.sum()), ex))
+
+    problems: List[str] = []
+    mass, diam, rho = num("estimated_mass_kg"), num("diameter_km"), num("density_gcm3")
+    lo, hi = DENSITY_LIMITS_ANY_GCM3
+    implied = pd.Series(bulk_density_gcm3(mass, diam), index=df.index)
+    if "estimated_mass_kg" in df.columns and "diameter_km" in df.columns:
+        report((implied < lo) | (implied > hi),
+               "mass and diameter imply a bulk density outside %g-%g g/cm3" % (lo, hi))
+    if "density_gcm3" in df.columns:
+        report((rho < lo) | (rho > hi), "density_gcm3 outside %g-%g g/cm3" % (lo, hi))
+        if "estimated_mass_kg" in df.columns:
+            report((implied / rho - 1).abs() > 1e-6,
+                   "estimated_mass_kg is not density_gcm3 x volume")
+    if "albedo" in df.columns:
+        report(num("albedo") >= ALBEDO_CEILING, "albedo of %g or more" % ALBEDO_CEILING)
+        report(num("albedo") < ALBEDO_FLOOR, "albedo below %g" % ALBEDO_FLOOR)
+    if "absolute_magnitude_h" in df.columns and "diameter_km" in df.columns:
+        measured = (df["diameter_source"].eq("measured") if "diameter_source" in df.columns
+                    else pd.Series(True, index=df.index))
+        p = pd.Series(albedo_from_h_and_diameter(num("absolute_magnitude_h"), diam),
+                      index=df.index)
+        lo_p, hi_p = IMPLIED_ALBEDO_RANGE
+        report(measured & ((p < lo_p) | (p > hi_p)),
+               "a measured diameter that H puts at an albedo outside %g-%g"
+               % (round(lo_p, 4), round(hi_p, 2)))
+    if "rotation_period_h" in df.columns:
+        # Judged on what is KNOWN of the size, as the merge judges it: a
+        # measured diameter, else the size at albedo 1.  A derived diameter
+        # is an assumption and cannot make a measured period impossible.
+        known = (df["diameter_source"].eq("measured").to_numpy()
+                 if "diameter_source" in df.columns else np.ones(len(df), bool))
+        smallest = smallest_diameter_km(diam.where(known), num("absolute_magnitude_h"))
+        report(rotation_is_impossible(num("rotation_period_h"), smallest, hi),
+               "a body 10 km or more across spinning faster than its breakup "
+               "period at %g g/cm3" % hi)
+    return problems
+
+
 def check_release(df: pd.DataFrame, previous: Optional[dict] = None,
                   floors: Optional[Dict[str, int]] = None,
                   allow_shrink: bool = False) -> List[str]:
@@ -178,6 +241,9 @@ def check_release(df: pd.DataFrame, previous: Optional[dict] = None,
         problems.append("measured diameters: %d, below the floor of %d"
                         % (measured, floors["measured_diameters"]))
 
+    # Nothing physically impossible is published, however well sourced.
+    problems.extend(physical_problems(df))
+
     counts = source_counts(df)
     for name in SOURCE_NAMES:
         if counts[name] < floors[name]:
@@ -201,10 +267,15 @@ def check_release(df: pd.DataFrame, previous: Optional[dict] = None,
 
 def write_taxonomy(path: str) -> None:
     """The composition tables, exactly: JSON floats round-trip through repr."""
+    from .physics import DENSITY_LIMITS_GCM3
     from .taxonomy import PGM_ENRICHMENT_BY_TYPE, TAXONOMY_COMPOSITION
     with open(path, "w", encoding="utf-8", newline="\n") as fh:
+        # DENSITY_LIMITS_GCM3 decides which measured masses and densities a
+        # build accepted, so it ships with the tables it is keyed on.
         json.dump({"TAXONOMY_COMPOSITION": TAXONOMY_COMPOSITION,
-                   "PGM_ENRICHMENT_BY_TYPE": PGM_ENRICHMENT_BY_TYPE},
+                   "PGM_ENRICHMENT_BY_TYPE": PGM_ENRICHMENT_BY_TYPE,
+                   "DENSITY_LIMITS_GCM3": {k: list(v) for k, v in
+                                           DENSITY_LIMITS_GCM3.items()}},
                   fh, indent=1, ensure_ascii=False)
         fh.write("\n")
 
