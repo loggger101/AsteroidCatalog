@@ -402,3 +402,24 @@ def test_a_zero_sigma_is_no_sigma():
     jpl = {"designation": ["1"], "semi_major_axis_au": [2.5],
            "absolute_magnitude_h": [15.0], "absolute_magnitude_h_sigma": [0.0]}
     assert pd.isna(_merge(jpl).loc["1", "absolute_magnitude_h_sigma"])
+
+
+def test_a_density_above_the_measured_record_is_not_believed():
+    """Kallisto, S: 3.27e17 kg (+/-45%) on 48.6 km is 5.4 g/cm3.  No asteroid
+    has been measured above ~4.2; the class estimate stands in."""
+    jpl = {"designation": ["204"], "semi_major_axis_au": [2.67],
+           "diameter_km": [48.566], "spectral_type": ["S"]}
+    ssod = {"designation": ["204"], "estimated_mass_kg": [3.266e17],
+            "estimated_mass_sigma_kg": [1.46e17]}
+    row = _merge(jpl, ssod).loc["204"]
+    assert pd.isna(row["estimated_mass_kg"]) and row["mass_screened_out"] == "SsODNet"
+
+
+def test_a_tnos_asteroid_colour_class_is_not_its_composition():
+    """Ixion carries a source "S"; an icy TNO is not 2.7 g/cm3 of stone."""
+    jpl = {"designation": ["28978"], "semi_major_axis_au": [39.4],
+           "diameter_km": [709.6], "spectral_type": ["S"]}
+    row = _build(jpl).loc["28978"]
+    assert row["spectral_type"] == "S", "the source's label is kept"
+    assert row["comp_group"] == "D-type"
+    assert row["density_gcm3"] == ac.TAXONOMY_COMPOSITION["D"]["density_est_gcm3"]

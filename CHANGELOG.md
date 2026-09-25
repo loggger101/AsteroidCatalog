@@ -29,7 +29,7 @@ real in a real source and taken because its source came first:
 | **Masses with no determination.** 153 Hilda: 3.04e18 ± 7.04e19 kg | 4 | a sigma as large as the value is refused |
 | **Mass, diameter and density disagreed in the same row.** The density was SsODNet's or the class table's, the mass another's | 486 rows | `estimated_mass_kg = density_gcm3 × volume` in every row; a measured mass sets the density |
 | **H-derived diameters a measured mass refutes.** 2003 QY90: 5.2e17 kg on 257 km, 0.06 g/cm³ | 14 of 20 | re-derived from the mass at the class density, `diameter_source = "derived_mass"` |
-| **Impossible source densities.** SsODNet Ch-types at 4.8–5.2 g/cm³ (Hedda, Aline), P-types at 5.3 (Camelia, Aidamina), a D-type at 6.3 | 20 above the carbonaceous ceiling | dropped; the class estimate stands in |
+| **Impossible and unrealistic densities.** SsODNet Ch-types at 4.8–5.2 g/cm³ (Hedda, Aline), P-types at 5.3, a D-type at 6.3; S-, M- and X-types at 5.4–6.9 (Kallisto, Heidelberga, Prymno), above any asteroid ever measured | 20 above the carbonaceous ceiling, 12 above the measured record | dropped; the class estimate stands in |
 | **Albedos at a fit's ceiling.** JPL's 1.000 (24) and SsODNet's 1.10 for Makemake | 25 | refused; the next source's value is used |
 | **Rotation faster than breakup.** JPL periods under 1.5 h on 10–18 km bodies, where SsODNet has 48–180 h | 27 | refused for bodies ≥10 km at their class's density ceiling |
 | **Icy bodies typed as rock.** Albedo inference made Pluto, Haumea, Makemake and Sedna basalt (V, 2.9 g/cm³), Quaoar and Gonggong S, and every H-sized TNO a main-belt C | 8,312 untyped bodies beyond 5.5 AU; 14,879 untyped Trojans typed C where D is their commonest class | an untyped body from the Trojans out (a ≥ 4.6 AU) is D, `spectral_type_source = "orbit"`; a measured class is never overridden |
@@ -74,11 +74,14 @@ bodies, 2.79 over 48); X-complex's 3.3 is above its measured median of 2.21
 carries the metal fraction the mining layer values, so it is left as a
 modelling decision, not changed here.
 
-The density ceilings were checked against the meteorite literature before
-release: carbonaceous grain densities top out at ~3.6 (CO/CV), but stony-irons
-reach 7.8 (pallasites) and 7.2 (mesosiderites, linked to V-types), so the
-stony classes are capped at iron's 8.0, not the 5.0 first written.  An S-type at
-6 g/cm³ is implausible and the audit lists it; it is not impossible.
+The density ceilings were checked against the meteorite literature and the
+measured record before release. Carbonaceous grain densities top out at about
+3.6 (CO/CV), a physical limit. For every other class the ceiling is 5.0, and
+that is the measured record, not physics: stony-irons could reach 7.8, but no
+asteroid has been measured above about 4.2, and the densest of the 32 masses
+known to 5% is 3.54. The release gate keeps iron's 8.0 as the absolute bound.
+Past 5.5 AU, composition comes from D whatever class a source gave: Ixion's
+colour-class "S" had made it 2.7 g/cm³ and 5.05e20 kg.
 
 **New columns**: `albedo_screened_out`, `mass_screened_out`,
 `rotation_period_screened_out` and `diameter_screened_out`, naming the sources

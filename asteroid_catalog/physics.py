@@ -50,17 +50,25 @@ from .taxonomy import TAXONOMY_COMPOSITION
 #       The CB chondrites reach 5.66 (Bencubbin), but they are 60-70% metal
 #       and are not what a C-complex spectrum is matched to.
 #
-#   everything else            8.0: iron-nickel is 7.9, and stony-irons span
-#                              nearly all of the range with a silicate
-#                              spectrum still possible (pallasites 4.1-7.8,
-#                              mesosiderites 3.1-7.2, the latter linked to
-#                              V-types).  So an S- or V-type at 6 g/cm3 is
-#                              IMPLAUSIBLE, and the audit lists it, but not
-#                              impossible, and the pipeline keeps it.
+#   everything else            5.0, and this one is REALISM, not physics.
+#                              Physically a stony-iron can reach 7.8
+#                              (pallasites 4.1-7.8, mesosiderites 3.1-7.2)
+#                              and iron 7.9, which is why the release gate
+#                              still uses 8.0 (DENSITY_LIMITS_ANY_GCM3).  But
+#                              no asteroid has been MEASURED above ~4.2: of
+#                              the 32 in the 2026-09-23 release with a mass
+#                              known to 5%, the densest is 3.54 (93 Lydia),
+#                              and the M-types measured by adaptive optics run
+#                              3.4-4.2 (Psyche, Kalliope, Kleopatra).  Every
+#                              value over 5 there came from a mass good to
+#                              12-56% or a radiometric diameter, so 5.0 (4.2
+#                              plus 20%) is the ceiling a mass must meet to be
+#                              believed.  One that fails is replaced by the
+#                              class estimate, which is realistic.
 #
-#   ⚠️  1.4.0 as first written capped the stony groups at 5.0 on "pallasites
-#   ~4.8"; checked against the literature before release, pallasites run to
-#   7.8.  A limit here must be a physical impossibility, not a surprise.
+#   ⚠️  1.4.0 as first written capped stony groups at 5.0 as IMPOSSIBLE on
+#   "pallasites ~4.8"; pallasites run to 7.8, so that was wrong as physics.
+#   The same 5.0 is right as the measured record, and is labelled as such.
 #
 # The floor is the same for everyone: the most porous small bodies measured are
 # comet nuclei and TNO binaries at ~0.3-0.5 g/cm3 (67P 0.53, Tempel 1 ~0.4),
@@ -72,24 +80,25 @@ from .taxonomy import TAXONOMY_COMPOSITION
 # new group; `test_every_taxonomy_group_has_density_limits` checks that.
 DENSITY_FLOOR_GCM3 = 0.25
 _CARBONACEOUS_CEILING = 3.6
+_MEASURED_RECORD_CEILING = 5.0
 _IRON_CEILING = 8.0
 DENSITY_LIMITS_GCM3 = {
     "C-complex": (DENSITY_FLOOR_GCM3, _CARBONACEOUS_CEILING),
     "D-type":    (DENSITY_FLOOR_GCM3, _CARBONACEOUS_CEILING),
     "K-type":    (DENSITY_FLOOR_GCM3, _CARBONACEOUS_CEILING),
     "L-type":    (DENSITY_FLOOR_GCM3, _CARBONACEOUS_CEILING),
-    "T-type":    (DENSITY_FLOOR_GCM3, _IRON_CEILING),   # troilite-bearing; analogue unsettled
-    "S-complex": (DENSITY_FLOOR_GCM3, _IRON_CEILING),
-    "Q-type":    (DENSITY_FLOOR_GCM3, _IRON_CEILING),
-    "A-type":    (DENSITY_FLOOR_GCM3, _IRON_CEILING),
-    "O-type":    (DENSITY_FLOOR_GCM3, _IRON_CEILING),
-    "R-type":    (DENSITY_FLOOR_GCM3, _IRON_CEILING),
-    "V-type":    (DENSITY_FLOOR_GCM3, _IRON_CEILING),
-    "X-complex": (DENSITY_FLOOR_GCM3, _IRON_CEILING),
-    "Unknown":   (DENSITY_FLOOR_GCM3, _IRON_CEILING),
+    "T-type":    (DENSITY_FLOOR_GCM3, _MEASURED_RECORD_CEILING),
+    "S-complex": (DENSITY_FLOOR_GCM3, _MEASURED_RECORD_CEILING),
+    "Q-type":    (DENSITY_FLOOR_GCM3, _MEASURED_RECORD_CEILING),
+    "A-type":    (DENSITY_FLOOR_GCM3, _MEASURED_RECORD_CEILING),
+    "O-type":    (DENSITY_FLOOR_GCM3, _MEASURED_RECORD_CEILING),
+    "R-type":    (DENSITY_FLOOR_GCM3, _MEASURED_RECORD_CEILING),
+    "V-type":    (DENSITY_FLOOR_GCM3, _MEASURED_RECORD_CEILING),
+    "X-complex": (DENSITY_FLOOR_GCM3, _MEASURED_RECORD_CEILING),
+    "Unknown":   (DENSITY_FLOOR_GCM3, _MEASURED_RECORD_CEILING),
 }
-# The limits for a body whose class is not known: anything but iron-and-more.
-DENSITY_LIMITS_ANY_GCM3 = DENSITY_LIMITS_GCM3["Unknown"]
+# What NO body can exceed, whatever its class: the release gate's bound.
+DENSITY_LIMITS_ANY_GCM3 = (DENSITY_FLOOR_GCM3, _IRON_CEILING)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # GEOMETRIC ALBEDO
@@ -149,6 +158,15 @@ G_SI = 6.67430e-11
 # and keep the inference.  See enrich.py.
 OUTER_SOLAR_SYSTEM_AU = 4.6
 OUTER_SOLAR_SYSTEM_CLASS = "D"
+
+# Past Jupiter's aphelion the asteroid taxonomy stops describing composition:
+# a TNO's "S" or "C" is a colour class fitted with asteroid templates, and an
+# icy body is not stony rock.  39 TNOs with a source class and no measured
+# mass were given the class's rock density (Ixion, S: 2.7 g/cm3, 5.05e20 kg,
+# where TNOs of its size measure 1.2-1.5).  Beyond this, composition is taken
+# from OUTER_SOLAR_SYSTEM_CLASS whatever the label; `spectral_type` keeps the
+# source's label.
+ICY_COMPOSITION_AU = 5.5
 
 
 def taxonomy_group(spec_type) -> str:

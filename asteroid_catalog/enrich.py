@@ -23,7 +23,8 @@ from tqdm.auto import tqdm
 from ._log import say, warn
 
 from .physics import (
-    ALBEDO_CEILING, ALBEDO_FLOOR, OUTER_SOLAR_SYSTEM_AU, OUTER_SOLAR_SYSTEM_CLASS,
+    ALBEDO_CEILING, ALBEDO_FLOOR, ICY_COMPOSITION_AU, OUTER_SOLAR_SYSTEM_AU,
+    OUTER_SOLAR_SYSTEM_CLASS,
     albedo_from_h_and_diameter, bulk_density_gcm3, density_limits,
     diameter_from_mass_km, sphere_volume_m3,
 )
@@ -215,8 +216,13 @@ def enrich_composition(df: pd.DataFrame) -> pd.DataFrame:
     # One factorisation of `spectral_type`, nine columns read off it.  The
     # codes are identical for every field, so factorising once and indexing
     # nine times is nine passes of C-level take instead of nine of `.apply`.
-    _spec_codes, _spec_uniques = pd.factorize(df["spectral_type"],
-                                              use_na_sentinel=False)
+    # Composition is looked up on the class, except past Jupiter, where it is
+    # D whatever the label (physics.ICY_COMPOSITION_AU).
+    comp_key = df["spectral_type"]
+    if "semi_major_axis_au" in df.columns:
+        icy = pd.to_numeric(df["semi_major_axis_au"], errors="coerce") > ICY_COMPOSITION_AU
+        comp_key = comp_key.where(~icy, OUTER_SOLAR_SYSTEM_CLASS)
+    _spec_codes, _spec_uniques = pd.factorize(comp_key, use_na_sentinel=False)
     for field in comp_fields:
         _vals = np.empty(len(_spec_uniques), dtype=object)
         for _i, _u in enumerate(_spec_uniques):
@@ -232,8 +238,7 @@ def enrich_composition(df: pd.DataFrame) -> pd.DataFrame:
     # in Module 2's "nickel-iron" mineral.  Differentiated bodies (M-type
     # cores) have ~2× chondritic PGM in their metal phase; basaltic-crust
     # fragments (V-type) ~0.2×.  See PGM_ENRICHMENT_BY_TYPE for the table.
-    df["comp_pgm_enrichment"] = _by_distinct(df["spectral_type"],
-                                             pgm_enrichment_for_type)
+    df["comp_pgm_enrichment"] = _by_distinct(comp_key, pgm_enrichment_for_type)
     n_enriched  = int((df["comp_pgm_enrichment"] > 1.0).sum())
     n_depleted  = int((df["comp_pgm_enrichment"] < 1.0).sum())
     if n_enriched or n_depleted:

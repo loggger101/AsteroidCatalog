@@ -263,11 +263,13 @@ A value in a source is not evidence that the value is possible. The
 Since 1.4.0, source by source and before precedence picks a value:
 
 - **A mass must give the body a possible bulk density,** 0.25 g/cm³ up to the
-  zero-porosity grain density of the densest rock its class could be: 3.6 for
-  the carbonaceous classes (C-complex, D, and the CV/CO analogues K and L),
-  8.0, iron, for everything else, since stony-irons reach 7.8 with a silicate
-  spectrum (`asteroid_catalog/physics.py`). An S-type at 6 g/cm³ is kept, and
-  the audit lists it as implausible. A mass whose sigma is as large as itself
+  ceiling for its class (`asteroid_catalog/physics.py`). For the
+  carbonaceous classes (C-complex, D, and the CV/CO analogues K and L) the
+  ceiling is 3.6, the densest carbonaceous rock at zero porosity. For
+  everything else it is 5.0, and that is the measured record, not physics.
+  Stony-irons could reach 7.8, but no asteroid has been measured above about
+  4.2 (Psyche). The densest of the 32 masses known to 5% is 3.54. The release
+  gate still enforces iron's 8.0 as the absolute bound. A mass whose sigma is as large as itself
   is no determination and is refused too.
 - **SsODNet is preferred for mass.** JPL's `GM` covers 17 bodies, carries no
   uncertainty, and is superseded for Hygiea and Interamnia.
@@ -285,7 +287,9 @@ Since 1.4.0, source by source and before precedence picks a value:
 After enrichment, **every row satisfies `estimated_mass_kg = density_gcm3 ×
 π/6 × diameter_km³`.** An H-derived diameter that a measured mass refutes is
 re-derived from the mass at the class density (`diameter_source =
-"derived_mass"`). Bodies from the Trojans out (a ≥ 4.6 AU) with no measured class are typed `D`
+"derived_mass"`). Beyond 5.5 AU, composition comes from `D` whatever class a source gave,
+because an asteroid class fitted to a TNO's colours says nothing about ice.
+Bodies from the Trojans out (a ≥ 4.6 AU) with no measured class are typed `D`
 (`spectral_type_source = "orbit"`), not by albedo.
 
 The release gate refuses a build that breaks any of this, and
