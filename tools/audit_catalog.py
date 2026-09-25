@@ -10,6 +10,15 @@ limits cannot decide: disagreements between sources, a diameter and an H that
 imply an albedo no surface has, mass sigmas as large as the mass.  Nothing in
 SUSPECT is wrong for certain, and every line names rows to read.
 
+Then two listings to eyeball: the heaviest bodies, which dominate any mass
+total, and the REFERENCE BODIES, five whose sizes spacecraft or radar have
+measured.  The reference list was economicspace's `verify_stage1.py` check 6
+until that pipeline stopped building its own catalog; it moved here because
+it is a question about the build.  It pinned literature values to three
+decimals and went red on the first contract that re-chose a source, so what
+it asserts now is the half that never goes stale: all five are `measured`,
+i.e. H-derivation is not overwriting a measurement.
+
 This is the audit that found the defects data contract 1.4.0 fixes, run
 against the 2026-09-23 release; see CHANGELOG.md.  Read-only; no network.
 """
@@ -84,6 +93,30 @@ def suspects(df: pd.DataFrame):
     return out
 
 
+# Designation -> name.  Five bodies with a spacecraft or radar size: if any of
+# them reads anything but `diameter_source == "measured"`, the derivation is
+# overwriting measurements.
+REFERENCE_BODIES = {"1": "Ceres", "2": "Pallas", "4": "Vesta",
+                    "16": "Psyche", "433": "Eros"}
+
+
+def reference_bodies(df: pd.DataFrame):
+    """The reference rows, and a label per body that is missing or unmeasured."""
+    if "designation" not in df.columns:
+        return df.iloc[0:0], ["no designation column"]
+    des = df["designation"].astype(str)
+    rows = df[des.isin(REFERENCE_BODIES)]
+    bad = []
+    for d, name in REFERENCE_BODIES.items():
+        hit = rows[rows["designation"].astype(str) == d]
+        if hit.empty:
+            bad.append("%s (%s) is not in the catalog" % (name, d))
+        elif str(hit["diameter_source"].iloc[0]) != "measured":
+            bad.append("%s diameter_source is %r, not 'measured'"
+                       % (name, hit["diameter_source"].iloc[0]))
+    return rows, bad
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("catalog", help="asteroid_catalog.csv[.gz] or .parquet")
@@ -124,7 +157,23 @@ def main(argv=None) -> int:
                 str(r.get("diameter_provider", "") or r.get("diameter_source", ""))[:9],
                 r["density_gcm3"], str(r.get("spectral_type", ""))[:4],
                 r.get("spectral_type_source", "")))
-    return 1 if impossible else 0
+    rows, ref_bad = reference_bodies(df)
+    print("\nREFERENCE BODIES  (each must be `measured`)")
+    for _, r in rows.iterrows():
+        print("  %-4s %-8s D %8.3f km %-9s rho %6.3f  P %7.3f h  %-3s %s" % (
+            r["designation"], str(r.get("name", ""))[:8], _num(r, "diameter_km"),
+            str(r.get("diameter_provider", "") or "")[:9], _num(r, "density_gcm3"),
+            _num(r, "rotation_period_h"), str(r.get("spectral_type", ""))[:3],
+            r.get("diameter_source", "")))
+    for line in ref_bad:
+        print("  ! " + line)
+    return 1 if impossible or ref_bad else 0
+
+
+def _num(row, name) -> float:
+    """A row's value as a float, NaN when missing, for the listing."""
+    v = pd.to_numeric(pd.Series([row.get(name)]), errors="coerce").iloc[0]
+    return float(v)
 
 
 if __name__ == "__main__":

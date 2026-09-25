@@ -59,8 +59,8 @@ def test_import_creates_no_directory(tmp_path):
 def test_verbose_restores_the_original_output(tmp_path):
     """`say()` is off by default and on when asked -- the output is not lost.
 
-    That is what lets the economicspace adapter keep Stage 1's console output
-    byte for byte while the library stays quiet.
+    That is what lets a caller keep the builder's console output byte for
+    byte while the library stays quiet by default.
     """
     out = _run("import asteroid_catalog as ac; ac.set_verbose(True); "
                "ac.say('hello')", tmp_path)

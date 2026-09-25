@@ -161,3 +161,13 @@ def test_the_cli_refuses_with_a_nonzero_exit(tmp_path, capsys):
                "--tag", "t"])
     assert rc == 1
     assert "below the floor" in capsys.readouterr().err
+
+
+def test_data_version_matches_the_config():
+    """The stamp a manifest carries is the one stamped into the rows.
+
+    Moved here from the retired consumer-contract suite: it is a property of
+    what a release PUBLISHES, which is the only surface a consumer reads now.
+    """
+    import asteroid_catalog as ac
+    assert ac.DATA_VERSION == ac.CONFIG.pipeline_version

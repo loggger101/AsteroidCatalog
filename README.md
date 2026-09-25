@@ -301,7 +301,10 @@ Bodies from the Trojans out (a ≥ 4.6 AU) with no measured class are typed `D`
 
 The release gate refuses a build that breaks any of this, and
 `python tools/audit_catalog.py asteroid_catalog.parquet` runs the same checks,
-plus the ones no limit can decide, on any build or release.
+plus the ones no limit can decide, on any build or release. It also lists the
+heaviest bodies and five reference bodies with spacecraft or radar sizes
+(Ceres, Pallas, Vesta, Psyche, Eros), and fails if any of the five is not
+`measured`.
 
 ⚠️ **Possible is not the same as right.** Two things the limits cannot see:
 

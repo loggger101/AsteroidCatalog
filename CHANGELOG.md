@@ -14,6 +14,38 @@ moving it is not evidence that a number changed.
 
 ---
 
+## 0.5.0 - 2026-09-25
+
+**The economicspace consumer contract is retired, because its consumer is
+gone.** economicspace's Stage 1 has installed a pinned `data-*` release since
+its master v1.34.0 and imports nothing from this package, which 0.3.0 recorded
+and left "for a separate decision". This is that decision:
+
+| removed | why it existed | why it can go |
+|---|---|---|
+| `build_catalog_table`, `lookup_body` | collision-proof second names for an adapter that `build_master.py`'s whole-word rewrite would otherwise break | no adapter imports them; `build_catalog` and `lookup_asteroid` are the names |
+| `tests/test_consumer_contract.py` | pinned those names, and four private helpers, against that rewrite | it guarded a surface nothing reads; `test_data_version_matches_the_config` moved to `tests/test_release.py`, since a manifest is what a consumer checks now |
+| `config._fmt_limit` | the adapter's banner rendered row caps with it | nothing calls it |
+
+`config._resolve_cache_dir`, `taxonomy._by_distinct` and
+`designations._extract_canonical_designation` stay: this package uses all
+three itself.
+
+**`tools/audit_catalog.py` lists five reference bodies** (Ceres, Pallas, Vesta,
+Psyche, Eros) and exits non-zero if any is missing or not `measured`. It was
+economicspace's `verify_stage1.py` check 6, which pinned their literature values
+to three decimals and went red on `data-2026-09-25` for correct reasons (a mass
+is published beside its own source's diameter now, so Vesta reads 525.400 km,
+Pallas 512.588, Psyche 223.143 and Eros 17.600). The build is this repository's
+question, so the check lives here, asserting the half that never goes stale.
+
+⚠️  **A breaking change to the public surface**, which is why the minor version
+moves: code calling `build_catalog_table` or `lookup_body` must call
+`build_catalog` or `lookup_asteroid`. No number a build produces moved; the data
+contract stays at **1.4.0**, and no catalog release is needed.
+
+---
+
 ## 0.4.0 - 2026-09-25 — data contract **1.4.0**
 
 **Nothing physically impossible is published.** An audit of the

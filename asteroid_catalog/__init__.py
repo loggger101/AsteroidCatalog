@@ -63,8 +63,9 @@ PROVENANCE.  Extracted from Module 1 of `economicspace`, the asteroid-mining
 profitability pipeline, at pipeline_version 1.2.0 (commit 1ce0dba).  Nothing
 was re-typed: the package was built by slicing source line ranges, 2,953 of
 that module's 3,338 lines, so the derivation chain here is the one fourteen
-releases of measurement were taken against.  economicspace consumes this
-package as its Stage 1.
+releases of measurement were taken against.  economicspace consumes the
+catalog releases this package publishes as its Stage 1; it installs a pinned
+`data-*` release and imports nothing from here.
 
 The tables and the fetchers are split out because nothing in their schema knows
 what a mine is.  A merged asteroid catalog with honest provenance is useful to
@@ -105,64 +106,12 @@ from .enrich import enrich_composition
 from .build import build_catalog
 from .query import lookup_asteroid, filter_by_region, filter_by_spectral_group
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
-#: The DATA contract, stamped into every output row.  Mirrored by the
-#: economicspace adapter, which asserts the two are equal at import.  See
-#: config.py for why this is not the same number as `__version__`.
+#: The DATA contract, stamped into every output row and written into each
+#: release's manifest, which is where a consumer checks it.  See config.py for
+#: why this is not the same number as `__version__`.
 DATA_VERSION = CONFIG.pipeline_version
-
-
-# ---------------------------------------------------------------------------
-# COLLISION-PROOF SECOND NAMES
-# ---------------------------------------------------------------------------
-# THESE ARE NOT CONVENIENCE ALIASES AND MUST NOT BE DELETED AS DUPLICATES.
-#
-# economicspace concatenates four standalone modules into one `master.py`
-# namespace, and resolves the name collisions that creates with a whole-word
-# regex over each module's ENTIRE TEXT -- code, comments and string literals
-# alike.  For its Stage 1 module the rewritten words are `CONFIG`,
-# `build_catalog` and `lookup_asteroid`.
-#
-# So an adapter there cannot write
-#
-#     from asteroid_catalog import build_catalog as _pkg_build
-#
-# because the word `build_catalog` is rewritten on its way into master.py and
-# the import asks this package for a name that does not exist.  Aliasing the
-# LOCAL name does not help; the imported name is still a bare word.  The fix
-# has to be on this side, and the same lesson cost the spacecost split a
-# release before it was written down there as `validate_tables`.
-#
-# `build_catalog_table` and `lookup_body` are chosen so that the rewrite cannot
-# match them: a word boundary needs a non-word character, and `_` is a word
-# character, so `\bbuild_catalog\b` does not match inside `build_catalog_table`.
-# Verified by `tests/test_consumer_contract.py`, which runs the real regex.
-#
-# If you rename these, that adapter breaks at import with an ImportError that
-# names a function nobody wrote.
-
-def build_catalog_table(config: CatalogConfig = CONFIG) -> pd.DataFrame:
-    """`build_catalog`, under a name a rewriting build cannot break.
-
-    Identical behaviour; see the block above this definition for why a second
-    name has to exist at all.
-
-    THE SIGNATURE IS PART OF THE ALIAS.  `tests/test_consumer_contract.py`
-    holds it equal to `build_catalog`'s, because a second name that drifts
-    from the first is worse than no second name: the caller who needs this one
-    is the one who cannot use the other, so they have no way to notice.
-    """
-    return build_catalog(config)
-
-
-def lookup_body(catalog: pd.DataFrame, query: str) -> pd.DataFrame:
-    """`lookup_asteroid`, under a name a rewriting build cannot break.
-
-    Identical behaviour; see the block above `build_catalog_table` for why a
-    second name has to exist at all.
-    """
-    return lookup_asteroid(catalog, query)
 
 
 __all__ = [
@@ -182,6 +131,4 @@ __all__ = [
     "validate_and_filter", "enrich_composition", "build_catalog",
     # reading a built catalog
     "lookup_asteroid", "filter_by_region", "filter_by_spectral_group",
-    # collision-proof second names -- see the block above
-    "build_catalog_table", "lookup_body",
 ]

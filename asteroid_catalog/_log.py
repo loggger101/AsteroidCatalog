@@ -7,9 +7,8 @@ program, and wrong for a package somebody imports to read one taxonomy row.
 All 114 of those calls became `say()`.
 
 `say()` is silent by default.  `set_verbose(True)`, or the `--verbose` flag on
-the CLI, restores the original console output verbatim.  That is what the
-economicspace adapter does, which is why Stage 1's console output there is
-unchanged by the split.
+the CLI, restores the original console output verbatim, which is what let
+the builder's console output survive the split from economicspace unchanged.
 
 WARNINGS ARE NOT PROGRESS AND DO NOT GO THROUGH HERE.  A source that fetched
 rows and matched none is a defect in that fetcher, and the whole value of that
