@@ -14,6 +14,53 @@ moving it is not evidence that a number changed.
 
 ---
 
+## 0.4.0 - 2026-09-25 — data contract **1.4.0**
+
+**Nothing physically impossible is published.** An audit of the
+`data-2026-09-23` release found values no body can have, every one of them
+real in a real source and taken because its source came first:
+
+| defect | in `data-2026-09-23` | fix |
+|---|---|---|
+| **Impossible masses.** MP3C's 6.76e18 kg for 1686 De Sitter (29.7 km) is 495 g/cm³; its 5.43e18 kg for 152 Atala, 51 g/cm³. | 26 bodies outside 0.25–8 g/cm³ | each source's mass is checked against the densest rock its class could be (`physics.py`) before precedence applies |
+| **JPL masses quoted to one figure.** SBDB `GM` gives Hygiea 7.0 and Interamnia 5.0 km³/s² (1.05e20 and 7.49e19 kg): Interamnia a B-type at 5.0 g/cm³, Hygiea 20% heavy | 2 of 17 JPL masses | mass precedence is SsODNet first: ssoBFT combines every published mass, JPL's spacecraft ones included (0.2% agreement on Ceres, Vesta, Eros, Bennu) |
+| **A mass beside another catalog's diameter.** SsODNet's mass over JPL's radiometric diameter put Eunomia at 4.9 g/cm³; SsODNet's own 271 km (adaptive optics) gives 3.1 | 349 of 487 SsODNet masses sat beside a diameter >2% from their own | a mass is published with its own source's diameter |
+| **System masses beside primary diameters.** Six TNO binaries: SsODNet and MP3C give the system's mass, MP3C alone the primary's size, at implied albedos up to 1.8 | 6 | when every mass contradicts the diameter, the quantity fewer sources report is dropped |
+| **Masses with no determination.** 153 Hilda: 3.04e18 ± 7.04e19 kg | 4 | a sigma as large as the value is refused |
+| **Mass, diameter and density disagreed in the same row.** The density was SsODNet's or the class table's, the mass another's | 486 rows | `estimated_mass_kg = density_gcm3 × volume` in every row; a measured mass sets the density |
+| **H-derived diameters a measured mass refutes.** 2003 QY90: 5.2e17 kg on 257 km, 0.06 g/cm³ | 14 of 20 | re-derived from the mass at the class density, `diameter_source = "derived_mass"` |
+| **Impossible source densities.** SsODNet C-types at 6.2 g/cm³, a D-type at 6.3 | 21 outside their class's range | dropped; the class estimate stands in |
+| **Albedos at a fit's ceiling.** JPL's 1.000 (24) and SsODNet's 1.10 for Makemake | 25 | refused; the next source's value is used |
+| **Rotation faster than breakup.** JPL periods under 1.5 h on 10–18 km bodies, where SsODNet has 48–180 h | 27 | refused for bodies ≥10 km at their class's density ceiling |
+| **Icy bodies typed as rock.** Albedo inference made Pluto, Haumea, Makemake and Sedna basalt (V, 2.9 g/cm³), Quaoar and Gonggong S, and every H-sized TNO a main-belt C | 8,312 untyped bodies beyond 5.5 AU | an untyped body beyond 5.5 AU is D, `spectral_type_source = "orbit"`; a measured class is never overridden |
+
+**New columns**: `albedo_screened_out`, `mass_screened_out`,
+`rotation_period_screened_out` and `diameter_screened_out`, naming the sources
+whose value was refused. A refused value still counts in `<stem>_n_sources` and
+`<stem>_spread`, which describe what the sources say.
+
+**Meanings that moved**: `density_measured` is True only for a density that rests
+on measurements alone, a measured mass over a measured diameter or a source's
+density. `diameter_provider` for a body with a measured mass is its mass's
+source. New values: `diameter_source = "derived_mass"` and
+`spectral_type_source = "orbit"`.
+
+**The release gate** (`release.physical_problems`) refuses a build carrying any
+of it; `data-2026-09-23` fails on four counts. **`tools/audit_catalog.py`** runs
+the gate and the checks no limit can decide on any build or release, and the
+publish workflow writes its report to the job summary. `taxonomy.json` gains
+`DENSITY_LIMITS_GCM3`.
+
+**Not fixed, and why**: a binary's mass in ssoBFT is often the system's. Pluto
+carries 1.447e22 kg, the Pluto–Charon system; MP3C has Pluto's 1.30e22. Both are
+possible, so no limit can choose, and precedence keeps SsODNet's. 4,755 bodies
+have sources more than 1 mag apart in H, and 714 have rotation periods exactly
+2x apart; the audit lists them.
+
+`pipeline_version` moves to **1.4.0**.
+
+---
+
 ## 0.3.0 - 2026-09-23
 
 **The catalog is published, not just buildable.** A build cannot be repeated,

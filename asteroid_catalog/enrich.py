@@ -22,6 +22,11 @@ from tqdm.auto import tqdm
 
 from ._log import say, warn
 
+from .physics import (
+    ALBEDO_CEILING, ALBEDO_FLOOR, OUTER_SOLAR_SYSTEM_AU, OUTER_SOLAR_SYSTEM_CLASS,
+    albedo_from_h_and_diameter, bulk_density_gcm3, density_limits,
+    diameter_from_mass_km, sphere_volume_m3,
+)
 from .taxonomy import TAXONOMY_COMPOSITION, _by_distinct, pgm_enrichment_for_type
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -34,6 +39,7 @@ def enrich_composition(df: pd.DataFrame) -> pd.DataFrame:
     Steps:
       1. Normalise spectral_type strings  (Title-case, strip blank-ish values).
       2a. Where spectral_type is absent, fall back to spectral_type_tholen.
+      2a'. Beyond 5.5 AU, an untyped body is D, from its orbit (1.4.0).
       2b. Where it's STILL absent, infer a coarse type from geometric albedo.
       2c. Where there is no measured albedo either, fall back to the albedo
           ASSUMED when the diameter was derived from H (v1.1.0).
@@ -41,17 +47,18 @@ def enrich_composition(df: pd.DataFrame) -> pd.DataFrame:
             • "source"         → arrived from a fetcher (JPL spec_B, SsODNet
                                  taxonomy.class, MP3C taxonomy, …)
             • "tholen"         → filled from spectral_type_tholen (step 2a)
+            • "orbit"          → D, for an untyped body beyond Jupiter (2a')
             • "albedo"         → inferred from measured albedo (step 2b)
             • "albedo_assumed" → inferred from the assumed albedo behind an
                                  H-derived diameter (step 2c), the weakest
                                  class, and the bulk of a default v1.1.0 run
             • "unknown"        → still missing after every fallback
       3. Look up TAXONOMY_COMPOSITION fields for each type → `comp_*` cols.
-      4. Fill density_gcm3 from taxonomy estimate where no measurement exists;
-         `density_measured` flag tracks provenance.
-      5. Compute estimated_mass_kg, preserving any value already supplied by a
-         fetcher (SsODNet) and filling gaps with (4/3)π r³ ρ from
-         diameter × density; `mass_measured` flag tracks provenance.
+      4/5. Density and mass, so that mass = density × volume in every row:
+         a measured mass sets the density; failing that a source density
+         within its class's possible range; failing that the class estimate.
+         An H-derived diameter a measured mass refutes is re-derived from the
+         mass.  `density_measured` and `mass_measured` track provenance.
     """
     say("\n  Enriching composition data ...")
     df = df.copy()
@@ -105,6 +112,25 @@ def enrich_composition(df: pd.DataFrame) -> pd.DataFrame:
         n_thol = int(fill_mask.sum())
         if n_thol:
             say(f"       Spectral type filled from Tholen for {n_thol:,} entries")
+
+    # ── 2a'. Beyond Jupiter, the orbit says more than the albedo (1.4.0) ────
+    # The albedo inference below reads a bright surface as basalt (V) or stone
+    # (S), which is right in the main belt and wrong past Jupiter, where a
+    # bright surface is fresh ICE.  In the 2026-09-23 release it typed Pluto,
+    # Haumea, Makemake and Sedna as V (2.9 g/cm3, 90% silicate, PGM-depleted
+    # basaltic crust) and Quaoar and Gonggong as S, and gave all 8,127 H-sized
+    # TNOs and Centaurs a main-belt C.  Every body beyond Jupiter's aphelion
+    # with no classification from a source now takes D, the table's ice- and
+    # organic-rich outer-Solar-System class, labelled "orbit".  A class a
+    # source measured is never overridden.
+    if "semi_major_axis_au" in df.columns:
+        a_au = pd.to_numeric(df["semi_major_axis_au"], errors="coerce")
+        outer = df["spectral_type"].isna() & (a_au > OUTER_SOLAR_SYSTEM_AU)
+        df.loc[outer, "spectral_type"] = OUTER_SOLAR_SYSTEM_CLASS
+        df.loc[outer, "spectral_type_source"] = "orbit"
+        if int(outer.sum()):
+            say(f"       Spectral type {OUTER_SOLAR_SYSTEM_CLASS} from the orbit "
+                f"(a > {OUTER_SOLAR_SYSTEM_AU} AU) for {int(outer.sum()):,} entries")
 
     # ── 2b. Infer from albedo where type is still missing ────────────────────
     def _infer_from_albedo(a: float) -> str:
@@ -192,41 +218,98 @@ def enrich_composition(df: pd.DataFrame) -> pd.DataFrame:
         say(f"       PGM enrichment: {n_enriched:,} enriched (>1x)  |  "
               f"{n_depleted:,} depleted (<1x)  |  rest baseline (1x)")
 
-    # ── 4. Fill density gap ───────────────────────────────────────────────────
-    if "density_gcm3" in df.columns:
-        df["density_gcm3"]    = pd.to_numeric(df["density_gcm3"], errors="coerce")
-        df["density_measured"] = df["density_gcm3"].notna()
-    else:
-        df["density_gcm3"]    = np.nan
-        df["density_measured"] = False
+    # ── 4/5. Density and mass, in ONE ROW THAT AGREES WITH ITSELF (1.4.0) ───
+    # Until 1.3.0 these were three independent columns: a measured mass from
+    # one catalog, a diameter from another and a density from a third (or from
+    # the class table), so `estimated_mass_kg` was not `density_gcm3` times the
+    # volume in 464 rows of the 2026-09-23 release.  Now, in every row,
+    #
+    #     estimated_mass_kg == density_gcm3 * pi/6 * diameter_km**3
+    #
+    # and whichever of the three was measured determines the others:
+    #
+    #     measured mass             density = mass / volume
+    #     measured density, no mass mass = density * volume
+    #     neither                   density = the class estimate, mass follows
+    #
+    # `density_measured` is True only when the density rests on measurements
+    # alone: a measured mass over a measured diameter, or a source's density.
+    mass_src = (pd.to_numeric(df["estimated_mass_kg"], errors="coerce")
+                if "estimated_mass_kg" in df.columns
+                else pd.Series(np.nan, index=df.index, dtype="float64"))
+    rho_src = (pd.to_numeric(df["density_gcm3"], errors="coerce")
+               if "density_gcm3" in df.columns
+               else pd.Series(np.nan, index=df.index, dtype="float64"))
+    rho_est = pd.to_numeric(df["comp_density_est_gcm3"], errors="coerce")
+    diam = (pd.to_numeric(df["diameter_km"], errors="coerce")
+            if "diameter_km" in df.columns
+            else pd.Series(np.nan, index=df.index, dtype="float64"))
+    estimate = (df["derived_diameter_is_estimate"].fillna(False).astype(bool)
+                if "derived_diameter_is_estimate" in df.columns
+                else pd.Series(False, index=df.index))
 
-    df["density_gcm3"] = df["density_gcm3"].fillna(
-        pd.to_numeric(df["comp_density_est_gcm3"], errors="coerce")
-    )
+    # A MEASUREMENT is judged against the class a SOURCE gave, never against
+    # one this function inferred from an albedo: an inference is not grounds
+    # to overrule a measurement.  A source density outside its group's
+    # possible range (physics.py) is dropped; SsODNet carries C-types at
+    # 6.2 g/cm3 and a D-type at 6.3.
+    sourced = df["spectral_type_source"].isin(["source", "tholen"])
+    lo_m, hi_m = density_limits(df["comp_group"].where(sourced, "Unknown"))
+    bad_rho = rho_src.notna() & ~((rho_src >= lo_m) & (rho_src <= hi_m))
+    rho_src = rho_src.mask(bad_rho)
+
+    # AN ESTIMATE A MEASUREMENT REFUTES IS REPLACED.  A measured mass beside
+    # a diameter DERIVED from H and an assumed albedo puts the body outside
+    # the density its class allows: 2003 QY90 was a 257 km body of 5.2e17 kg,
+    # 0.06 g/cm3, because a binary's H is two bodies' light and the Centaur/
+    # TNO albedo bin is too dark for it.  The mass is the measurement, so the
+    # diameter is re-derived from it at the class's density, labelled
+    # "derived_mass".  If even that needs an albedo no surface has, the mass
+    # cannot belong to this body and is dropped instead.
+    lo_c, hi_c = density_limits(df["comp_group"])
+    rho_md = pd.Series(bulk_density_gcm3(mass_src, diam), index=df.index)
+    refuted = mass_src.notna() & estimate & ~((rho_md >= lo_c) & (rho_md <= hi_c))
+    d_from_m = pd.Series(diameter_from_mass_km(mass_src, rho_est), index=df.index)
+    h = (pd.to_numeric(df["absolute_magnitude_h"], errors="coerce")
+         if "absolute_magnitude_h" in df.columns
+         else pd.Series(np.nan, index=df.index, dtype="float64"))
+    p_implied = pd.Series(albedo_from_h_and_diameter(h, d_from_m), index=df.index)
+    fits = (refuted & (d_from_m > 0)
+            & (p_implied.isna() | ((p_implied >= ALBEDO_FLOOR) & (p_implied < ALBEDO_CEILING))))
+    if fits.any():
+        diam = diam.where(~fits, d_from_m)
+        df["diameter_km"] = diam
+        df.loc[fits, "diameter_source"] = "derived_mass"
+        if "albedo_assumed_for_diameter" in df.columns:
+            df.loc[fits, "albedo_assumed_for_diameter"] = np.nan
+    unfit = refuted & ~fits
+    if unfit.any():
+        mass_src = mass_src.mask(unfit)
+        if "mass_screened_out" in df.columns and "mass_provider" in df.columns:
+            prov = df["mass_provider"].astype("string")
+            old = df["mass_screened_out"].astype("string")
+            df["mass_screened_out"] = old.where(
+                ~unfit, (old.fillna("") + ";" + prov).str.strip(";"))
+            df.loc[unfit, "mass_provider"] = pd.NA
+
+    mass_measured = mass_src.notna()
+    vol_m3 = pd.Series(sphere_volume_m3(diam), index=df.index)
+    density = pd.Series(np.where(mass_measured, bulk_density_gcm3(mass_src, diam),
+                                 rho_src.fillna(rho_est)), index=df.index)
+    df["density_gcm3"] = density
+    df["density_measured"] = ((mass_measured & ~estimate)
+                              | (~mass_measured & rho_src.notna()))
+    df["mass_measured"] = mass_measured
+    df["estimated_mass_kg"] = mass_src.where(mass_measured, density * 1_000.0 * vol_m3)
 
     n_meas = int(df["density_measured"].sum())
-    n_est  = len(df) - n_meas
-    say(f"       Density: {n_meas:,} measured  |  {n_est:,} estimated from taxonomy")
-
-    # ── 5. Compute estimated mass (kg) ────────────────────────────────────────
-    # Keep any MEASURED mass already supplied by a source (SsODNet).
-    # `mass_measured` tracks provenance: True if the value came from a fetcher,
-    # False if we derived it here from diameter × density (sphere assumption).
-    if "estimated_mass_kg" in df.columns:
-        measured = pd.to_numeric(df["estimated_mass_kg"], errors="coerce")
-    else:
-        measured = pd.Series(np.nan, index=df.index, dtype="float64")
-    df["mass_measured"] = measured.notna()
-
-    if "diameter_km" in df.columns:
-        diam_m   = pd.to_numeric(df["diameter_km"], errors="coerce") * 1_000.0
-        rho_kgm3 = pd.to_numeric(df["density_gcm3"], errors="coerce") * 1_000.0
-        derived  = (4 / 3) * np.pi * (diam_m / 2) ** 3 * rho_kgm3
-    else:
-        derived  = pd.Series(np.nan, index=df.index, dtype="float64")
-
-    # Measured wins; derived fills the gaps.
-    df["estimated_mass_kg"] = measured.fillna(derived)
+    say(f"       Density: {n_meas:,} measured  |  {len(df) - n_meas:,} estimated"
+        + (f"  ({int(bad_rho.sum()):,} source densities outside their class's "
+           f"possible range dropped)" if int(bad_rho.sum()) else ""))
+    if int(refuted.sum()):
+        say(f"       {int(refuted.sum()):,} H-derived diameters contradicted a measured "
+            f"mass: {int(fits.sum()):,} re-derived from the mass, "
+            f"{int(unfit.sum()):,} masses dropped")
 
     n_mass_meas = int(df["mass_measured"].sum())
     n_mass_der  = int(df["estimated_mass_kg"].notna().sum()) - n_mass_meas

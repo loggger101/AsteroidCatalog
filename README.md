@@ -16,7 +16,7 @@ the same rows every time. See [Published releases](#published-releases).
 To build your own from the live sources:
 
 ```bash
-pip install git+https://github.com/loggger101/AsteroidCatalog@v0.3.0
+pip install git+https://github.com/loggger101/AsteroidCatalog@v0.4.0
 asteroid-catalog build --out ./data
 ```
 
@@ -35,10 +35,10 @@ ac.lookup_asteroid(df, "Bennu")
 | stage | what happens |
 |---|---|
 | **fetch** | JPL SBDB, SsODNet ssoBFT, NEOWISE V2.0 and MP3C, in that order |
-| **merge** | every row re-keyed onto JPL's designation for that body, duplicates combined; JPL is the backbone and wins on conflicts, the rest fill gaps, and every measured value records who supplied it and whether the sources agree |
+| **merge** | every row re-keyed onto JPL's designation for that body, duplicates combined; JPL is the backbone and wins on conflicts (SsODNet first for masses), the rest fill gaps, and every measured value records who supplied it and whether the sources agree. A source value that is physically impossible is refused before precedence applies |
 | **derive** | a diameter for the ~90% of bodies nobody measured one for, from absolute magnitude and an estimated albedo |
 | **validate** | quality gates, with every rejection logged and counted |
-| **enrich** | bulk density and four mass fractions per Bus-DeMeo class, plus an optional precious-metal layer |
+| **enrich** | bulk density and four mass fractions per Bus-DeMeo class, plus an optional precious-metal layer; mass, diameter and density made to agree in every row |
 
 ### The sources
 
@@ -65,7 +65,7 @@ build, frozen. Releases are never overwritten or rebuilt under the same tag.
 | `asteroid_catalog.csv.gz` | the catalog exactly as the build wrote it (CRLF), gzipped deterministically |
 | `asteroid_catalog.parquet` | the same rows, typed: designations are strings, flag columns nullable booleans |
 | `rejected_entries.csv` | every row validation dropped, and why |
-| `taxonomy.json` | `TAXONOMY_COMPOSITION` and `PGM_ENRICHMENT_BY_TYPE` as this build used them, so the `comp_*` columns can be re-derived without installing the package |
+| `taxonomy.json` | `TAXONOMY_COMPOSITION` and `PGM_ENRICHMENT_BY_TYPE` as this build used them, so the `comp_*` columns can be re-derived without installing the package, and `DENSITY_LIMITS_GCM3`, which decided the measured masses and densities it accepted |
 | `manifest.json` | release tag, `catalog_date`, `pipeline_version`, package version and commit, row count, bodies per source, and a sha256 for every asset and for the CSV inside the gzip |
 
 Download by tag, so you always get the same file:
@@ -96,7 +96,11 @@ builds from the four live sources on a GitHub runner, then runs
 - has a null or duplicated designation, or more than one `catalog_date` or
   `pipeline_version`, or a `pipeline_version` other than this package's;
 - is smaller than the previous release by more than 0.5% of rows, or 2% of any
-  source's bodies (the `allow_shrink` input overrides this one gate only).
+  source's bodies (the `allow_shrink` input overrides this one gate only);
+- carries anything physically impossible: a mass and diameter implying a
+  bulk density outside 0.25–8 g/cm³, a mass that is not density × volume, an
+  albedo of 1 or more, or a body 10 km or more across spinning faster than
+  it could without flying apart. See [5](#5-nothing-physically-impossible-is-published).
 
 Every failed gate is listed and nothing is published. `dry_run` builds and
 gates without publishing. The same command works locally:
@@ -108,7 +112,7 @@ asteroid-catalog package ./data --out ./dist --tag data-2026-09-23 --previous ma
 
 ---
 
-## Four things to understand before you use a built catalog
+## Five things to understand before you use a built catalog
 
 ### 1. It is not reproducible, and that is a property of the data
 
@@ -203,9 +207,10 @@ Every quantity more than one source measures (`diameter_km`, `albedo`,
 
 | column | meaning |
 |---|---|
-| `<stem>_provider` | the source the value came from (JPL, then SsODNet, NEOWISE, MP3C) |
+| `<stem>_provider` | the source the value came from (JPL, then SsODNet, NEOWISE, MP3C; for mass, SsODNet first) |
 | `<stem>_n_sources` | how many sources report a value |
 | `<stem>_spread` | max/min − 1 across them (max − min in magnitudes for H) |
+| `<stem>_screened_out` | albedo, mass, rotation period (and diameter, see [5](#5-nothing-physically-impossible-is-published)): the sources whose value was refused as physically impossible; empty when none was. A refused value still counts in `n_sources` and `spread`, which describe what the sources say |
 | `<stem>_sources_agree` | spread within tolerance (10% diameter, 25% albedo and mass, 0.3 mag H, 2% rotation); empty with one source |
 
 The value's sigma always comes from the same source as the value. Per body,
@@ -232,6 +237,59 @@ quote those albedos; SsODNet re-derives albedo from today's H, and
 NEOWISE-era value and is not consistent with the H beside it. The catalog does
 not re-derive it; `albedo_spread` and `albedo_provider` are there to find the
 rows where it matters.
+
+### 5. Nothing physically impossible is published
+
+A value in a source is not evidence that the value is possible. The
+`data-2026-09-23` release, the last built before data contract 1.4.0, carried:
+
+| body | what the catalog said | why it cannot be |
+|---|---|---|
+| 1686 De Sitter | 6.76e18 kg on 29.7 km (MP3C) | 495 g/cm³; nothing is denser than iron, 7.9 |
+| 152 Atala | 5.43e18 kg on 59 km (MP3C) | 51 g/cm³ |
+| 704 Interamnia | 7.49e19 kg (JPL GM 5.0) | a B-type at 5.0 g/cm³; carbonaceous rock tops out at 3.6 |
+| 10 Hygiea | 1.05e20 kg (JPL GM 7.0) | GM quoted to one figure; the literature has 8.7e19 |
+| six TNO binaries | a system mass beside the primary's diameter | 9–16 g/cm³, at albedos up to 1.8 |
+| Pluto, Makemake, Haumea, Sedna | typed V from albedo | basalt; a bright surface past Jupiter is ice |
+
+Since 1.4.0, source by source and before precedence picks a value:
+
+- **A mass must give the body a possible bulk density,** 0.25 g/cm³ up to the
+  zero-porosity grain density of the densest rock its class could be: 3.6 for
+  C-complex, D and T, 5.0 for stony classes, 8.0 for X-complex and untyped
+  (`asteroid_catalog/physics.py`). A mass whose sigma is as large as itself
+  is no determination and is refused too.
+- **SsODNet is preferred for mass.** JPL's `GM` covers 17 bodies, carries no
+  uncertainty, and is superseded for Hygiea and Interamnia.
+- **A mass is published beside its own source's diameter,** so `density_gcm3`
+  is a real measurement. ssoBFT's diameters for massive bodies come from
+  occultations and adaptive optics (Eunomia 271 km, where JPL has a radiometric
+  232 km); pairing its mass with JPL's diameter put Eunomia at 4.9 g/cm³.
+- **When every mass contradicts the diameter,** the quantity fewer sources
+  report goes: De Sitter's lone MP3C mass, or a TNO binary's lone MP3C
+  diameter, which is then re-derived.
+- **Albedos of 1 or more are refused**, which are fits at their ceiling.
+  **Rotation periods** faster than breakup, `sqrt(3π/Gρ)` at the class's
+  density ceiling, are refused for bodies 10 km or more across.
+
+After enrichment, **every row satisfies `estimated_mass_kg = density_gcm3 ×
+π/6 × diameter_km³`.** An H-derived diameter that a measured mass refutes is
+re-derived from the mass at the class density (`diameter_source =
+"derived_mass"`). Bodies beyond 5.5 AU with no measured class are typed `D`
+(`spectral_type_source = "orbit"`), not by albedo.
+
+The release gate refuses a build that breaks any of this, and
+`python tools/audit_catalog.py asteroid_catalog.parquet` runs the same checks,
+plus the ones no limit can decide, on any build or release.
+
+⚠️ **Possible is not the same as right.** Two things the limits cannot see:
+
+- **A binary's mass is often the system's.** SsODNet gives Pluto 1.447e22 kg,
+  the Pluto–Charon system; Pluto alone is 1.303e22, which MP3C has. Both are
+  possible, so precedence decides, and `mass_spread` is how to find the rows.
+- **Diameters beside a mass are the mass source's, and everywhere else
+  JPL's.** For large bodies with no mass, JPL's radiometric diameter may be
+  5–15% below the occultation value.
 
 ---
 

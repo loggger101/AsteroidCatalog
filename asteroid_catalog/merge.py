@@ -28,6 +28,10 @@ from ._log import say, warn
 
 from .designations import _extract_canonical_designation
 from .identity import build_alias_map, resolve_designations
+from .physics import (
+    ALBEDO_CEILING, bulk_density_gcm3, density_limits, groups_of,
+    rotation_is_impossible, smallest_diameter_km,
+)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # DEDUPLICATION
@@ -144,19 +148,87 @@ def deduplicate_catalog(
 # tens of percent; catalogue H values differ systematically by 0.1-0.3 mag; a
 # rotation period is precise enough that 2% catches the half/double-period
 # ambiguity.  `<stem>_spread` is published so a caller can apply their own.
+#
+# ⚠️  PRECEDENCE PICKS AMONG POSSIBLE VALUES ONLY  (data contract 1.4.0).  Until
+# 1.3.0 the first source with a value won, whatever the value was, and the
+# 2026-09-23 release published a 29.7 km body at 495 g/cm3 because MP3C was
+# the only source with a mass for it.  Three fields are now screened, source
+# by source, BEFORE precedence applies (limits and their reasons in physics.py):
+#
+#   albedo              1 or more is a fit at its ceiling, not a surface
+#   estimated_mass_kg   a sigma as large as the value is no determination; a
+#                       mass that puts the body outside its group's possible
+#                       bulk density, with the source's own diameter and with
+#                       the catalog's, is not this body's mass
+#   rotation_period_h   a body 10 km or more across cannot spin faster than
+#                       its equator can hold on
+#
+# A screened value still counts in `<stem>_n_sources` and `<stem>_spread`,
+# which describe what the sources SAY; `<stem>_screened_out` names the sources
+# whose value was refused.
+#
+# MASS PRECEDENCE IS SsODNet FIRST.  JPL is the authority on orbits and
+# identity, not on masses: its SBDB `GM` covers 17 bodies, carries no
+# uncertainty, and gives Hygiea and Interamnia to one significant figure (7.0
+# and 5.0 km^3/s^2, i.e. 1.05e20 and 7.49e19 kg, against 8.7e19 and ~3.5e19 in
+# the literature).  ssoBFT's mass is a weighted, outlier-rejected combination
+# of every published estimate, the spacecraft masses JPL quotes included (the
+# two agree to 0.2% on Ceres, Vesta, Eros and Bennu).
 MEASURED_FIELDS: Dict[str, dict] = {
     "diameter_km":          {"stem": "diameter",        "sigma": "diameter_sigma_km",
                              "kind": "ratio", "tolerance": 0.10},
     "albedo":               {"stem": "albedo",          "sigma": "albedo_sigma",
-                             "kind": "ratio", "tolerance": 0.25},
+                             "kind": "ratio", "tolerance": 0.25,
+                             "screen": "albedo"},
     "absolute_magnitude_h": {"stem": "h",               "sigma": "absolute_magnitude_h_sigma",
                              "kind": "diff",  "tolerance": 0.30},
     "estimated_mass_kg":    {"stem": "mass",            "sigma": "estimated_mass_sigma_kg",
-                             "kind": "ratio", "tolerance": 0.25},
+                             "kind": "ratio", "tolerance": 0.25,
+                             "screen": "density", "prefer": ["SsODNet"]},
     "rotation_period_h":    {"stem": "rotation_period", "sigma": None,
-                             "kind": "ratio", "tolerance": 0.02},
+                             "kind": "ratio", "tolerance": 0.02,
+                             "screen": "spin"},
 }
 _HELD_BACK = set(MEASURED_FIELDS) | {m["sigma"] for m in MEASURED_FIELDS.values() if m["sigma"]}
+
+
+def _matrix(merged: pd.DataFrame, cols: List[str]) -> np.ndarray:
+    """The named columns as one float matrix, NaN where a column is absent."""
+    n = len(merged)
+    return np.column_stack([
+        pd.to_numeric(merged[c], errors="coerce").to_numpy(dtype="float64")
+        if c in merged.columns else np.full(n, np.nan) for c in cols])
+
+
+def _first(usable: np.ndarray, rank: List[int]) -> np.ndarray:
+    """Per row, the column index of the first usable value in `rank` order."""
+    u = usable[:, rank]
+    first = u.argmax(axis=1)
+    return np.where(u.any(axis=1), np.asarray(rank)[first], -1)
+
+
+def _names(mask: np.ndarray, order: List[str]) -> pd.Series:
+    """';'-joined source names per row where `mask` is set, NA where none."""
+    out = np.full(len(mask), "", dtype=object)
+    for j, s in enumerate(order):
+        out = np.where(mask[:, j], np.where(out == "", s, out + ";" + s), out)
+    return pd.Series(out, dtype="string").replace("", pd.NA)
+
+
+def _say_screened(merged: pd.DataFrame, stem: str, V: np.ndarray,
+                  refused: np.ndarray, order: List[str]) -> None:
+    """One progress line per screened field: what was refused, from whom."""
+    if not refused.any():
+        say(f"     OK   {stem}: no source value refused")
+        return
+    per = ", ".join(f"{s} {int(refused[:, j].sum()):,}" for j, s in enumerate(order)
+                    if refused[:, j].any())
+    ex = []
+    for i in np.flatnonzero(refused.any(axis=1))[:5]:
+        j = int(refused[i].argmax())
+        ex.append(f"{merged['designation'].iat[i]} ({order[j]} {V[i, j]:.4g})")
+    say(f"        {stem}: {int(refused.any(axis=1).sum()):,} bodies had a value refused "
+        f"as physically impossible ({per}); e.g. {', '.join(ex)}")
 
 
 def _resolve_measured(merged: pd.DataFrame, order: List[str]) -> pd.DataFrame:
@@ -164,58 +236,140 @@ def _resolve_measured(merged: pd.DataFrame, order: List[str]) -> pd.DataFrame:
 
     `merged` holds, per source S in `order`, the columns `_<field>__<S>` (and
     `_<sigma>__<S>`) left unfilled by the join.  They are consumed here.
+
+    Fields are resolved in MEASURED_FIELDS order, and that order is load-
+    bearing: the mass screen needs the resolved diameter (and each source's
+    own), and the spin screen needs the diameter the mass step settled on.
     """
     n = len(merged)
+    rows = np.arange(n)
+    names = np.array(order + [None], dtype=object)
+    groups = None                       # taxonomy group per row, when needed
+    diam = None                         # per-source diameters, for mass pairing
+
     for field, spec in MEASURED_FIELDS.items():
         vcols = [f"_{field}__{s}" for s in order]
+        scols = [f"_{spec['sigma']}__{s}" for s in order] if spec["sigma"] else []
         if not any(c in merged.columns for c in vcols):
             # A sigma with no value to belong to says nothing; do not let the
             # temporary column leak into the catalog.
-            if spec["sigma"]:
-                merged.drop(columns=[f"_{spec['sigma']}__{s}" for s in order
-                                     if f"_{spec['sigma']}__{s}" in merged.columns],
-                            inplace=True)
+            merged.drop(columns=[c for c in scols if c in merged.columns], inplace=True)
             continue
-        V = np.column_stack([
-            pd.to_numeric(merged[c], errors="coerce").to_numpy(dtype="float64")
-            if c in merged.columns else np.full(n, np.nan) for c in vcols])
+        V = _matrix(merged, vcols)
+        S = _matrix(merged, scols) if scols else None
         if spec["kind"] == "ratio":
             V[~(V > 0)] = np.nan           # a non-positive size is no measurement
         has = ~np.isnan(V)
         count = has.sum(axis=1)
-        pick = np.where(count > 0, has.argmax(axis=1), -1)
-        rows = np.arange(n)
-
-        merged[field] = np.where(pick >= 0, V[rows, np.maximum(pick, 0)], np.nan)
-        if spec["sigma"]:
-            S = np.column_stack([
-                pd.to_numeric(merged[f"_{spec['sigma']}__{s}"], errors="coerce")
-                  .to_numpy(dtype="float64")
-                if f"_{spec['sigma']}__{s}" in merged.columns else np.full(n, np.nan)
-                for s in order])
-            merged[spec["sigma"]] = np.where(pick >= 0, S[rows, np.maximum(pick, 0)], np.nan)
-
-        names = np.array(order + [None], dtype=object)
         stem = spec["stem"]
+        prefer = [order.index(s) for s in spec.get("prefer", []) if s in order]
+        rank = prefer + [j for j in range(len(order)) if j not in prefer]
+
+        # ── Physical screens (physics.py) ────────────────────────────────────
+        refused = np.zeros_like(has)
+        own_ok = None
+        screen = spec.get("screen")
+        if screen and groups is None:
+            groups = groups_of(merged)
+        if screen == "albedo":
+            refused = has & (V >= ALBEDO_CEILING)
+        elif screen == "spin":
+            _, ceiling = density_limits(groups)
+            smallest = smallest_diameter_km(
+                merged["diameter_km"] if "diameter_km" in merged.columns else np.full(n, np.nan),
+                merged["absolute_magnitude_h"] if "absolute_magnitude_h" in merged.columns
+                else np.full(n, np.nan))
+            refused = has & rotation_is_impossible(V, smallest[:, None], ceiling[:, None])
+        elif screen == "density":
+            floor, ceiling = density_limits(groups)
+            no_sigma = has & (S >= V) if S is not None else np.zeros_like(has)
+            d_cat = (pd.to_numeric(merged["diameter_km"], errors="coerce").to_numpy("float64")
+                     if "diameter_km" in merged.columns else np.full(n, np.nan))
+            d_own = diam[0] if diam is not None else np.full_like(V, np.nan)
+            rho_own = bulk_density_gcm3(V, d_own)
+            rho_cat = bulk_density_gcm3(V, d_cat[:, None])
+            lo, hi = floor[:, None], ceiling[:, None]
+            own_ok = (rho_own >= lo) & (rho_own <= hi)
+            cat_ok = (rho_cat >= lo) & (rho_cat <= hi)
+            testable = ~np.isnan(rho_own) | ~np.isnan(rho_cat)
+            impossible = has & ~no_sigma & testable & ~(own_ok | cat_ok)
+            refused = no_sigma | impossible
+
+            # EVERY mass refused on density alone: the mass and the diameter
+            # cannot both be right, and the one fewer sources report goes.  A
+            # tie drops the mass, the less certain measurement for all but the
+            # largest bodies (Carry 2012).  What this separates, measured on the
+            # 2026-09-23 release: De Sitter and Atala, one MP3C mass against a
+            # diameter four sources agree on (the mass goes); and six TNO
+            # binaries where SsODNet and MP3C give the SYSTEM mass and MP3C
+            # alone gives the PRIMARY's diameter, at implied albedos up to 1.8
+            # (the diameter goes, and is derived again downstream).
+            stuck = impossible.any(axis=1) & ~(has & ~refused).any(axis=1)
+            d_support = (merged["diameter_n_sources"].to_numpy()
+                         if "diameter_n_sources" in merged.columns else np.zeros(n))
+            m_support = (has & ~no_sigma).sum(axis=1)
+            drop_d = stuck & (m_support > d_support) & (diam is not None)
+            if diam is not None:
+                merged["diameter_screened_out"] = _names(
+                    diam[1] & drop_d[:, None], diam[2]).to_numpy()
+            if drop_d.any():
+                merged.loc[drop_d, ["diameter_km", "diameter_sigma_km"]] = np.nan
+                merged.loc[drop_d, "diameter_provider"] = pd.NA
+                refused[drop_d] = no_sigma[drop_d]
+                own_ok[drop_d] = False     # nothing left to pair with
+        usable = has & ~refused
+        pick = _first(usable, rank)
+        at = np.maximum(pick, 0)
+
+        merged[field] = np.where(pick >= 0, V[rows, at], np.nan)
+        if S is not None:
+            merged[spec["sigma"]] = np.where(pick >= 0, S[rows, at], np.nan)
         merged[f"{stem}_provider"] = pd.Series(names[pick], index=merged.index,
                                                dtype="string")
         merged[f"{stem}_n_sources"] = count.astype("int64")
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)   # all-NaN rows
-            hi, lo = np.nanmax(V, axis=1), np.nanmin(V, axis=1)
-        spread = (hi / lo - 1.0) if spec["kind"] == "ratio" else (hi - lo)
+            hi_v, lo_v = np.nanmax(V, axis=1), np.nanmin(V, axis=1)
+        spread = (hi_v / lo_v - 1.0) if spec["kind"] == "ratio" else (hi_v - lo_v)
         spread = np.where(count > 0, spread, np.nan)
         merged[f"{stem}_spread"] = spread
         agree = pd.array(np.where(count >= 2, spread <= spec["tolerance"], False),
                          dtype="boolean")
         agree[count < 2] = pd.NA
         merged[f"{stem}_sources_agree"] = agree
+        if screen:
+            merged[f"{stem}_screened_out"] = _names(refused, order).to_numpy()
+            _say_screened(merged, stem, V, refused, order)
 
-        drop = [c for c in vcols if c in merged.columns]
-        if spec["sigma"]:
-            drop += [f"_{spec['sigma']}__{s}" for s in order
-                     if f"_{spec['sigma']}__{s}" in merged.columns]
-        merged.drop(columns=drop, inplace=True)
+        if field == "diameter_km":
+            dS = S if S is not None else np.full_like(V, np.nan)
+            diam = (V, has, order, dS)
+        if screen == "density" and diam is not None:
+            # PUBLISH A MASS BESIDE THE DIAMETER IT WAS MEASURED WITH.  A
+            # source's density is its mass over ITS diameter, and ssoBFT's
+            # diameters for massive bodies are the occultation and adaptive-
+            # optics ones (Eunomia 271 km, Davida 303, Europa 317), where the
+            # backbone's are older radiometric fits 5-15% smaller.  Pairing
+            # one catalog's mass with another's diameter is what put Eunomia
+            # at 4.9 g/cm3; its own pair says 3.1.
+            d_new = diam[0][rows, at]
+            swap = ((pick >= 0) & own_ok[rows, at]
+                    & (d_new != merged["diameter_km"].to_numpy("float64")))
+            if swap.any():
+                merged.loc[swap, "diameter_km"] = d_new[swap]
+                merged.loc[swap, "diameter_sigma_km"] = diam[3][rows, at][swap]
+                merged.loc[swap, "diameter_provider"] = names[pick][swap]
+            say(f"        mass: {int(swap.sum()):,} published beside their own "
+                f"source's diameter instead of the backbone's")
+            if "diameter_screened_out" in merged.columns:
+                n_drop = int(merged["diameter_screened_out"].notna().sum())
+                if n_drop:
+                    say(f"        diameter: {n_drop:,} dropped as the PRIMARY's size "
+                        f"beside a better-supported system mass; e.g. "
+                        f"{merged.loc[merged['diameter_screened_out'].notna(), 'designation'].head(5).tolist()}")
+
+        merged.drop(columns=[c for c in vcols + scols if c in merged.columns],
+                    inplace=True)
     return merged
 
 
@@ -390,7 +544,8 @@ def _column_order(backbone_cols: List[str], cols: List[str]) -> List[str]:
         stem = spec["stem"]
         group[field] = [c for c in
                         [field, spec["sigma"], f"{stem}_provider", f"{stem}_n_sources",
-                         f"{stem}_spread", f"{stem}_sources_agree"]
+                         f"{stem}_spread", f"{stem}_sources_agree",
+                         f"{stem}_screened_out"]
                         if c and c in cols]
     order: List[str] = []
     for c in backbone_cols + cols:
