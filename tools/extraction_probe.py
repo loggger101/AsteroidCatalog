@@ -44,8 +44,10 @@ ECON = os.environ.get(
 PKG = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # THE PRE-SPLIT MODULE, WHICH IS NOT IN EITHER REPOSITORY ANY MORE.
-# economicspace `modules/catalog.py` is the adapter now, so re-running this
-# needs the 3,338-line original, recovered from that repo's history:
+# economicspace `modules/catalog.py` became a thin adapter at the split, and
+# since that pipeline's master v1.34.0 it installs a published release instead
+# of importing this package.  Re-running this needs the 3,338-line original,
+# recovered from that repo's history:
 #
 #     git -C economicspace show <the commit before the split>:modules/catalog.py \
 #         > catalog_orig.py

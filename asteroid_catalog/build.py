@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 """Fetch -> merge -> derive -> validate -> enrich -> export.
 
-`build_catalog` is the whole pipeline.  `build_catalog_table` is the same
-function under a second name, and the second name is not cosmetic -- see its
-docstring.
+`build_catalog` is the whole pipeline.
 """
 
 import json

@@ -3,9 +3,9 @@
 
 Sliced from `CatalogConfig` in economicspace `modules/catalog.py`,
 pipeline_version 1.2.0.  The per-field comments are the original text: they
-are the documentation for every dial, and the dashboard in that project
-scrapes them as its help strings, so they are kept verbatim rather than
-re-worded.
+are the documentation for every dial, and were kept verbatim because that
+project's dashboard scraped them as its help strings while it still imported
+this package.
 
 FOUR THINGS CHANGED ON THE WAY OUT OF THAT REPO, AND NOTHING ELSE:
 
@@ -259,13 +259,3 @@ def _resolve_cache_dir(config: "CatalogConfig") -> str:
         path = os.path.join(tempfile.gettempdir(), "asteroid_pipeline_cache")
     os.makedirs(path, exist_ok=True)
     return path
-
-
-# ⚠️  `_fmt_limit` AND `_resolve_cache_dir` ARE CONSUMED ACROSS A REPOSITORY
-# BOUNDARY.  Nothing in this package calls either, so a dead-code sweep run
-# here will flag them; economicspace's Stage 1 adapter reaches both as
-# `asteroid_catalog.config.<name>`, rather than keeping its own copies.
-# `tests/test_consumer_contract.py` is what stops the deletion.
-def _fmt_limit(n: int) -> str:
-    """Render a row cap for the banner; 0 is unlimited, not zero rows."""
-    return "unlimited" if not n else f"{n:,}"
