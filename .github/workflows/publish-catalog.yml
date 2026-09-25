@@ -65,6 +65,8 @@ jobs:
 
       # The audit is informational: the gate that refuses an impossible
       # value runs in `package`.  It lists what the gate cannot decide.
+      # Its non-zero exit, including a reference body that is not
+      # `measured`, is swallowed here on purpose; read the step summary.
       - name: Audit
         run: |
           echo '## Audit' >> "$GITHUB_STEP_SUMMARY"

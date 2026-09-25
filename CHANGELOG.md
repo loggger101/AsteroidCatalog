@@ -38,6 +38,9 @@ to three decimals and went red on `data-2026-09-25` for correct reasons (a mass
 is published beside its own source's diameter now, so Vesta reads 525.400 km,
 Pallas 512.588, Psyche 223.143 and Eros 17.600). The build is this repository's
 question, so the check lives here, asserting the half that never goes stale.
+`tests/test_audit_reference_bodies.py` holds it to that. The publish workflow
+still runs the audit as information, so a failing reference body is reported
+in the run's summary but does not stop a release; only the release gate does.
 
 ⚠️  **A breaking change to the public surface**, which is why the minor version
 moves: code calling `build_catalog_table` or `lookup_body` must call
