@@ -136,6 +136,14 @@ absolute magnitude and an **estimated** albedo:
 H is measured; `p_V` is not. So a derived diameter is uncertain by roughly the
 square root of the albedo error — and a **mass** derived from it by that cubed.
 
+`p_V` is the median measured albedo of bodies like this one, recomputed in 1.4.0
+on the labels it is applied to (`asteroid_catalog/derive.py`): its spectral
+class if a source gave one (47 classes); otherwise its orbital population. NEOs
+and belt bodies have separate bins, because NEOs are 1.3–1.8× darker at the
+same a; Hildas and Jupiter Trojans each have their own; and past 5.5 AU the
+albedo follows H, because big TNOs are brighter (0.15 at H 3–6, 0.06 past
+H 8).
+
 Every such row is tagged in `diameter_source` and flagged in
 `derived_diameter_is_estimate`. Filter on it to get the measured-only
 population back:
