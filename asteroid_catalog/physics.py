@@ -14,9 +14,9 @@ Every one of them was a real value in a real source, and the merge took it
 because its source came first.  The first three are impossible: nothing is
 denser than iron, and a carbonaceous body is not denser than the densest
 carbonaceous rock.  Hygiea's is possible and superseded, which is a matter of
-precedence (merge.py), not of limits.  (JPL's GM for Hygiea and Interamnia are quoted to ONE
-significant figure, 7.0 and 5.0 km^3/s^2, and are superseded by the
-literature SsODNet compiles.)
+precedence (merge.py), not of limits.  (JPL's GM for Hygiea and Interamnia are
+quoted to ONE significant figure, 7.0 and 5.0 km^3/s^2, and are superseded by
+the literature SsODNet compiles.)
 
 This module holds the limits and nothing else, so the merge, the enrichment
 and the release gate all check against one definition.
@@ -32,7 +32,7 @@ from typing import Tuple
 import numpy as np
 import pandas as pd
 
-from .taxonomy import TAXONOMY_COMPOSITION
+from .taxonomy import _BLANK_CLASSES, _bus_demeo_case, composition_entry
 
 # ─────────────────────────────────────────────────────────────────────────────
 # BULK DENSITY  (g/cm3)
@@ -173,18 +173,16 @@ def taxonomy_group(spec_type) -> str:
     """The TAXONOMY_COMPOSITION group of a class as a source spells it.
 
     Normalised the way enrich_composition normalises (first letter upper, rest
-    lower), then the exact class, then its root letter, as `_lookup` does:
-    "S(iv)" -> "S" -> "S-complex", "Bk" -> "B" -> "C-complex".  Anything else
-    is "Unknown".
+    lower), then looked up as enrich_composition looks it up, exact class
+    first and root letter second: "S(iv)" -> "S" -> "S-complex", "Bk" -> "B"
+    -> "C-complex".  Anything else is "Unknown".
     """
     if spec_type is None or (not isinstance(spec_type, str) and pd.isna(spec_type)):
         return "Unknown"
     s = str(spec_type).strip()
-    if not s or s.lower() in ("nan", "none", "na", "<na>", "-"):
+    if s in _BLANK_CLASSES:
         return "Unknown"
-    s = s[0].upper() + s[1:].lower()
-    entry = TAXONOMY_COMPOSITION.get(s) or TAXONOMY_COMPOSITION.get(s[0])
-    return entry["group"] if entry else "Unknown"
+    return composition_entry(_bus_demeo_case(s))["group"]
 
 
 def density_limits(groups: pd.Series) -> Tuple[np.ndarray, np.ndarray]:
@@ -206,7 +204,7 @@ def groups_of(df: pd.DataFrame) -> pd.Series:
     for col in ("spectral_type", "spectral_type_tholen"):
         if col in df.columns:
             c = df[col].astype("string").str.strip()
-            c = c.mask(c.isin(["", "nan", "None", "NaN", "none", "NA", "<NA>", "-"]))
+            c = c.mask(c.isin(_BLANK_CLASSES))
             t = t.where(t.notna(), c)
     codes, uniques = pd.factorize(t, use_na_sentinel=False)
     groups = np.array([taxonomy_group(u) for u in uniques], dtype=object)
@@ -227,7 +225,8 @@ def bulk_density_gcm3(mass_kg, diameter_km) -> np.ndarray:
 def diameter_from_mass_km(mass_kg, density_gcm3) -> np.ndarray:
     """The sphere of that mass at that bulk density, in km."""
     with np.errstate(divide="ignore", invalid="ignore"):
-        v = np.asarray(mass_kg, dtype="float64") / (np.asarray(density_gcm3, dtype="float64") * 1_000.0)
+        rho_kg_m3 = np.asarray(density_gcm3, dtype="float64") * 1_000.0
+        v = np.asarray(mass_kg, dtype="float64") / rho_kg_m3
         return np.cbrt(6.0 * v / np.pi) / 1_000.0
 
 

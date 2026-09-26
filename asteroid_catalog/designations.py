@@ -6,21 +6,7 @@ that yields "2024", which is not null, is not obviously wrong, and
 cross-matches unrelated bodies.
 """
 
-import json
-import os
-import sys
-import time as _time
-import warnings
-from dataclasses import dataclass
-from datetime import datetime
-from typing import Dict, Optional, Tuple
-
-import numpy as np
 import pandas as pd
-import requests
-from tqdm.auto import tqdm
-
-from ._log import say, warn
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -114,6 +100,17 @@ def _extract_canonical_designation(s: pd.Series) -> pd.Series:
         {"": pd.NA, "nan": pd.NA, "NaN": pd.NA, "None": pd.NA, "none": pd.NA,
          "<NA>": pd.NA}
     )
+
+
+def _designation_key(s: pd.Series) -> pd.Series:
+    """The COMPARISON form of a designation: canonical, then upper-cased.
+
+    For matching and duplicate detection only, never for output.  It is the
+    same extractor the fetchers run to produce `designation`, so "(1) Ceres",
+    "1 Ceres" and "00001" all compare equal to JPL's "1" while "2024 BX1"
+    stays whole; upper-casing stops case variation fragmenting a group.
+    """
+    return _extract_canonical_designation(s).str.upper().str.strip()
 
 
 # ─────────────────────────────────────────────────────────────────────────────

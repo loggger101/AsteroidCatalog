@@ -17,21 +17,17 @@ in an interactive console: it is invisible until somebody logs a run, which is
 when it costs most.
 """
 
-import os
 import subprocess
 import sys
 
 import pytest
 
-REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from _support import REPO, repo_env
 
 
 def _run_under(encoding, *args):
     """Run the CLI with a hostile stdout encoding and no UTF-8 mode."""
-    env = dict(os.environ)
-    env["PYTHONPATH"] = REPO + os.pathsep + env.get("PYTHONPATH", "")
-    env["PYTHONUTF8"] = "0"
-    env["PYTHONIOENCODING"] = encoding
+    env = repo_env(PYTHONUTF8="0", PYTHONIOENCODING=encoding)
     return subprocess.run([sys.executable, "-m", "asteroid_catalog", *args],
                           capture_output=True, env=env, cwd=REPO)
 

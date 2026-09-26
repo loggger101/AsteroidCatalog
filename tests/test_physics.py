@@ -423,3 +423,22 @@ def test_a_tnos_asteroid_colour_class_is_not_its_composition():
     assert row["spectral_type"] == "S", "the source's label is kept"
     assert row["comp_group"] == "D-type"
     assert row["density_gcm3"] == ac.TAXONOMY_COMPOSITION["D"]["density_est_gcm3"]
+
+
+@pytest.mark.parametrize("blank", ["-", "<NA>", "NaN", "none", "NA", ""])
+def test_size_and_class_read_no_classification_the_same_way(blank):
+    """A Bus column that says "no class" must not block the Tholen class.
+
+    Before 1.4.1 derive_missing_diameters knew three spellings of "no class"
+    and enrich_composition eight, so "-" in `spectral_type` sized a body off
+    its orbit bin (p_V 0.066) while typing it S by Tholen (p_V 0.234): a
+    diameter 1.9x and a mass 6.6x what its own class implies.
+    """
+    df = pd.DataFrame({"designation": ["x"], "spectral_type": [blank],
+                       "spectral_type_tholen": ["S"], "semi_major_axis_au": [3.0],
+                       "absolute_magnitude_h": [15.0]})
+    out = ac.enrich_composition(ac.derive_missing_diameters(df, ac.CONFIG))
+    row = out.iloc[0]
+    assert row["spectral_type"] == "S" and row["spectral_type_source"] == "tholen"
+    assert row["diameter_source"] == "derived_h_taxonomy_albedo"
+    assert row["albedo_assumed_for_diameter"] == ac.ALBEDO_BY_SPECTRAL_TYPE["S"]

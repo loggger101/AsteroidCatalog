@@ -15,7 +15,6 @@ differ on Linux and Windows for no data reason.
 """
 
 import csv
-import io
 import os
 import sys
 
@@ -32,7 +31,7 @@ FIELDS = ["spectral_type", "group", "composition", "minerals",
 
 
 def write(path, header, rows):
-    with io.open(path, "w", encoding="utf-8", newline="") as fh:
+    with open(path, "w", encoding="utf-8", newline="") as fh:
         w = csv.writer(fh, lineterminator="\r\n")
         w.writerow(header)
         w.writerows(rows)
@@ -52,16 +51,21 @@ def taxonomy_rows():
                total, pgm_enrichment_for_type(name), e.get("notes", "")]
 
 
+FILES = ("taxonomy_composition.csv", "pgm_enrichment.csv")
+
+
+def export(ref_dir):
+    """Write both files into `ref_dir`; return their paths, in FILES order."""
+    os.makedirs(ref_dir, exist_ok=True)
+    a = write(os.path.join(ref_dir, FILES[0]), FIELDS, taxonomy_rows())
+    b = write(os.path.join(ref_dir, FILES[1]), ["spectral_type", "pgm_enrichment"],
+              sorted(PGM_ENRICHMENT_BY_TYPE.items()))
+    return a, b
+
+
 def main():
     here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    ref = os.path.join(here, "reference")
-    os.makedirs(ref, exist_ok=True)
-
-    a = write(os.path.join(ref, "taxonomy_composition.csv"), FIELDS,
-              taxonomy_rows())
-    b = write(os.path.join(ref, "pgm_enrichment.csv"),
-              ["spectral_type", "pgm_enrichment"],
-              sorted(PGM_ENRICHMENT_BY_TYPE.items()))
+    a, b = export(os.path.join(here, "reference"))
     print("  %s  (%d classes)" % (os.path.basename(a), len(TAXONOMY_COMPOSITION)))
     print("  %s  (%d explicit, everything else 1.0 by fallback)"
           % (os.path.basename(b), len(PGM_ENRICHMENT_BY_TYPE)))
