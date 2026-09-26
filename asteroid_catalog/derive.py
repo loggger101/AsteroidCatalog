@@ -21,6 +21,7 @@ from ._frame import flag
 from ._log import say
 
 from .config import CatalogConfig
+from .physics import H_DIAMETER_CONSTANT
 from .taxonomy import _BLANK_CLASSES, _bus_demeo_case
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -36,8 +37,10 @@ from .taxonomy import _BLANK_CLASSES, _bus_demeo_case
 #
 #     D_km = (1329 / sqrt(p_V)) * 10 ** (-H / 5)
 #
-# (Fowler & Chillemi 1992; the 1329 km constant is 2 AU_km * 10**(-V_sun/5)
-# with the Sun's V = -26.762, and is the same constant JPL and the MPC use.)
+# (Fowler & Chillemi 1992.  The 1329 km constant is 2 AU * 10**(V_sun/5) with
+# the Sun's V = -26.762 +/- 0.017, i.e. 1329 +/- 10 km; Pravec & Harris 2007,
+# Icarus 190, 250, Appendix A, derive it and note that it has been the
+# standard since the IRAS Minor Planet Survey.  physics.H_DIAMETER_CONSTANT.)
 #
 # So the ONLY estimated quantity is p_V, and everything below is about getting
 # the best available p_V for each row and recording which one was used.
@@ -77,6 +80,11 @@ from .taxonomy import _BLANK_CLASSES, _bus_demeo_case
 # section 4).  Classes are spelled as enrich_composition capitalises them.
 # Classes with n < 5 are ABSENT rather than guessed; they fall through the chain
 # in `_albedo_for_derivation` below, first to their root letter.
+#
+# RE-RUNNABLE, NOT ASSERTED: `tools/albedo_tables.py <catalog>` recomputes this
+# table and the three below from a built catalog and exits non-zero on drift.
+# On data-2026-09-26 it reproduces 46 of 47 classes to 0.005 (E has grown to
+# n=37, median 0.596) and every orbital bin to 0.001.
 ALBEDO_BY_SPECTRAL_TYPE: Dict[str, float] = {
     "A":    0.2620,   # n=709
     "Ad":   0.1820,   # n=113
@@ -143,9 +151,10 @@ ALBEDO_BY_SPECTRAL_TYPE: Dict[str, float] = {
 # re-check against the data-2026-09-23 release's JPL albedos found three
 # populations sharing a bin they do not share an albedo with:
 #
-#   * NEOs are darker than the belt at the same a, by 1.3-1.8x: 0.170 against
-#     0.4135 at 1.3-2.0 AU, 0.137 against 0.190 in the inner belt.  The old
-#     1.3-2.0 value, 0.2885, was a blend of NEOs and Hungarias that fits
+#   * NEOs are darker than the belt at the same a, by 1.4-2.4x: 0.170 against
+#     0.4135 at 1.3-2.0 AU (2.4x, the bright Hungarias), 0.137 against 0.190
+#     in the inner belt (1.4x), 0.037 against 0.066 beyond 2.82 AU (1.8x).
+#     The old 1.3-2.0 value, 0.2885, was a blend of NEOs and Hungarias that fits
 #     neither: 38,367 NEOs were sized off the belt, up to 1.3x too small
 #     (2.2x too light), and 30,232 Hungarias 1.2x too large.
 #   * The "Centaur / TNO" bin, a >= 5.2, was 1,228 of 1,231 Jupiter Trojans
@@ -156,6 +165,13 @@ ALBEDO_BY_SPECTRAL_TYPE: Dict[str, float] = {
 #     one bin takes every provider: 0.088 over 193.  Elsewhere it is JPL's
 #     albedos, as before, so the table stays on the H the `albedo` column
 #     carries (README section 4).
+#
+# A SECOND READING OF THE BELT BINS: the same medians over EVERY provider's
+# albedo run 3-7% lower (inner belt 0.176 against 0.190, outer 0.064 against
+# 0.066, data-2026-09-26).  That is the direction SsODNet's albedos run, 22%
+# under JPL's because it re-derives them from today's fainter H (README
+# section 4), diluted by JPL's majority of the sample.  So the two readings
+# differ by a known offset, not about the bodies; the table keeps JPL's.
 #
 # (a_min, a_max, median p_V, label); `n` is the measured sample.
 ALBEDO_BY_SEMI_MAJOR_AXIS_AU: Tuple[Tuple[float, float, float, str], ...] = (
@@ -203,8 +219,10 @@ ALBEDO_BEYOND_JUPITER_BY_H: Tuple[Tuple[float, float, str], ...] = (
 # practice cannot happen because validate_and_filter requires an orbit anyway.
 ALBEDO_FALLBACK = 0.0780
 
-# D_km = _H_DIAMETER_CONSTANT / sqrt(p_V) * 10**(-H/5)
-_H_DIAMETER_CONSTANT = 1329.0
+# D_km = _H_DIAMETER_CONSTANT / sqrt(p_V) * 10**(-H/5).  ONE definition, in
+# physics.py, which the screens invert; this name stays because
+# tools/extraction_probe.py reads it.  Until 1.5.0 it was a second literal.
+_H_DIAMETER_CONSTANT = H_DIAMETER_CONSTANT
 
 
 def _albedo_from_taxonomy(t: object) -> float:

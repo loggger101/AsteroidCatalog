@@ -21,6 +21,12 @@ physical limits in [section 5](#5-nothing-physically-impossible-is-published);
 1.4.1 changed no body of it. `data-2026-09-23` (contract 1.3.0) stays
 published and unchanged, and carries the impossible values that section lists.
 
+The package on `main` (0.7.0) writes data contract **1.5.0**, which corrects
+reference values the literature contradicts (the Xe/Xk rows, C-complex carbon,
+S-complex and V metal, the Xc density; see [CHANGELOG.md](CHANGELOG.md)). No
+release has been built under it yet, so `data-2026-09-26` still carries the
+1.4.1 values.
+
 To build your own from the live sources:
 
 ```bash
@@ -73,7 +79,7 @@ build, frozen. Releases are never overwritten or rebuilt under the same tag.
 | `asteroid_catalog.csv.gz` | the catalog exactly as the build wrote it (CRLF), gzipped deterministically |
 | `asteroid_catalog.parquet` | the same rows, typed: designations are strings, flag columns nullable booleans |
 | `rejected_entries.csv` | every row validation dropped, and why |
-| `taxonomy.json` | `TAXONOMY_COMPOSITION` and `PGM_ENRICHMENT_BY_TYPE` as this build used them, so the `comp_*` columns can be re-derived without installing the package, and `DENSITY_LIMITS_GCM3`, which decided the measured masses and densities it accepted |
+| `taxonomy.json` | `TAXONOMY_COMPOSITION` and `PGM_ENRICHMENT_BY_TYPE` as this build used them, so the `comp_*` columns can be re-derived without installing the package, and `DENSITY_LIMITS_GCM3`, which decided the measured masses and densities it accepted, and (from 1.5.0) `DENSITY_EVIDENCE`, the measured bodies each class density answers to |
 | `manifest.json` | release tag, `catalog_date`, `pipeline_version`, package version and commit, row count, bodies per source, and a sha256 for every asset and for the CSV inside the gzip |
 
 Download by tag, so you always get the same file:
@@ -149,7 +155,7 @@ square root of the albedo error — and a **mass** derived from it by that cubed
 `p_V` is the median measured albedo of bodies like this one, recomputed in 1.4.0
 on the labels it is applied to (`asteroid_catalog/derive.py`): its spectral
 class if a source gave one (47 classes); otherwise its orbital population. NEOs
-and belt bodies have separate bins, because NEOs are 1.3–1.8× darker at the
+and belt bodies have separate bins, because NEOs are 1.4–2.4× darker at the
 same a; Hildas and Jupiter Trojans each have their own; and past 5.5 AU the
 albedo follows H, because big TNOs are brighter (0.15 at H 3–6, 0.06 past
 H 8).
@@ -251,7 +257,12 @@ Measured on the 2026-09-22 sources, pair by pair:
 The albedo and H rows are one effect. Albedo from a thermal fit scales as
 10^(−0.4 H). NEOWISE fitted with the brighter H of its day, and JPL and MP3C
 quote those albedos; SsODNet re-derives albedo from today's H, and
-10^(0.4 × 0.28) ≈ 1.29. So the `albedo` column, JPL's by precedence, is the
+10^(0.4 × 0.28) ≈ 1.29. The two rows were measured independently and agree:
+a 0.28 mag H offset predicts an albedo ratio of 1/1.29 = 0.77, and the
+observed one is 0.78. It is also the effect Pravec et al. (2012, Icarus 221,
+365) found from their own photometry, catalog H too bright by 0.4–0.5 mag on
+average near H ≈ 14, and the reason they revised the WISE albedos downward.
+So the `albedo` column, JPL's by precedence, is the
 NEOWISE-era value and is not consistent with the H beside it. The catalog does
 not re-derive it; `albedo_spread` and `albedo_provider` are there to find the
 rows where it matters.
@@ -277,8 +288,10 @@ Since 1.4.0, source by source and before precedence picks a value:
   carbonaceous classes (C-complex, D, and the CV/CO analogues K and L) the
   ceiling is 3.6, the densest carbonaceous rock at zero porosity. For
   everything else it is 5.0, and that is the measured record, not physics.
-  Stony-irons could reach 7.8, but no asteroid has been measured above about
-  4.2 (Psyche). The densest of the 32 masses known to 5% is 3.54. The release
+  A stony-iron could be denser, but the densest asteroid measured is (22)
+  Kalliope at 4.40 ± 0.46 (Ferrais et al. 2022), and 5.0 clears it by more
+  than its one-sigma error. The densest of the 77 masses known to 5% in
+  `data-2026-09-26` are Kalliope (4.18) and Psyche (4.14). The release
   gate still enforces iron's 8.0 as the absolute bound. A mass whose sigma is as large as itself
   is no determination and is refused too.
 - **SsODNet is preferred for mass.** JPL's `GM` covers 17 bodies, carries no
@@ -303,7 +316,7 @@ After enrichment, **every row satisfies `estimated_mass_kg = density_gcm3 ×
 re-derived from the mass at the class density (`diameter_source =
 "derived_mass"`). Beyond 5.5 AU, composition comes from `D` whatever class a source gave,
 because an asteroid class fitted to a TNO's colours says nothing about ice.
-Bodies from the Trojans out (a ≥ 4.6 AU) with no measured class are typed `D`
+Bodies from the Trojans out (a > 4.6 AU) with no measured class are typed `D`
 (`spectral_type_source = "orbit"`), not by albedo.
 
 The release gate refuses a build that breaks any of this, and
@@ -337,9 +350,27 @@ ac.TAXONOMY_COMPOSITION["M"]
 ```
 
 ⚠️ **The fractions do not sum to 1, and must not be made to.** Every real class
-sums to strictly less than one — `C` is 0.76, `Cgh` is 0.73. The residual is
+sums to strictly less than one — `C` is 0.55, `S` 0.82. The residual is
 the part the literature does not resolve. Floor it at a bulk-silicate value or
 carry it as unknown; normalising it away invents composition.
+
+**Where a number has a source, the table says which.** Since data contract
+1.5.0:
+
+| what | value | backed by |
+|---|---|---|
+| carbon, hydrated C-complex (B, C, Cb, Cg, Cgh, Ch, F, G) | 0.04 | CI chondrites 3.5–3.9 wt% (Pearson et al. 2006); Bennu 4.5–4.7 and Ryugu ~4.0 (Lauretta et al. 2024). It was 0.20–0.30. |
+| metal, S-complex and Q | 0.06 | the mean of LL (3.56 wt%) and L (8.33 wt%) chondrite metal (Jarosewich 1990), the analogues the rows name; it was 0.15–0.20, H-chondrite metal or more |
+| metal, V | 0.01 | eucrites carry trace metal only; it was 0.05 |
+| Xe and Xk | swapped | most Tholen M-types are Xk (13 of 24, Fornasier et al. 2010), Xe's 0.49 µm band is the E-types', and Carry (2012) pairs Xe with EH enstatite chondrites; the metal-rich row sat under Xe |
+| density, Xc | 3.30 | the X-complex value: no density known to 20% supports lower, and the two Xc-types measured that well average 4.86 ± 0.81 (Carry 2012). It was 2.50. |
+
+Every class density is held to [Carry (2012)](https://arxiv.org/abs/1203.4336)'s
+average over the bodies measured to 20% (`taxonomy.DENSITY_EVIDENCE`): never
+more than 2σ above it, and more than 2σ below it only with a named small body
+to say why (B: Bennu 1.19; Sq: Itokawa 1.9; K: one large body measured). The
+silicate fractions, carbon outside the hydrated C-complex, and every ice
+fraction have no source; no meteorite constrains ice at all.
 
 `Unknown` is the deliberate exception, with all four fractions `None`, so the
 residual is the whole body.
@@ -354,6 +385,14 @@ a tempting and wrong edit.
 `PGM_ENRICHMENT_BY_TYPE` scales the platinum-group fraction of a metal phase by
 parent-body differentiation history — core fragments enriched, basaltic crust
 depleted, primitive bodies at a chondritic 1.0.
+
+⚠️ **No factor, and not the ~37 ppm baseline, traces to a publication, and the
+chondritic 1.0 is wrong in a known direction.** PGMs are siderophile, so an
+undifferentiated body's little metal holds nearly all of them: LL-chondrite
+metal carries 50–220 ppm (Kargel 1994), 1.4–6× the baseline. The ordinary-
+chondrite classes at 1.0 therefore understate their metal's PGM, and more so
+since 1.5.0 cut their metal fraction. That is the conservative direction, and
+it is left there rather than replaced by another guess.
 
 It is a **valuation layer, not an observation**, and it is the one part of this
 package that assumes you care about precious metals. If you do not, ignore the
