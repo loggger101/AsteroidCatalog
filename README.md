@@ -14,13 +14,12 @@ that names its build date, data contract and checksums. Pin a tag and you have
 the same rows every time. See [Published releases](#published-releases).
 
 The current release is
-[`data-2026-09-25`](https://github.com/loggger101/AsteroidCatalog/releases/tag/data-2026-09-25):
-1,567,469 bodies, data contract 1.4.0, the first release built under the
-physical limits in [section 5](#5-nothing-physically-impossible-is-published).
-`data-2026-09-23` (contract 1.3.0) stays published and unchanged, and carries
-the impossible values that section lists. The code on `main` builds contract
-1.4.1, whose one change is in [CHANGELOG.md](CHANGELOG.md) and moves no row
-of `data-2026-09-25`.
+[`data-2026-09-26`](https://github.com/loggger101/AsteroidCatalog/releases/tag/data-2026-09-26):
+1,567,657 bodies, data contract 1.4.1, built by asteroid_catalog 0.6.0.
+`data-2026-09-25` (contract 1.4.0) was the first release built under the
+physical limits in [section 5](#5-nothing-physically-impossible-is-published);
+1.4.1 changed no body of it. `data-2026-09-23` (contract 1.3.0) stays
+published and unchanged, and carries the impossible values that section lists.
 
 To build your own from the live sources:
 
@@ -138,8 +137,8 @@ and fetch again.
 
 ### 2. Most diameters are derived, not measured
 
-Only 9.6% of bodies have a measured diameter (149,718 of 1,567,469 in
-`data-2026-09-25`). The rest are sized from
+Only 9.6% of bodies have a measured diameter (149,718 of 1,567,657 in
+`data-2026-09-26`). The rest are sized from
 absolute magnitude and an **estimated** albedo:
 
     D_km = (1329 / sqrt(p_V)) * 10 ** (-H / 5)
