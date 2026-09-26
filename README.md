@@ -25,7 +25,7 @@ of `data-2026-09-25`.
 To build your own from the live sources:
 
 ```bash
-pip install git+https://github.com/loggger101/AsteroidCatalog@v0.5.0
+pip install git+https://github.com/loggger101/AsteroidCatalog@v0.6.0
 asteroid-catalog build --out ./data
 ```
 

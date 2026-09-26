@@ -139,7 +139,10 @@ def validate_and_filter(
     rejection_df = pd.DataFrame([r for r in log if r["rejected_count"] > 0])
 
     say(f"     OK  Accepted : {n_kept:,}")
-    say(f"     FAIL  Rejected : {n_dropped:,}  ({n_dropped/total*100:.1f}%)")
+    # FAIL only when something was dropped: a clean run's log said
+    # "FAIL  Rejected : 0 (0.0%)" in every build summary.
+    say(f"     {'FAIL' if n_dropped else 'OK'}  Rejected : {n_dropped:,}  "
+        f"({n_dropped/total*100:.1f}%)")
     if not rejection_df.empty:
         for _, row in rejection_df.iterrows():
             say(f"         * {row['reason']:55s} -> {row['rejected_count']:,} dropped")
