@@ -14,23 +14,22 @@ that names its build date, data contract and checksums. Pin a tag and you have
 the same rows every time. See [Published releases](#published-releases).
 
 The current release is
-[`data-2026-09-26`](https://github.com/loggger101/AsteroidCatalog/releases/tag/data-2026-09-26):
-1,567,657 bodies, data contract 1.4.1, built by asteroid_catalog 0.6.0.
-`data-2026-09-25` (contract 1.4.0) was the first release built under the
-physical limits in [section 5](#5-nothing-physically-impossible-is-published);
-1.4.1 changed no body of it. `data-2026-09-23` (contract 1.3.0) stays
-published and unchanged, and carries the impossible values that section lists.
-
-The package on `main` (0.7.0) writes data contract **1.5.0**, which corrects
-reference values the literature contradicts (the Xe/Xk rows, C-complex carbon,
-S-complex and V metal, the Xc density; see [CHANGELOG.md](CHANGELOG.md)). No
-release has been built under it yet, so `data-2026-09-26` still carries the
-1.4.1 values.
+[`data-2026-09-26b`](https://github.com/loggger101/AsteroidCatalog/releases/tag/data-2026-09-26b):
+1,567,859 bodies, data contract 1.5.0, built by asteroid_catalog 0.7.0. It
+corrects reference values the literature contradicts (the Xe/Xk rows,
+C-complex carbon, S-complex and V metal, the Xc density; see
+[CHANGELOG.md](CHANGELOG.md)), which moved the mass of 159 bodies and the
+composition columns of ~1.5 M. `data-2026-09-26` (contract 1.4.1), built the
+same day, stays published with the old values. `data-2026-09-25` (contract
+1.4.0) was the first release built under the physical limits in
+[section 5](#5-nothing-physically-impossible-is-published).
+`data-2026-09-23` (contract 1.3.0) stays published and unchanged, and carries
+the impossible values that section lists.
 
 To build your own from the live sources:
 
 ```bash
-pip install git+https://github.com/loggger101/AsteroidCatalog@v0.6.0
+pip install git+https://github.com/loggger101/AsteroidCatalog@v0.7.0
 asteroid-catalog build --out ./data
 ```
 
@@ -143,8 +142,8 @@ and fetch again.
 
 ### 2. Most diameters are derived, not measured
 
-Only 9.6% of bodies have a measured diameter (149,718 of 1,567,657 in
-`data-2026-09-26`). The rest are sized from
+Only 9.5% of bodies have a measured diameter (149,718 of 1,567,859 in
+`data-2026-09-26b`). The rest are sized from
 absolute magnitude and an **estimated** albedo:
 
     D_km = (1329 / sqrt(p_V)) * 10 ** (-H / 5)

@@ -29,14 +29,25 @@ the literature, and of the code's own claims against the published
 | V | `metal_fraction` 0.05 | 0.01 | eucrites carry trace metal only |
 | Xc | `density_est_gcm3` 2.50 | 3.30 | no density known to 20% supports lower than its complex, and the two Xc-types measured that well average 4.86 ± 0.81 (Carry 2012; one of them, Hestia, at his lowest confidence rank) |
 
-**What moves, on the `data-2026-09-26` population** (not yet rebuilt; no
-release carries 1.5.0): `estimated_mass_kg` and `density_gcm3` only for the
-bodies whose density is the class estimate, 37 Xe (×0.76), 60 Xk (×1.06) and
-62 Xc (×1.32), 0.013% of the catalog's mass between them; the `comp_*`
-fraction and `comp_notes` columns of ~1.0 M hydrated C-complex rows, ~505 k
-S-complex and Q rows and ~8 k V rows; every `comp_*` column of the 44 Xe and
-74 Xk rows, `comp_pgm_enrichment` included. No diameter, albedo, class or source moves, except a diameter
-re-derived from a measured mass at an Xe, Xk or Xc class density.
+**What moves:** `estimated_mass_kg` and `density_gcm3` only for the bodies
+whose density is the class estimate, 37 Xe (×0.76), 60 Xk (×1.06) and 62 Xc
+(×1.32), 0.013% of the catalog's mass between them; the `comp_*` fraction and
+`comp_notes` columns of ~1.0 M hydrated C-complex rows, ~505 k S-complex and
+Q rows and ~8 k V rows; every `comp_*` column of the 44 Xe and 74 Xk rows,
+`comp_pgm_enrichment` included. No diameter, albedo, class or source moves,
+except a diameter re-derived from a measured mass at an Xe, Xk or Xc class
+density.
+
+**Published as [`data-2026-09-26b`](https://github.com/loggger101/AsteroidCatalog/releases/tag/data-2026-09-26b)**,
+the first 1.5.0 release (`data-2026-09-26` was taken by the 1.4.1 build that
+morning): 1,567,859 bodies, built from `ff47bde`, audit clean, every asset's
+sha256 as its manifest says, and `tools/albedo_tables.py` finds no table
+stale.  Against `data-2026-09-26`, exactly what the above predicts: density
+and mass moved for 159 bodies (37 Xe ×0.763, 60 Xk ×1.056, 62 Xc ×1.32),
+carbon for 999,051 rows, metal for 513,918 and the PGM factor for 118; no
+albedo moved.  Apart from that, 202 bodies JPL added, none gone, and 13
+H-derived diameters and masses moved because JPL revised those new bodies'
+H and orbit.
 
 **New: the evidence is in the code, and checked.**
 
