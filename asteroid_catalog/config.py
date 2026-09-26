@@ -2,10 +2,10 @@
 """Configuration for a catalog build.
 
 Sliced from `CatalogConfig` in economicspace `modules/catalog.py`,
-pipeline_version 1.2.0.  The per-field comments are the original text: they
-are the documentation for every dial, and were kept verbatim because that
-project's dashboard scraped them as its help strings while it still imported
-this package.
+pipeline_version 1.2.0.  The per-field comments are the documentation for
+every dial.  They were kept verbatim while that project's dashboard scraped
+them as help strings; since it stopped importing this package (0.5.0) the ones
+that described economicspace rather than this package have been corrected.
 
 FOUR THINGS CHANGED ON THE WAY OUT OF THAT REPO, AND NOTHING ELSE:
 
@@ -41,8 +41,10 @@ A package release can leave `pipeline_version` alone.  See CHANGELOG.md.
 
 import os
 import sys
-
-from dataclasses import dataclass
+import tempfile
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Optional
 
 
 # The launcher to name in a printed instruction.  `py` is the Windows launcher
@@ -66,36 +68,26 @@ def _default_output_dir() -> str:
     return os.path.join(os.getcwd(), "asteroid_catalog_data")
 
 
-_DEFAULT_OUTPUT_DIR = _default_output_dir()
-
-
-
-
-# ═════════════════════════════════════════════════════════════════════════════
-# ║                                                                           ║
-# ║   ★  USER SETTINGS, EDIT THESE TO TUNE THE PIPELINE  ★                  ║
-# ║                                                                           ║
-# ║   Every knob the casual user is expected to touch lives in this single    ║
-# ║   dataclass.  Each field has a brief note describing what it controls,    ║
-# ║   the default value, and (where relevant) the range / common values.      ║
-# ║                                                                           ║
-# ║   Nothing below this block needs editing for normal use.                  ║
-# ║                                                                           ║
-# ═════════════════════════════════════════════════════════════════════════════
+# ─────────────────────────────────────────────────────────────────────────────
+# SETTINGS
+# ─────────────────────────────────────────────────────────────────────────────
+# Every knob a build has lives in this one dataclass, each with a note on what
+# it controls, its default, and (where relevant) its range.  Set them per
+# build rather than by editing this file:
+#
+#     build_catalog(CatalogConfig(jpl_limit=50_000, use_mp3c=False))
 @dataclass
 class CatalogConfig:
-    """User-editable pipeline configuration.  See per-field comments below."""
+    """Configuration for one catalog build.  See the per-field comments."""
 
     # ─── SOURCE TOGGLES ───────────────────────────────────────────────────────
     # Set any of these to False to skip that source.  An unreachable or empty
     # source is silently tolerated by the pipeline; you don't need to flip the
-    # toggle just because a host is down.
+    # toggle just because a host is down.  Adding a source: see build.py.
     use_jpl:      bool = True   # NASA JPL Small-Body Database     (orbital + physical)
     use_mp3c:     bool = True   # MP3C @ Observatoire Côte d'Azur   (diameters, masses, families)
     use_ssodnet:  bool = True   # SsODNet ssoBFT (IMCCE)            (mass, density, taxonomy, …)
     use_neowise:  bool = True   # NEOWISE V2.0 via IRSA TAP         (IR diameters + albedos)
-    # To add a new catalog: write a fetch_<name>(config) function and add a
-    # matching `use_<name>: bool = True` line here.
 
     # ─── FETCH LIMITS & NETWORK ──────────────────────────────────────────────
     # ONE CAP PER SOURCE, and 0 means "no cap, take the whole table".
@@ -140,7 +132,7 @@ class CatalogConfig:
     # service under load, not an expected wait.
     neowise_async_max_wait_s: int = 900
     mp3c_limit:      int = 0   # 0 = whatever MP3C will serve
-    request_timeout: int = 300 # seconds per HTTP request before giving up (5 min)
+    request_timeout: int = 300  # seconds per HTTP request before giving up (5 min)
 
     # ─── CROSS-SOURCE IDENTITY  (v1.3.0) ─────────────────────────────────────
     # The same body often sits under different designations in different
@@ -188,20 +180,21 @@ class CatalogConfig:
     min_derived_diameter_km: float = 0.0
 
     # ─── OUTPUT  (where the CSVs land) ───────────────────────────────────────
-    # `output_dir` is created at startup if it doesn't exist.  On Colab the
-    # default '/content/...' lives in the session sandbox, change to a Drive
-    # path like '/content/drive/MyDrive/asteroids' to persist between runs.
-    output_dir:        str = _DEFAULT_OUTPUT_DIR
+    # `output_dir` is created when a build writes to it, never at import.
+    # Default: ./asteroid_catalog_data, or $ASTEROID_CATALOG_OUTPUT_DIR, read
+    # when the config is made rather than when the package was imported, so
+    # a notebook that sets either after `import asteroid_catalog` is heard.
+    output_dir:        str = field(default_factory=_default_output_dir)
     catalog_filename:  str = "asteroid_catalog.csv"
     rejected_filename: str = "rejected_entries.csv"
 
     # ─── BULK-DOWNLOAD CACHE  (SsODNet parquet & similar) ────────────────────
-    # SsODNet's ssoBFT is ~500 MB.  We cache it once per `cache_max_age_days`
+    # SsODNet's ssoBFT is ~850 MB.  We cache it once per `cache_max_age_days`
     # and re-use it between runs.  Bump max_age down to force a fresh pull.
     #
     # `cache_dir` controls WHERE the cache lives:
     #   • Empty string (default) → system tmp directory (good for Drive users:
-    #                              the ~500 MB parquet does NOT round-trip
+    #                              the ~850 MB parquet does NOT round-trip
     #                              through Drive sync on every run).
     #   • Any absolute path      → that exact directory.
     # If you want the cache co-located with the catalog CSV instead, set this
@@ -209,33 +202,21 @@ class CatalogConfig:
     cache_dir:           str   = ""
 
     # How long the ssoBFT parquet cache is reused before it is re-downloaded.
-    # That download is ~500 MB, so raise this for repeated offline runs.
+    # That download is ~850 MB, so raise this for repeated offline runs.
     cache_max_age_days:  float = 7.0
 
-    # ─── PREVIEW & SUMMARY DISPLAY  (cosmetic, affects stdout only) ──────────
-    preview_rows:           int = 10   # rows shown in CATALOG PREVIEW table
-    top_n_spectral_types:   int = 20   # types listed in spectral-distribution bars
-
-    # ─── PIPELINE VERSION  (bump when changing the schema) ───────────────────
+    # ─── PIPELINE VERSION  (the data contract) ───────────────────────────────
     # Stamped into every output CSV, and the only way to tell which code
     # produced a given catalog.  BUMP IT when a change moves any number a run
     # produces.  The rule is ONE-DIRECTIONAL: changing a number means bumping,
     # and a bump does NOT mean a number changed, which is why nothing may read
-    # a version as evidence that a result moved.
-    # THE CHANGELOG IS versions.md, NOT THIS COMMENT.  It used to be 155 lines
-    # of release notes sitting right here, a second copy of a record versions.md
-    # already held, which is the documentation form of the defect this project
-    # keeps cataloguing; it was also what the dashboard rendered as this field's
-    # help text, because ui_meta scrapes a field's comment block.  Moved out on
-    # 2026-09-02.  Two places to write, neither of them here:
-    #     versions.md > Releases            what the release did, and what it
-    #                                       measured to say so
-    #     versions.md > Module changelogs   this module's own stamp-by-stamp
-    #                                       record: Stage 1 changelog
-    pipeline_version: str = "1.4.0"
+    # a version as evidence that a result moved.  What each bump did, and what
+    # was measured to say so, goes in CHANGELOG.md, not here.
+    pipeline_version: str = "1.4.1"
 
-# Instantiate.  Edit the field defaults above (inside the dataclass); DO NOT
-# mutate CONFIG fields here, which defeats having one editable source of truth.
+
+# The defaults.  Configure a build by passing a CatalogConfig of your own;
+# mutating this shared instance changes every later build in the process.
 #
 # NOTHING IS CREATED ON DISK BY THIS LINE.  The original made the output
 # directory here and the cache directory four lines later, which is right for a
@@ -246,16 +227,28 @@ CONFIG = CatalogConfig()
 
 def _resolve_cache_dir(config: "CatalogConfig") -> str:
     """
-    Return the absolute path of the bulk-download cache.
+    Return the absolute path of the bulk-download cache, creating it.
 
     If `config.cache_dir` is non-empty, use it verbatim.  Otherwise default to
-    a stable per-user location under the system tmp dir; this avoids the 526
-    MB SsODNet parquet syncing through Google Drive on every refresh.
+    a stable per-user location under the system tmp dir; this avoids the
+    ~850 MB SsODNet parquet syncing through Google Drive on every refresh.
     """
     if config.cache_dir:
         path = config.cache_dir
     else:
-        import tempfile
         path = os.path.join(tempfile.gettempdir(), "asteroid_pipeline_cache")
     os.makedirs(path, exist_ok=True)
     return path
+
+
+def _cache_is_fresh(path: str, max_age_days: float) -> bool:
+    """True if a cached download exists and is at most `max_age_days` old."""
+    age = _cache_age_days(path)
+    return age is not None and age <= max_age_days
+
+
+def _cache_age_days(path: str) -> Optional[float]:
+    """Age of a cached download in days, or None if there is none."""
+    if not os.path.exists(path):
+        return None
+    return (datetime.now().timestamp() - os.path.getmtime(path)) / 86400.0

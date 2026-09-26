@@ -48,6 +48,7 @@ jobs:
       # Inputs reach the shell through the environment, never by ${{ }}
       # substitution into a script, so a tag cannot inject a command.
       TAG_INPUT: ${{ inputs.tag }}
+      ALLOW_SHRINK: ${{ inputs.allow_shrink }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -104,7 +105,7 @@ jobs:
         run: |
           args=(build --out dist --tag "$TAG" --commit "$GITHUB_SHA")
           if [ -f previous/manifest.json ]; then args+=(--previous previous/manifest.json); fi
-          if [ "${{ inputs.allow_shrink }}" = "true" ]; then args+=(--allow-shrink); fi
+          if [ "$ALLOW_SHRINK" = "true" ]; then args+=(--allow-shrink); fi
           asteroid-catalog package "${args[@]}"
           cat dist/RELEASE_NOTES.md >> "$GITHUB_STEP_SUMMARY"
           ls -l dist

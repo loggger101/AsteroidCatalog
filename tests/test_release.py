@@ -49,7 +49,7 @@ def _write_build(tmp_path, df):
 
 
 def _sha(path):
-    return hashlib.sha256(open(path, "rb").read()).hexdigest()
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def test_a_good_build_passes():

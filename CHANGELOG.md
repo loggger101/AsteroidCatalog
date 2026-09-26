@@ -5,12 +5,105 @@ file exists to prevent:
 
 | | what it tracks | where it lives |
 |---|---|---|
-| `asteroid_catalog.__version__` | the **package** release: a loader fix, a new helper, a docs pass | `pyproject.toml` and `__init__.py` |
+| `asteroid_catalog.__version__` | the **package** release: a loader fix, a new helper, a docs pass | `__init__.py` (pyproject.toml reads it from there) |
 | `pipeline_version` | the **data contract**, stamped into every output row | `config.py` |
 
 A package release can leave `pipeline_version` alone. A change that moves any
 number a build produces **must** move it, and that rule is one-directional:
 moving it is not evidence that a number changed.
+
+---
+
+## Unreleased — data contract **1.4.1**
+
+**A body's size and its class read "no classification" the same way.**
+`derive_missing_diameters` recognised three spellings of an empty class
+(`""`, `"nan"`, `"None"`) and `enrich_composition` eight (`"-"`, `"NA"`,
+`"<NA>"`, ...).  So a Bus column holding `"-"` blocked the Tholen fallback in
+the first and not the second: the body was sized off its orbit bin (p_V 0.066
+in the outer belt) and typed by its Tholen class (S: 0.234), a diameter 1.9x
+and a mass 6.6x what its own class implies.  Both now read
+`taxonomy._BLANK_CLASSES`.  This moves numbers for such bodies, so the data
+contract moves; **no row of `data-2026-09-25` is one** (checked against the
+published parquet), and on synthetic sources built to contain them only those
+rows' `albedo_assumed_for_diameter`, `diameter_km`, `diameter_source` and
+`estimated_mass_kg` change.
+
+Everything else below moves no number: a full offline build against faked
+services writes the same catalog, cell for cell, under pandas 3 and 2.2.
+
+**Bugs fixed**
+
+| where | what went wrong |
+|---|---|
+| `lookup_asteroid` | under pandas 2, `astype(str)` spells a missing name `"nan"`, so `lookup NA` or `lookup nan` returned ~1.54 M rows of the published catalog; and a blank query returned every row, which the CLI then printed |
+| `build_catalog` | never created its output directory (only the CLI did), so a library build fetched everything and then failed writing the CSV |
+| `CatalogConfig` | the default `output_dir` and `ASTEROID_CATALOG_OUTPUT_DIR` were read once, at import; set after `import asteroid_catalog`, they were ignored |
+| SsODNet | a failed refresh threw away the cached parquet, and the whole source with it; it now falls back to the stale copy, as the MPC links already did |
+| NEOWISE async | the wait ceiling counted only sleeps, not polls that may each take `request_timeout`; a relative job URL was used as-is; a refused `PHASE=RUN` was polled for the full ceiling; the session was never closed |
+| `asteroid-catalog` | a malformed or missing `--previous` crashed `package` with a traceback; negative `--*-limit` values reached the APIs; `taxonomy m` or `taxonomy Sq2` found nothing; `lookup` printed every match (now 50, `--max-rows 0` for all); a failed `build` left an empty output directory |
+| `pyproject.toml` | `license = "MIT"` needs setuptools 77 (PEP 639); the build requirement said 68, which fails on it |
+| the tests | nothing kept them off the network; `tests/conftest.py` now refuses every socket connection |
+
+**Documents corrected**: the SsODNet citation (the authors are Berthier,
+Carry, Mahlke and Normand, A&A 671, A151; "Vachier" was wrong) with its DOI;
+the column is `comp_pgm_enrichment`, not `pgm_enrichment`; the release gate
+and section 5 of the README list all the checks that run, including an
+albedo below 0.01 and a measured diameter its H cannot fit; the CLI, not
+`build_catalog`, is what asks before overwriting; `filter_by_region` selects
+on semi-major axis, so its docstring no longer offers it for NEOs, which are
+defined by perihelion.
+
+**Also, moving nothing: one copy of each thing.** The package was built by
+slicing line ranges out of one 3,338-line module, and every slice kept that
+module's whole import header and its own copy of the helpers around it.
+
+| was | now |
+|---|---|
+| 116 unused imports: the same 13-line header in every sliced module | removed |
+| four streamed downloads with a progress bar (JPL, NEOWISE, SsODNet, MPC) | `_http.read_body` / `_http.write_body` |
+| "numeric column, or NaN if absent", a dozen times inline | `_frame.numeric` / `flag` / `coerce_numeric` |
+| two cache-freshness checks, two identical designation keys | `config._cache_is_fresh`, `designations._designation_key` |
+| exact-class-then-root-letter lookup and Bus-DeMeo capitalisation, each in three modules | `taxonomy.composition_entry`, `taxonomy._bus_demeo_case` |
+| the CLI's own catalog reader | `query.read_catalog` (still importable from `release`) |
+| the version in `pyproject.toml` and `__init__.py` | `__init__.py` only |
+| "how to add a source" in three places, each incomplete | `build.py`, ADDING A SOURCE |
+| three spellings of "no classification" (`"-"`, `"<NA>"`, ...) | `taxonomy._BLANK_CLASSES` |
+| the tests' subprocess environment and tool loader, three copies | `tests/_support.py` |
+| `test_reference_export` re-typing the exporter in a subprocess string | it calls `export_reference.export()` |
+
+**`build_catalog` creates its output directory.** Only the CLI did, so a
+library call with the default config fetched every source and then failed
+writing the CSV.
+
+**No pyarrow, no SsODNet, said loudly and before the download.** The fetcher
+used to fall back to reading all ~915 columns, which `pyproject.toml` already
+calls worse than failing; pyarrow is a declared dependency.
+
+⚠️  **`CatalogConfig.preview_rows` and `top_n_spectral_types` are removed.**
+Nothing read them; the preview they configured stayed in economicspace. Code
+passing either by keyword must drop it.
+
+**`enrich_composition` is three steps you can read one at a time**:
+`_classify`, `_add_composition`, `_reconcile_density_and_mass`.  The albedo
+class inference in it is vectorised; it was a Python call per row, on ~1.4 M
+rows, to choose between two letters.  Helpers that were nested inside long
+fetch functions (`_as_designation`, `_first_period`, `_albedo_from_taxonomy`)
+are module level, and imports that sat inside functions for no reason are at
+the top.
+
+**CI lints.**  `ruff check`, with correctness rules only (`F`, `E9`; see
+`pyproject.toml`), so the dead imports cannot come back; no formatter, because
+the code aligns columns by hand.  The publish workflow reads `allow_shrink`
+through the environment like its other input, as its own header says every
+input must.
+
+Also: `say()` / `warn()` continuation lines realigned (they still sat where
+`print(` had put them), SsODNet's parquet size corrected to the ~850 MB it now
+is, the package docstring's "76-class table" (it has 32 classes) and "says so
+on stderr" (`warn` writes to stdout) corrected, and comments that pointed at
+economicspace's `versions.md`, at a `_lookup()` that no longer exists, or at
+sections that do not exist here fixed.
 
 ---
 
@@ -387,7 +480,7 @@ module, recovered from economicspace's history; its docstring says how.
 
 ---
 
-## 0.1.0 — 2026-09-22
+## 0.1.0 - 2026-09-22
 
 Extracted from Module 1 of
 [economicspace](https://github.com/loggger101/economicspace) at

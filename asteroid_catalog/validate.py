@@ -5,19 +5,9 @@ Every drop is counted and the reason is kept, because a filter that silently
 shrinks a catalog is indistinguishable from a fetcher that silently failed.
 """
 
-import json
-import os
-import sys
-import time as _time
-import warnings
-from dataclasses import dataclass
-from datetime import datetime
-from typing import Dict, Optional, Tuple
+from typing import Tuple
 
-import numpy as np
 import pandas as pd
-import requests
-from tqdm.auto import tqdm
 
 from ._log import say, warn
 
@@ -26,6 +16,15 @@ from .config import CatalogConfig
 # ─────────────────────────────────────────────────────────────────────────────
 # VALIDATOR  (failsafes)
 # ─────────────────────────────────────────────────────────────────────────────
+def _blank(s: pd.Series) -> pd.Series:
+    """True where a column holds nothing usable.
+
+    NaN and the empty string both count, and so does whitespace: a source that
+    writes `" "` for "no value" would otherwise pass as having one.
+    """
+    return s.isna() | (s.astype(str).str.strip() == "")
+
+
 def _log_rejection(df: pd.DataFrame, mask: pd.Series, reason: str) -> dict:
     """Build a rejection-log record for the given mask."""
     count = int(mask.sum())
@@ -35,6 +34,11 @@ def _log_rejection(df: pd.DataFrame, mask: pd.Series, reason: str) -> dict:
         else []
     )
     return {"reason": reason, "rejected_count": count, "examples": str(examples)}
+
+
+def _log_column_absent(reason: str, count: int) -> dict:
+    """A rejection-log record for a rule that could not run row by row."""
+    return {"reason": reason, "rejected_count": count, "examples": "N/A"}
 
 
 def validate_and_filter(
@@ -69,7 +73,7 @@ def validate_and_filter(
         warn("     FAIL  'designation' column missing - cannot build catalog")
         return pd.DataFrame(), pd.DataFrame()
 
-    bad = df["designation"].isna() | (df["designation"].astype(str).str.strip() == "")
+    bad = _blank(df["designation"])
     log.append(_log_rejection(df, bad & valid_mask, "Missing designation"))
     valid_mask &= ~bad
 
@@ -87,8 +91,8 @@ def validate_and_filter(
                                   f"diameter < {config.min_diameter_km} km"))
         valid_mask &= ~bad_small
     else:
-        log.append({"reason": "diameter_km column absent",
-                    "rejected_count": int(valid_mask.sum()), "examples": "N/A"})
+        log.append(_log_column_absent("diameter_km column absent",
+                                      int(valid_mask.sum())))
         valid_mask[:] = False
 
     # ── 4. Semi-major axis required ───────────────────────────────────────────
@@ -98,8 +102,8 @@ def validate_and_filter(
         log.append(_log_rejection(df, bad & valid_mask, "Missing semi-major axis"))
         valid_mask &= ~bad
     else:
-        log.append({"reason": "semi_major_axis_au column absent — coordinate mapping disabled",
-                    "rejected_count": 0, "examples": "N/A"})
+        log.append(_log_column_absent(
+            "semi_major_axis_au column absent — coordinate mapping disabled", 0))
         say("     WARN  No orbital elements - coordinate mapping will be unavailable")
 
     # ── 5. Strict spectral type (optional) ───────────────────────────────────
@@ -109,21 +113,17 @@ def validate_and_filter(
     # rejected, contradicting the CONFIG comment that says strict mode requires
     # "Bus / Tholen".  A row passes if EITHER column has a non-blank value.
     if config.require_spectral_type:
-        def _blank(s: pd.Series) -> pd.Series:
-            """True where a taxonomy column holds nothing usable.
+        def _has(col: str) -> pd.Series:
+            if col not in df.columns:
+                return pd.Series(False, index=df.index)
+            return ~_blank(df[col])
 
-            NaN and the empty string both count, and so does whitespace: a
-            source that writes `" "` for "no classification" would otherwise
-            pass strict mode with a blank type.
-            """
-            return s.isna() | (s.astype(str).str.strip() == "")
-
-        has_bus    = (~_blank(df["spectral_type"]))           if "spectral_type"        in df.columns else pd.Series(False, index=df.index)
-        has_tholen = (~_blank(df["spectral_type_tholen"]))    if "spectral_type_tholen" in df.columns else pd.Series(False, index=df.index)
+        has_bus, has_tholen = _has("spectral_type"), _has("spectral_type_tholen")
 
         if not (has_bus.any() or has_tholen.any()):
-            log.append({"reason": "no spectral_type / spectral_type_tholen columns (strict mode ON)",
-                        "rejected_count": int(valid_mask.sum()), "examples": "N/A"})
+            log.append(_log_column_absent(
+                "no spectral_type / spectral_type_tholen columns (strict mode ON)",
+                int(valid_mask.sum())))
             valid_mask[:] = False
         else:
             bad = ~(has_bus | has_tholen)

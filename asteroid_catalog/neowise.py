@@ -8,21 +8,18 @@ transfer, and a proxy timeout anywhere in that window discards the result with
 nothing to retry.
 """
 
-import json
-import os
-import sys
 import time as _time
-import warnings
-from dataclasses import dataclass
-from datetime import datetime
-from typing import Dict, Optional, Tuple
+from io import BytesIO
+from typing import Optional
+from urllib.parse import urljoin
 
 import numpy as np
 import pandas as pd
 import requests
-from tqdm.auto import tqdm
 
-from ._log import say, warn
+from ._frame import coerce_numeric
+from ._http import read_body
+from ._log import say
 
 from .config import CatalogConfig
 from .designations import _extract_canonical_designation
@@ -112,56 +109,106 @@ def _neowise_fetch_async(params: dict, config: CatalogConfig) -> Optional[bytes]
     Returns None on any failure, which puts the caller back on the sync path.
     """
     try:
-        session = requests.Session()
-        resp = session.post(
-            _NEOWISE_TAP_ASYNC, data=params,
-            allow_redirects=False, timeout=config.request_timeout,
-        )
-        if resp.status_code not in (200, 302, 303):
-            say(f"     WARN  async submit returned HTTP {resp.status_code}")
-            return None
-        job = resp.headers.get("Location")
-        if not job:
-            say("     WARN  async submit returned no job URL")
-            return None
-        say(f"     job   {job}")
-
-        session.post(f"{job}/phase", data={"PHASE": "RUN"},
-                     timeout=config.request_timeout)
-
-        waited, phase = 0.0, "UNKNOWN"
-        while waited < float(config.neowise_async_max_wait_s):
-            try:
-                phase = session.get(
-                    f"{job}/phase", timeout=config.request_timeout,
-                ).text.strip()
-            except requests.exceptions.RequestException:
-                phase = "UNKNOWN"          # keep waiting; the job is server-side
-            if phase in _UWS_TERMINAL:
-                break
-            _time.sleep(2.0)
-            waited += 2.0
-
-        if phase != "COMPLETED":
-            say(f"     WARN  async job ended in phase {phase}")
-            return None
-
-        for attempt in (1, 2, 3):
-            try:
-                res = session.get(f"{job}/results/result",
-                                  timeout=config.request_timeout)
-                if res.status_code == 200:
-                    return res.content
-                say(f"     WARN  result HTTP {res.status_code} "
-                      f"(attempt {attempt})")
-            except requests.exceptions.RequestException as exc:
-                say(f"     WARN  result attempt {attempt}: {type(exc).__name__}")
-            _time.sleep(2.0 * attempt)
-        return None
-
+        with requests.Session() as session:
+            return _run_async_job(session, params, config)
     except requests.exceptions.RequestException as exc:
         say(f"     WARN  async TAP unavailable ({type(exc).__name__})")
         return None
+
+
+# A phase poll returns a few bytes; it gets this long, not the full
+# `request_timeout`, so polls cannot stretch the wait far past its ceiling.
+_UWS_POLL_TIMEOUT_S = 60
+
+
+def _run_async_job(session: requests.Session, params: dict,
+                   config: CatalogConfig) -> Optional[bytes]:
+    """The three UWS phases of `_neowise_fetch_async`, on one session."""
+    resp = session.post(
+        _NEOWISE_TAP_ASYNC, data=params,
+        allow_redirects=False, timeout=config.request_timeout,
+    )
+    if resp.status_code not in (200, 302, 303):
+        say(f"     WARN  async submit returned HTTP {resp.status_code}")
+        return None
+    location = resp.headers.get("Location")
+    if not location:
+        say("     WARN  async submit returned no job URL")
+        return None
+    # UWS allows a relative Location; resolved against the endpoint it came from.
+    job = urljoin(_NEOWISE_TAP_ASYNC, location)
+    say(f"     job   {job}")
+
+    run = session.post(f"{job}/phase", data={"PHASE": "RUN"},
+                       timeout=config.request_timeout)
+    if run.status_code >= 400:
+        say(f"     WARN  async job refused PHASE=RUN (HTTP {run.status_code})")
+        return None
+
+    # The ceiling is wall-clock time.  Counting only the sleeps between polls
+    # let slow polls (each allowed `request_timeout`) run far past it.
+    deadline = _time.monotonic() + float(config.neowise_async_max_wait_s)
+    phase = "UNKNOWN"
+    while _time.monotonic() < deadline:
+        try:
+            phase = session.get(
+                f"{job}/phase",
+                timeout=min(config.request_timeout, _UWS_POLL_TIMEOUT_S),
+            ).text.strip()
+        except requests.exceptions.RequestException:
+            phase = "UNKNOWN"          # keep waiting; the job is server-side
+        if phase in _UWS_TERMINAL:
+            break
+        _time.sleep(2.0)
+
+    if phase != "COMPLETED":
+        say(f"     WARN  async job ended in phase {phase}")
+        return None
+
+    for attempt in (1, 2, 3):
+        try:
+            res = session.get(f"{job}/results/result",
+                              timeout=config.request_timeout)
+            if res.status_code == 200:
+                return res.content
+            say(f"     WARN  result HTTP {res.status_code} (attempt {attempt})")
+        except requests.exceptions.RequestException as exc:
+            say(f"     WARN  result attempt {attempt}: {type(exc).__name__}")
+        _time.sleep(2.0 * attempt)
+    return None
+
+
+def _as_designation(numbers: pd.Series, prov: Optional[pd.Series]) -> pd.Series:
+    r"""IRSA's asteroid_number as a merge key, or the provisional designation.
+
+    ⚠️  `asteroid_number` MUST be rendered as an integer, and this is not a
+    cosmetic point; it is the bug that made this entire source a no-op for
+    every large run up to v1.1.0.
+
+    IRSA types the column by what the result slice happens to contain.  A
+    slice with no unnumbered bodies comes back int64 and `.astype("string")`
+    gives "3"; add one row whose asteroid_number is null and the column is
+    float64, so the same call gives "3.0".  The canonical extractor matches
+    neither `^(\d+)\s*$` nor `^(\d+)\s+[A-Z][a-z]` against "3.0", passes it
+    through unchanged, and the merge key can never equal JPL's "3".  Every
+    NEOWISE row then reached validate_and_filter as a body nothing else had
+    heard of, and was dropped for having no semi-major axis.
+
+    So it worked at small caps and failed at large ones, which is the worst
+    possible shape: the fetcher still printed its ✅ and its row count, and
+    the only visible trace was neowise_* columns sitting 100% empty in the
+    output CSV.  _extract_canonical_designation strips a trailing ".0"
+    defensively now as well, but do not rely on that and remove this.
+    """
+    out = pd.Series(pd.NA, index=numbers.index, dtype="string")
+    num = pd.to_numeric(numbers, errors="coerce")
+    has_num = num.notna()
+    # Int64 first, so 3.0 renders as "3" and not "3.0".
+    out[has_num] = num[has_num].astype("Int64").astype("string")
+    if prov is not None:
+        fallback = prov.astype("string").str.strip()
+        out[~has_num] = fallback[~has_num]
+    return out.replace({"": pd.NA, "<NA>": pd.NA, "nan": pd.NA})
 
 
 def fetch_neowise(config: CatalogConfig) -> pd.DataFrame:
@@ -254,23 +301,7 @@ def fetch_neowise(config: CatalogConfig) -> pd.DataFrame:
                     snippet = resp.text[:300].replace("\n", " ")
                     say(f"     FAIL  HTTP {resp.status_code} - {snippet}")
                     return pd.DataFrame()
-
-                total_bytes = int(resp.headers.get("content-length") or 0) or None
-                chunks: list = []
-                with tqdm(
-                    total=total_bytes,
-                    desc="     NEOWISE",
-                    unit="B",
-                    unit_scale=True,
-                    unit_divisor=1024,
-                    leave=True,
-                    mininterval=0.3,
-                ) as pbar:
-                    for chunk in resp.iter_content(chunk_size=65536):
-                        if chunk:
-                            chunks.append(chunk)
-                            pbar.update(len(chunk))
-                body = b"".join(chunks)
+                body = read_body(resp, "     NEOWISE")
 
     except requests.exceptions.Timeout:
         say("     FAIL  NEOWISE TAP timed out")
@@ -289,25 +320,22 @@ def fetch_neowise(config: CatalogConfig) -> pd.DataFrame:
     # Detect each of these explicitly so we don't try to coerce HTML/XML into
     # a DataFrame and end up with garbage rows.
     head = body[:400].lstrip()
+    snippet = body[:400].decode("utf-8", errors="replace").replace("\n", " ")[:200]
     if not head:
         say("     FAIL  TAP returned an empty body")
         return pd.DataFrame()
     if head.startswith(b"<?xml") or head.startswith(b"<VOTABLE"):
-        snippet = body[:400].decode("utf-8", errors="replace").replace("\n", " ")
-        say(f"     FAIL  TAP returned a VOTable error envelope: {snippet[:200]}")
+        say(f"     FAIL  TAP returned a VOTable error envelope: {snippet}")
         return pd.DataFrame()
     if head[:1] == b"<":   # any other tag-leading body (HTML, etc.)
-        snippet = body[:400].decode("utf-8", errors="replace").replace("\n", " ")
-        say(f"     FAIL  TAP returned a non-CSV body: {snippet[:200]}")
+        say(f"     FAIL  TAP returned a non-CSV body: {snippet}")
         return pd.DataFrame()
     if not head.lower().startswith(b"asteroid_number"):
         # Expected CSV header from this query begins with `asteroid_number`.
         # Anything else means the schema or query has drifted, fail loud.
-        snippet = body[:400].decode("utf-8", errors="replace").replace("\n", " ")
-        say(f"     FAIL  TAP body doesn't look like expected CSV: {snippet[:200]}")
+        say(f"     FAIL  TAP body doesn't look like expected CSV: {snippet}")
         return pd.DataFrame()
 
-    from io import BytesIO
     try:
         df = pd.read_csv(BytesIO(body))
     except Exception as exc:
@@ -319,44 +347,6 @@ def fetch_neowise(config: CatalogConfig) -> pd.DataFrame:
         return pd.DataFrame()
 
     # Designation: numbered → `asteroid_number`, unnumbered → `prov_desig`.
-    #
-    # ⚠️  `asteroid_number` MUST be rendered as an integer, and this is not a
-    # cosmetic point; it is the bug that made this entire source a no-op for
-    # every large run up to v1.1.0.
-    #
-    # IRSA types the column by what the result slice happens to contain.  A
-    # slice with no unnumbered bodies comes back int64 and `.astype("string")`
-    # gives "3"; add one row whose asteroid_number is null and the column is
-    # float64, so the same call gives "3.0".  The canonical extractor matches
-    # neither `^(\d+)\s*$` nor `^(\d+)\s+[A-Z][a-z]` against "3.0", passes it
-    # through unchanged, and the merge key can never equal JPL's "3".  Every
-    # NEOWISE row then reached validate_and_filter as a body nothing else had
-    # heard of, and was dropped for having no semi-major axis.
-    #
-    # So it worked at small caps and failed at large ones, which is the worst
-    # possible shape: the fetcher still printed its ✅ and its row count, and
-    # the only visible trace was neowise_* columns sitting 100% empty in the
-    # output CSV.  _extract_canonical_designation strips a trailing ".0"
-    # defensively now as well, but do not rely on that and remove this.
-    def _as_designation(numbers: pd.Series, prov: Optional[pd.Series]) -> pd.Series:
-        """IRSA's asteroid_number as a merge key, or the provisional designation.
-
-        Through `Int64` and only then to string, which is the whole point: IRSA
-        types the column float64 whenever the slice holds any unnumbered body,
-        and `.astype("string")` on that yields `"3.0"`, which matches no JPL
-        `pdes` and is not null either. That cost NEOWISE four releases of
-        contributing zero rows. See the block above.
-        """
-        out = pd.Series(pd.NA, index=numbers.index, dtype="string")
-        num = pd.to_numeric(numbers, errors="coerce")
-        has_num = num.notna()
-        # Int64 first, so 3.0 renders as "3" and not "3.0".
-        out[has_num] = num[has_num].astype("Int64").astype("string")
-        if prov is not None:
-            fallback = prov.astype("string").str.strip()
-            out[~has_num] = fallback[~has_num]
-        return out.replace({"": pd.NA, "<NA>": pd.NA, "nan": pd.NA})
-
     if "asteroid_number" in df.columns:
         df["designation"] = _as_designation(
             df["asteroid_number"],
@@ -368,11 +358,8 @@ def fetch_neowise(config: CatalogConfig) -> pd.DataFrame:
     # Drop the source-identifier columns so the rename + merge stay tidy
     df = df.drop(columns=[c for c in ("asteroid_number", "prov_desig") if c in df.columns])
 
-    # Standard rename + numeric coercion
-    df = df.rename(columns={k: v for k, v in _NEOWISE_RENAME.items() if k in df.columns})
-    for col in _NEOWISE_NUMERIC:
-        if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors="coerce")
+    df = df.rename(columns=_NEOWISE_RENAME)
+    coerce_numeric(df, _NEOWISE_NUMERIC)
 
     # Coerce the stacked-measurement flag to True/False/NaN to match the
     # boolean convention used by `is_neo`, `is_pha`, `density_measured`, …

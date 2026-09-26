@@ -11,46 +11,30 @@ against what is committed.  Edit a taxonomy row without re-exporting and the
 suite says so.
 """
 
-import io
 import os
-import subprocess
-import sys
 
 import pytest
 
-REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+import asteroid_catalog as ac
+from _support import REPO, load_tool
+
 REFERENCE = os.path.join(REPO, "reference")
-FILES = ["taxonomy_composition.csv", "pgm_enrichment.csv"]
+exporter = load_tool("export_reference")
 
 
-@pytest.mark.parametrize("name", FILES)
+@pytest.mark.parametrize("name", exporter.FILES)
 def test_committed_export_is_current(name, tmp_path):
     committed = os.path.join(REFERENCE, name)
     assert os.path.exists(committed), (
         "%s is not committed; run `py tools/export_reference.py`" % name)
 
-    env = dict(os.environ)
-    env["PYTHONPATH"] = REPO + os.pathsep + env.get("PYTHONPATH", "")
-    # Render into a scratch tree, then compare. Running the real exporter
-    # would overwrite the thing under test, which is a check that cannot fail.
-    scratch = tmp_path / "reference"
-    scratch.mkdir()
-    code = (
-        "import sys, os;"
-        "sys.path.insert(0, %r);"
-        "sys.argv=['x'];"
-        "import tools.export_reference as e;"
-        "e.write(os.path.join(%r, 'taxonomy_composition.csv'), e.FIELDS, e.taxonomy_rows());"
-        "e.write(os.path.join(%r, 'pgm_enrichment.csv'), ['spectral_type','pgm_enrichment'],"
-        " sorted(e.PGM_ENRICHMENT_BY_TYPE.items()))"
-        % (REPO, str(scratch), str(scratch))
-    )
-    out = subprocess.run([sys.executable, "-c", code], capture_output=True,
-                         text=True, env=env, cwd=REPO)
-    assert out.returncode == 0, out.stderr
-
-    fresh = io.open(str(scratch / name), "rb").read()
-    have = io.open(committed, "rb").read()
+    # Render into a scratch directory, then compare.  Running the exporter
+    # into reference/ would overwrite the thing under test, which is a check
+    # that cannot fail.
+    exporter.export(str(tmp_path))
+    fresh = (tmp_path / name).read_bytes()
+    with open(committed, "rb") as fh:
+        have = fh.read()
     assert fresh == have, (
         "%s is stale -- the table changed and the export did not. "
         "Run `py tools/export_reference.py` and commit the result." % name)
@@ -58,8 +42,7 @@ def test_committed_export_is_current(name, tmp_path):
 
 def test_export_covers_every_class():
     """A rendering that silently drops rows is worse than no rendering."""
-    import asteroid_catalog as ac
-
-    rows = io.open(os.path.join(REFERENCE, "taxonomy_composition.csv"),
-                   encoding="utf-8").read().splitlines()
+    with open(os.path.join(REFERENCE, "taxonomy_composition.csv"),
+              encoding="utf-8") as fh:
+        rows = fh.read().splitlines()
     assert len(rows) - 1 == len(ac.TAXONOMY_COMPOSITION)

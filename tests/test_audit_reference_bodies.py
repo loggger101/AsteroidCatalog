@@ -5,17 +5,12 @@ Synthetic frames only, like the rest of the suite.  `tools/` is not a package,
 so the module is loaded from its path.
 """
 
-import importlib.util
-import os
-
 import pandas as pd
 import pytest
 
-_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                     "tools", "audit_catalog.py")
-_spec = importlib.util.spec_from_file_location("audit_catalog", _PATH)
-audit = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(audit)
+from _support import load_tool
+
+audit = load_tool("audit_catalog")
 
 
 def _frame(designations=("1", "2", "4", "16", "433"), source="measured"):

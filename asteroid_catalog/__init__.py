@@ -25,7 +25,7 @@ Plus two things the surveys do not give you:
     a DIAMETER for the ~91% of bodies nobody measured one for, from H and an
     estimated albedo, tagged so you can always filter back to measured-only
     a COMPOSITION estimate per Bus-DeMeo class: bulk density and four mass
-    fractions, from a cited 76-class table
+    fractions, from a cited per-class table
 
 Quick start:
 
@@ -38,8 +38,9 @@ Quick start:
     >>> ac.pgm_enrichment_for_type("V")    # 0.2; basaltic crust, PGM-depleted
 
 WHAT THIS PACKAGE PROMISES, AND WHAT IT DOES NOT.  It promises provenance:
-every physical column is accompanied by a `*_source` column saying where the
-value came from, and nothing is silently imputed.  It does not promise that a
+every measured quantity names the source it came from (`<stem>_provider`),
+every estimate says how it was made (`diameter_source`,
+`spectral_type_source`, `density_measured`), and nothing is silently imputed.  It does not promise that a
 run today reproduces a run yesterday -- JPL adds bodies daily, so the catalog
 is a different length every time, and a result measured against one build must
 name the build it used.  `catalog_date` and `pipeline_version` are stamped into
@@ -49,10 +50,11 @@ A SOURCE THAT FAILS IS TOLERATED, NOT HIDDEN.  An unreachable survey degrades
 the catalog rather than failing the build.  (MP3C was documented as "regularly
 unreachable" for releases; it was reachable, at an address the fetcher did not
 use.  A tolerated failure hides a wrong address as well as it hides an
-outage.)  But a source that fetched rows and matched NONE of them
-to the backbone is always a bug in that fetcher, never an empty upstream table,
-and `merge_sources` says so on stderr whether or not you asked for progress
-output.  Read the per-source match counts, not the fetch counts.
+outage.)  But a source that fetched rows and matched NONE of them to the
+backbone is always a bug in that fetcher, never an empty upstream table, and
+`merge_sources` says so on stdout whether or not you asked for progress
+output (see `_log.warn`).  Read the per-source match counts, not the fetch
+counts.
 
 THE COMPOSITION FRACTIONS DO NOT SUM TO 1 AND MUST NOT BE MADE TO.  Every real
 taxonomy class sums to strictly less than one; the residual is the part the
@@ -73,7 +75,9 @@ anyone doing population statistics, survey planning or target selection, and
 the mining-specific layer is one clearly-labelled column.
 """
 
-import pandas as pd
+# Set before the submodules load, so any of them can import it at the top.
+# The one place the package version is written; pyproject.toml reads it here.
+__version__ = "0.5.0"
 
 from ._log import say, warn, set_verbose, is_verbose
 
@@ -85,7 +89,8 @@ from .taxonomy import (
     pgm_enrichment_for_type,
 )
 
-from .designations import _extract_canonical_designation
+# Private, but reached as `ac._extract_canonical_designation` by the trap tests.
+from .designations import _extract_canonical_designation  # noqa: F401
 
 from .jpl import fetch_jpl_sbdb, JPL_SBDB_URL
 from .mp3c import fetch_mp3c
@@ -105,8 +110,6 @@ from .validate import validate_and_filter
 from .enrich import enrich_composition
 from .build import build_catalog
 from .query import lookup_asteroid, filter_by_region, filter_by_spectral_group
-
-__version__ = "0.5.0"
 
 #: The DATA contract, stamped into every output row and written into each
 #: release's manifest, which is where a consumer checks it.  See config.py for

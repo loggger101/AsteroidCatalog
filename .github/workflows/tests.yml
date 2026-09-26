@@ -25,6 +25,8 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
       - name: Install
         run: |
           python -m pip install --upgrade pip
@@ -35,3 +37,16 @@ jobs:
         run: |
           asteroid-catalog --version
           asteroid-catalog taxonomy M
+
+  # Unused imports and undefined names only; the rules live in pyproject.toml.
+  # The package was sliced out of one module and every slice carried that
+  # module's whole import header: 116 dead imports before this ran.
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - run: pip install "ruff>=0.6"
+      - run: ruff check

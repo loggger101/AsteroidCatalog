@@ -7,19 +7,12 @@ why it is fetched first and why it wins on conflicts.
 """
 
 import json
-import os
-import sys
-import time as _time
-import warnings
-from dataclasses import dataclass
-from datetime import datetime
-from typing import Dict, Optional, Tuple
 
-import numpy as np
 import pandas as pd
 import requests
-from tqdm.auto import tqdm
 
+from ._frame import coerce_numeric
+from ._http import read_body
 from ._log import say, warn
 
 from .config import CatalogConfig
@@ -174,6 +167,19 @@ _JPL_NUMERIC = [
 ]
 
 
+# Minimal field set guaranteed to exist in every SBDB query response, asked
+# for if the full list causes a 400.  `epoch` is carried here as well as in
+# _JPL_FIELDS deliberately: `ma` is in this list, and a mean anomaly without
+# its epoch is unusable, so omitting it from the fallback would reintroduce
+# the exact defect the full list fixes, on precisely the runs where the full
+# list already failed.
+_JPL_SAFE_FIELDS = [
+    "pdes", "name", "full_name", "spkid", "neo", "pha",
+    "diameter", "diameter_sigma", "albedo", "rot_per",
+    "e", "a", "q", "ad", "i", "om", "w", "ma", "epoch", "per", "n", "H",
+    "condition_code", "data_arc", "n_obs_used", "rms", "moid", "class", "soln_date",
+]
+
 # Days per Julian year, the year the orbital-period convention uses.
 DAYS_PER_YEAR = 365.25
 
@@ -214,14 +220,6 @@ def fetch_jpl_sbdb(config: CatalogConfig) -> pd.DataFrame:
     """
     say("\n  JPL Small-Body Database  (ssd-api.jpl.nasa.gov) ...")
 
-    # Minimal field set guaranteed to exist in every SBDB query response.
-    # Used as fallback if the full list causes a 400.
-    # `epoch` is carried here as well as in _JPL_FIELDS deliberately: `ma` is in
-    # this list, and a mean anomaly without its epoch is unusable, so omitting
-    # it from the fallback would reintroduce the exact defect the full list
-    # fixes, on precisely the runs where the full list already failed.
-    _SAFE_FIELDS = "pdes,name,full_name,spkid,neo,pha,diameter,diameter_sigma,albedo,rot_per,e,a,q,ad,i,om,w,ma,epoch,per,n,H,condition_code,data_arc,n_obs_used,rms,moid,class,soln_date"
-
     base_params = {
         "sb-kind":   "a",           # asteroids only
         "full-prec": "true",
@@ -237,11 +235,11 @@ def fetch_jpl_sbdb(config: CatalogConfig) -> pd.DataFrame:
         base_params["limit"] = config.jpl_limit
     else:
         say("     NOTE   No row cap - requesting the full SBDB asteroid table "
-              "(~1.55 M rows, ~435 MB).  Set CONFIG.jpl_limit for a faster run.")
+            "(~1.55 M rows, ~435 MB).  Set jpl_limit (--jpl-limit) for a faster run.")
 
     attempts = [
         ("full fields",  {**base_params, "fields": ",".join(_JPL_FIELDS)}),
-        ("safe fields",  {**base_params, "fields": _SAFE_FIELDS}),
+        ("safe fields",  {**base_params, "fields": ",".join(_JPL_SAFE_FIELDS)}),
     ]
 
     for attempt_name, params in attempts:
@@ -265,27 +263,7 @@ def fetch_jpl_sbdb(config: CatalogConfig) -> pd.DataFrame:
                     continue   # try next attempt
 
                 resp.raise_for_status()
-
-                # Pull the body in chunks while updating a tqdm bar.  If the
-                # server reports Content-Length we get a proper percentage;
-                # otherwise total=None makes tqdm show an indeterminate bar
-                # that still reports bytes-downloaded in real time.
-                total_bytes = int(resp.headers.get("content-length") or 0) or None
-                chunks: list = []
-                with tqdm(
-                    total=total_bytes,
-                    desc=f"     JPL ({attempt_name})",
-                    unit="B",
-                    unit_scale=True,
-                    unit_divisor=1024,
-                    leave=True,
-                    mininterval=0.3,
-                ) as pbar:
-                    for chunk in resp.iter_content(chunk_size=65536):
-                        if chunk:
-                            chunks.append(chunk)
-                            pbar.update(len(chunk))
-                body = b"".join(chunks)
+                body = read_body(resp, f"     JPL ({attempt_name})")
 
             try:
                 payload = json.loads(body)
@@ -306,13 +284,8 @@ def fetch_jpl_sbdb(config: CatalogConfig) -> pd.DataFrame:
             ]
             df = pd.DataFrame(payload["data"], columns=field_names)
 
-            # Rename to standard schema
-            df = df.rename(columns={k: v for k, v in _JPL_RENAME.items() if k in df.columns})
-
-            # Coerce numerics
-            for col in _JPL_NUMERIC:
-                if col in df.columns:
-                    df[col] = pd.to_numeric(df[col], errors="coerce")
+            df = df.rename(columns=_JPL_RENAME)
+            coerce_numeric(df, _JPL_NUMERIC)
 
             # Boolean flags
             for flag in ("is_neo", "is_pha"):

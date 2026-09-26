@@ -12,6 +12,7 @@ running: a check that needs 862 MB of input is a check CI skips.
 import contextlib
 import io
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -210,3 +211,25 @@ def test_lookup_handles_an_int64_designation_column():
     ints = pd.DataFrame({"designation": pd.Series([1, 433, 69260], dtype="int64"),
                          "name": ["Ceres", "Eros", "x"]})
     assert len(_quiet(ints, "433")) == 1
+
+
+def test_lookup_never_matches_a_missing_value():
+    """A missing name is not the string "nan", "<NA>" or "None".
+
+    Under pandas 2, `astype(str)` spells a missing name "nan", and "NA" or
+    "nan" matched every unnamed body in the catalog -- ~1.54 M rows of the
+    `data-2026-09-25` release read back from its CSV.
+    """
+    frame = pd.DataFrame({
+        "designation": ["1", "2", "3"],
+        "name": pd.Series(["Ceres", np.nan, None], dtype=object),
+        "provisional_designation": pd.Series(["A801 AA", np.nan, pd.NA], dtype=object),
+    })
+    for probe in ("nan", "NA", "None", "<NA>"):
+        assert len(_quiet(frame, probe)) == 0, "%r matched a missing value" % probe
+
+
+def test_a_blank_lookup_matches_nothing():
+    """Not everything: the CLI prints what this returns."""
+    frame = pd.DataFrame({"designation": ["1", "2"], "name": ["Ceres", "Pallas"]})
+    assert len(_quiet(frame, "   ")) == 0

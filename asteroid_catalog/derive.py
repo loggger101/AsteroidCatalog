@@ -12,23 +12,16 @@ so two runs with the same row count and a different measured/derived split are
 not the same population.
 """
 
-import json
-import os
-import sys
-import time as _time
-import warnings
-from dataclasses import dataclass
-from datetime import datetime
-from typing import Dict, Optional, Tuple
+from typing import Dict, Tuple
 
 import numpy as np
 import pandas as pd
-import requests
-from tqdm.auto import tqdm
 
-from ._log import say, warn
+from ._frame import flag
+from ._log import say
 
 from .config import CatalogConfig
+from .taxonomy import _BLANK_CLASSES, _bus_demeo_case
 
 # ─────────────────────────────────────────────────────────────────────────────
 # DERIVED DIAMETERS  (v1.1.0)
@@ -180,13 +173,22 @@ ALBEDO_BY_SEMI_MAJOR_AXIS_AU: Tuple[Tuple[float, float, float, str], ...] = (
 # The same, for near-Earth objects (JPL `neo`, q < 1.3 AU), which take it in
 # preference wherever they have a row.  Beyond 2.82 AU they are few (83) and
 # pooled: they are the dark, often cometary, end of the population.
+ALBEDO_BY_SEMI_MAJOR_AXIS_AU_NEO: Tuple[Tuple[float, float, float, str], ...] = (
+    (0.000,  1.300, 0.1870, "NEO, Aten / Apollo"),     # n=296
+    (1.300,  2.000, 0.1700, "NEO, 1.3-2.0 AU"),        # n=407
+    (2.000,  2.500, 0.1370, "NEO, inner belt"),        # n=282
+    (2.500,  2.820, 0.0620, "NEO, middle belt"),       # n=135
+    (2.820,  1e9,   0.0370, "NEO, outer"),             # n=83
+)
+
 # BEYOND JUPITER, BY H, NOT ONE VALUE.  Past 5.5 AU the brighter bodies are
 # the BIG ones, and big trans-Neptunian objects are icier and brighter: over
 # the 193 measured, the median runs 0.147 at H 3-6 (n=64) down to 0.0585 past
 # H 8 (n=86), the size-albedo trend of the Herschel "TNOs are Cool" survey.
 # One value (0.088) sized 532037 Chiminigagua (H 3.09) at 1,219 km against
 # ~740 measured, and made it the eighth-heaviest body in the catalog.  The
-# `Centaur / TNO` row of the table above is the fallback for a body with no H.
+# `Centaur / TNO` row of ALBEDO_BY_SEMI_MAJOR_AXIS_AU is the fallback for a body
+# with no H.
 # (h_max, median p_V, label), first match wins.
 ALBEDO_BEYOND_JUPITER_BY_H: Tuple[Tuple[float, float, str], ...] = (
     (3.0,   0.4481, "dwarf planet, H <= 3"),           # n=7
@@ -196,14 +198,6 @@ ALBEDO_BEYOND_JUPITER_BY_H: Tuple[Tuple[float, float, str], ...] = (
     (1e9,   0.0585, "small TNO / Centaur, H > 8"),     # n=86
 )
 
-ALBEDO_BY_SEMI_MAJOR_AXIS_AU_NEO: Tuple[Tuple[float, float, float, str], ...] = (
-    (0.000,  1.300, 0.1870, "NEO, Aten / Apollo"),     # n=296
-    (1.300,  2.000, 0.1700, "NEO, 1.3-2.0 AU"),        # n=407
-    (2.000,  2.500, 0.1370, "NEO, inner belt"),        # n=282
-    (2.500,  2.820, 0.0620, "NEO, middle belt"),       # n=135
-    (2.820,  1e9,   0.0370, "NEO, outer"),             # n=83
-)
-
 # Overall median across the whole measured sample.  Last resort only: used for
 # a body with no albedo, no usable taxonomy and no semi-major axis, which in
 # practice cannot happen because validate_and_filter requires an orbit anyway.
@@ -211,6 +205,25 @@ ALBEDO_FALLBACK = 0.0780
 
 # D_km = _H_DIAMETER_CONSTANT / sqrt(p_V) * 10**(-H/5)
 _H_DIAMETER_CONSTANT = 1329.0
+
+
+def _albedo_from_taxonomy(t: object) -> float:
+    """Median geometric albedo for a spectral type, or NaN if unknown.
+
+    Falls back to the ROOT letter ("Sq2" to "S"), as the composition lookup
+    does (`taxonomy.composition_entry`), so a sub-type nobody tabulated still
+    sizes off its complex rather than dropping out of the catalog.
+    """
+    if not isinstance(t, str) or not t.strip():
+        return np.nan
+    # Capitalised as enrich_composition capitalises (1.4.0).  Sources write
+    # "SQ" and "SA" as well as "Sq" and "Sa"; the exact lookup missed them and
+    # fell to the S median, sizing 663 bodies of the 2026-09-23 release 6% too
+    # large (20% too heavy).
+    s = _bus_demeo_case(t.strip())
+    if s in ALBEDO_BY_SPECTRAL_TYPE:
+        return ALBEDO_BY_SPECTRAL_TYPE[s]
+    return ALBEDO_BY_SPECTRAL_TYPE.get(s[0], np.nan)
 
 
 def _albedo_for_derivation(df: pd.DataFrame) -> Tuple[pd.Series, pd.Series]:
@@ -245,46 +258,29 @@ def _albedo_for_derivation(df: pd.DataFrame) -> Tuple[pd.Series, pd.Series]:
     # step invents are not visible here, which is deliberate.  Inferring a type
     # from albedo and then an albedo from that type would be a closed loop that
     # launders one guess into two columns.
+    #
+    # "No classification" is read exactly as enrich_composition reads it
+    # (1.4.1).  With a narrower list here, a Bus column holding "-" or "<NA>"
+    # blocked the Tholen fallback: the body was sized off its orbit bin while
+    # enrich_composition typed it by its Tholen class, so its size and its
+    # composition rested on two different albedos.
     tax = pd.Series(pd.NA, index=df.index, dtype="object")
     for col in ("spectral_type", "spectral_type_tholen"):
         if col in df.columns:
             candidate = df[col].astype("string").str.strip()
-            candidate = candidate.replace({"": pd.NA, "nan": pd.NA, "None": pd.NA})
+            candidate = candidate.replace(dict.fromkeys(_BLANK_CLASSES, pd.NA))
             tax = tax.where(tax.notna(), candidate)
 
     need = albedo.isna() & tax.notna()
     if need.any():
-        def _from_taxonomy(t: object) -> float:
-            """Median geometric albedo for a spectral type, or NaN if unknown.
-
-            Falls back to the ROOT letter ("Sq2" to "S"), matching the fallback
-            `_lookup()` already uses for composition, so a sub-type nobody
-            tabulated still sizes off its complex rather than dropping out of
-            the catalog.
-            """
-            if not isinstance(t, str) or not t.strip():
-                return np.nan
-            # Capitalised as enrich_composition capitalises (1.4.0).  Sources
-            # write "SQ" and "SA" as well as "Sq" and "Sa"; the exact lookup
-            # missed them and fell to the S median, sizing 663 bodies of the
-            # 2026-09-23 release 6% too large (20% too heavy).
-            s = t.strip()
-            s = s[0].upper() + s[1:].lower()
-            if s in ALBEDO_BY_SPECTRAL_TYPE:
-                return ALBEDO_BY_SPECTRAL_TYPE[s]
-            # Root letter, matching the fallback _lookup() already uses for
-            # composition: "Sq2" → "S".
-            return ALBEDO_BY_SPECTRAL_TYPE.get(s[0].upper(), np.nan)
-
-        derived_tax = tax[need].map(_from_taxonomy)
+        derived_tax = tax[need].map(_albedo_from_taxonomy)
         albedo.loc[need] = derived_tax
         label[need & albedo.notna()] = "taxonomy_albedo"
 
     # ── 3. Orbital bin ────────────────────────────────────────────────────────
     if "semi_major_axis_au" in df.columns:
         a = pd.to_numeric(df["semi_major_axis_au"], errors="coerce")
-        neo = (df["is_neo"].fillna(False).astype(bool) if "is_neo" in df.columns
-               else pd.Series(False, index=df.index))
+        neo = flag(df, "is_neo")
         if "absolute_magnitude_h" in df.columns:
             h = pd.to_numeric(df["absolute_magnitude_h"], errors="coerce")
             outer = albedo.isna() & (a >= ALBEDO_BY_SEMI_MAJOR_AXIS_AU[-1][0]) & h.notna()
@@ -344,7 +340,7 @@ def derive_missing_diameters(
 
     if not config.derive_diameter_from_h:
         say("\n  Diameter derivation OFF - measured diameters only "
-              f"({int(measured.sum()):,} of {len(df):,} rows will survive validation)")
+            f"({int(measured.sum()):,} of {len(df):,} rows will survive validation)")
         df["diameter_km"] = diam
         return df
 
@@ -355,7 +351,7 @@ def derive_missing_diameters(
         # broke rather than that the data is simply unavailable.  Say so; a
         # silent no-op here costs 1.4 M rows.
         say("     WARN  No `absolute_magnitude_h` column - nothing to derive from. "
-              "Check that the JPL fetcher requested the H field.")
+            "Check that the JPL fetcher requested the H field.")
         df["diameter_km"] = diam
         return df
 
@@ -382,8 +378,8 @@ def derive_missing_diameters(
         n_small = int(too_small.sum())
         if n_small:
             say(f"        {n_small:,} derived below "
-                  f"{config.min_derived_diameter_km} km - left unfilled "
-                  f"(min_derived_diameter_km)")
+                f"{config.min_derived_diameter_km} km - left unfilled "
+                f"(min_derived_diameter_km)")
         target &= ~too_small
 
     # Guard against a non-finite result reaching the catalog.  H is occasionally
@@ -418,7 +414,7 @@ def derive_missing_diameters(
 
     counts = df["diameter_source"].value_counts()
     say(f"     OK  {int(target.sum()):,} diameters derived  "
-          f"(measured kept: {int(measured.sum()):,})")
+        f"(measured kept: {int(measured.sum()):,})")
     for src, n in counts.items():
         if src == "none":
             continue

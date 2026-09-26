@@ -8,18 +8,28 @@
     asteroid-catalog taxonomy M
 
 `build` is verbose by default and the library is not, which is the right way
-round: somebody who typed a command wants to watch a 500 MB download, and
+round: somebody who typed a command wants to watch a 850 MB download, and
 somebody who imported the package for one taxonomy row does not.
 """
 
 import argparse
+import json
 import os
 import sys
 
+import pandas as pd
+
 from . import __version__
 from ._log import set_verbose
+from .build import build_catalog
 from .config import CatalogConfig, CONFIG
-from .taxonomy import TAXONOMY_COMPOSITION, pgm_enrichment_for_type
+from .query import lookup_asteroid, read_catalog
+from .release import package_release
+from .taxonomy import TAXONOMY_COMPOSITION, _bus_demeo_case, pgm_enrichment_for_type
+
+# Each gets --no-<name> and --<name>-limit, mapped onto CatalogConfig's
+# `use_<name>` and `<name>_limit`.
+_SOURCES = ("jpl", "ssodnet", "neowise", "mp3c")
 
 
 def _overwrite_ok(paths, what: str, assume_yes: bool) -> bool:
@@ -60,12 +70,10 @@ def _overwrite_ok(paths, what: str, assume_yes: bool) -> bool:
 
 
 def _build(args) -> int:
-    from .build import build_catalog
-
     config = CatalogConfig()
     if args.out:
         config.output_dir = args.out
-    for name in ("jpl", "ssodnet", "neowise", "mp3c"):
+    for name in _SOURCES:
         if getattr(args, "no_" + name, False):
             setattr(config, "use_" + name, False)
         limit = getattr(args, name + "_limit", None)
@@ -74,7 +82,8 @@ def _build(args) -> int:
     if args.cache_dir:
         config.cache_dir = args.cache_dir
 
-    os.makedirs(config.output_dir, exist_ok=True)
+    # build_catalog creates the directory when it writes; making it here as
+    # well left an empty one behind whenever the build then failed.
     targets = [os.path.join(config.output_dir, config.catalog_filename),
                os.path.join(config.output_dir, config.rejected_filename)]
     if not _overwrite_ok(targets, "A catalog build writes:", args.yes):
@@ -91,19 +100,15 @@ def _build(args) -> int:
 
 
 def _package(args) -> int:
-    import json
-
-    from .release import package_release
-
     previous = None
-    if args.previous:
-        with open(args.previous, encoding="utf-8") as fh:
-            previous = json.load(fh)
     try:
+        if args.previous:
+            with open(args.previous, encoding="utf-8") as fh:
+                previous = json.load(fh)
         m = package_release(args.build_dir, args.out, args.tag,
                             previous=previous, source_commit=args.commit,
                             allow_shrink=args.allow_shrink)
-    except (ValueError, FileNotFoundError) as exc:
+    except (ValueError, OSError) as exc:     # JSONDecodeError is a ValueError
         print("FAIL  %s" % exc, file=sys.stderr)
         return 1
     print("%s: %d rows, built %s, data contract %s -> %s"
@@ -115,40 +120,45 @@ def _package(args) -> int:
 
 
 def _lookup(args) -> int:
-    import pandas as pd
-
-    from .query import lookup_asteroid
-
     path = args.catalog or os.path.join(CONFIG.output_dir,
                                         CONFIG.catalog_filename)
     if not os.path.exists(path):
         print("no catalog at %s; run `asteroid-catalog build` first" % path,
               file=sys.stderr)
         return 2
-    # `designation` MUST be read as a string.  A numbered asteroid's
-    # designation looks like an integer, so a slice in which every row happens
-    # to be numbered infers int64 and every string comparison against it
-    # matches nothing.
-    df = pd.read_csv(path, low_memory=False, dtype={"designation": str})
+    df = read_catalog(path)
     hit = lookup_asteroid(df, args.query)
     if hit.empty:
         print("no match for %r in %d rows" % (args.query, len(df)))
         return 1
+    # A substring search: "1" matches most numbered bodies, and printing all
+    # of them is a terminal full of rows nobody asked to read.
+    shown = hit if not args.max_rows else hit.head(args.max_rows)
     with pd.option_context("display.max_columns", None, "display.width", 200):
-        print(hit.to_string(index=False))
+        print(shown.to_string(index=False))
+    if len(shown) < len(hit):
+        print("... %d of %d matches shown; --max-rows 0 for all"
+              % (len(shown), len(hit)))
     return 0
 
 
 def _taxonomy(args) -> int:
-    if args.klass:
-        row = TAXONOMY_COMPOSITION.get(args.klass)
+    klass = args.klass.strip() if args.klass else ""
+    if klass:
+        # Resolved as the pipeline resolves a class: Bus-DeMeo capitalisation,
+        # then the exact row, then its root letter ("sq" -> "Sq", "Sq2" -> "S").
+        cased = _bus_demeo_case(klass)
+        key = cased if cased in TAXONOMY_COMPOSITION else cased[0]
+        row = TAXONOMY_COMPOSITION.get(key)
         if row is None:
             print("unknown class %r; %d known"
-                  % (args.klass, len(TAXONOMY_COMPOSITION)), file=sys.stderr)
+                  % (klass, len(TAXONOMY_COMPOSITION)), file=sys.stderr)
             return 1
+        if key != klass:
+            print("  (%r is read as %r)" % (klass, key))
         for k, v in row.items():
             print("  %-20s %s" % (k, v))
-        print("  %-20s %s" % ("pgm_enrichment", pgm_enrichment_for_type(args.klass)))
+        print("  %-20s %s" % ("pgm_enrichment", pgm_enrichment_for_type(cased)))
         return 0
     for name in sorted(TAXONOMY_COMPOSITION):
         row = TAXONOMY_COMPOSITION[name]
@@ -179,6 +189,14 @@ def _make_stdout_capable() -> None:
             pass
 
 
+def _non_negative_int(text: str) -> int:
+    """argparse type: an integer >= 0.  A negative row cap reached the APIs."""
+    value = int(text)
+    if value < 0:
+        raise argparse.ArgumentTypeError("must be 0 or more, got %d" % value)
+    return value
+
+
 def main(argv=None) -> int:
     _make_stdout_capable()
     p = argparse.ArgumentParser(
@@ -191,14 +209,14 @@ def main(argv=None) -> int:
 
     b = sub.add_parser("build", help="fetch every source and write the catalog")
     b.add_argument("--out", help="output directory")
-    b.add_argument("--cache-dir", help="where the ~500 MB SsODNet parquet is cached")
+    b.add_argument("--cache-dir", help="where the ~850 MB SsODNet parquet is cached")
     b.add_argument("--quiet", action="store_true", help="suppress progress output")
     b.add_argument("--yes", action="store_true",
                    help="overwrite an existing catalog without asking")
-    for name in ("jpl", "ssodnet", "neowise", "mp3c"):
+    for name in _SOURCES:
         b.add_argument("--no-" + name, action="store_true",
                        help="skip the %s source" % name.upper())
-        b.add_argument("--%s-limit" % name, type=int, metavar="N",
+        b.add_argument("--%s-limit" % name, type=_non_negative_int, metavar="N",
                        help="cap %s at N rows (0 = no cap)" % name.upper())
     b.set_defaults(func=_build)
 
@@ -217,6 +235,8 @@ def main(argv=None) -> int:
     l = sub.add_parser("lookup", help="find a body in a built catalog")
     l.add_argument("query", help="designation, number or name")
     l.add_argument("--catalog", help="path to asteroid_catalog.csv")
+    l.add_argument("--max-rows", type=_non_negative_int, default=50, metavar="N",
+                   help="print at most N matches (default 50; 0 = all)")
     l.set_defaults(func=_lookup)
 
     t = sub.add_parser("taxonomy", help="show the composition table")

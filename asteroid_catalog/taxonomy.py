@@ -8,10 +8,9 @@ in the upstream project is the number of DISTINCT `spectral_type` VALUES in a
 built catalog, which is a different thing and roughly twice as large.
 
 THE FRACTIONS DO NOT SUM TO 1 AND MUST NOT BE MADE TO -- every real class sums
-to strictly less than one, and
-the residual is what a consumer floors at a bulk-silicate value.  `Unknown` is
-the deliberate exception, with all four fractions None, so the residual is the
-whole body.
+to strictly less than one, and the residual is what a consumer floors at a
+bulk-silicate value.  `Unknown` is the deliberate exception, with all four
+fractions None, so the residual is the whole body.
 
 `PGM_ENRICHMENT_BY_TYPE` IS A VALUATION LAYER, NOT AN OBSERVATION, and it is
 kept separate for that reason.  It multiplies only the platinum-group fraction
@@ -20,21 +19,10 @@ costing something other than precious metals can ignore the column entirely.
 The physical half of this module stands without it.
 """
 
-import json
-import os
-import sys
-import time as _time
-import warnings
-from dataclasses import dataclass
-from datetime import datetime
-from typing import Dict, Optional, Tuple
+from typing import Dict
 
 import numpy as np
 import pandas as pd
-import requests
-from tqdm.auto import tqdm
-
-from ._log import say, warn
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -529,7 +517,7 @@ def _by_distinct(col: "pd.Series", fn):
     strings, and the numeric columns land where they always did.
 
     ⚠️  Values are SHARED across rows that share a class, exactly as
-    `.apply()` shared them: `_lookup` returns the object straight out of
+    `.apply()` shared them: `composition_entry` returns the row straight out of
     `TAXONOMY_COMPOSITION`, so every C-type row already pointed at one list.
     Stage 1 writes this to CSV and never mutates it.  (Stage 4 re-reads it and
     deliberately does NOT share; see `_parse_minerals_column`.)
@@ -540,6 +528,37 @@ def _by_distinct(col: "pd.Series", fn):
         resolved[i] = fn(u)
     return pd.Series(resolved[codes], index=col.index,
                      name=col.name).infer_objects()
+
+
+# How a classification column spells "no classification", compared after
+# `str.strip()`.  "<NA>" is what pandas < 3 renders a missing value as under
+# `astype(str)`; left in, it became a class called "<na>" and skipped every
+# inference downstream.
+_BLANK_CLASSES = ("", "-", "nan", "NaN", "None", "none", "NA", "<NA>")
+
+
+def _bus_demeo_case(t: str) -> str:
+    """A class in Bus-DeMeo capitalisation: "sq" and "SQ" both become "Sq".
+
+    First letter upper, rest lower, which is how the tables here are keyed.
+    `t` must be a non-empty, already-stripped string.
+    """
+    return t[0].upper() + t[1:].lower()
+
+
+def composition_entry(spec_type) -> dict:
+    """The TAXONOMY_COMPOSITION row for a class: exact, else its root letter.
+
+    A sub-type nobody tabulated inherits its complex ("Sq2" takes "S"), and
+    anything else, a missing value included, is "Unknown".  Expects the class
+    already in Bus-DeMeo capitalisation.
+    """
+    if isinstance(spec_type, str) and spec_type:
+        entry = (TAXONOMY_COMPOSITION.get(spec_type)
+                 or TAXONOMY_COMPOSITION.get(spec_type[0]))
+        if entry:
+            return entry
+    return TAXONOMY_COMPOSITION["Unknown"]
 
 
 def pgm_enrichment_for_type(spec_type) -> float:
