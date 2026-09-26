@@ -14,6 +14,91 @@ moving it is not evidence that a number changed.
 
 ---
 
+## 0.7.0 - 2026-09-26 — data contract **1.5.0**
+
+**Reference values the literature contradicts are corrected, and every value
+that has a source now names it.** An audit of the numbers in the code against
+the literature, and of the code's own claims against the published
+`data-2026-09-26`, found five table rows that measurements contradict:
+
+| class(es) | was | now | why |
+|---|---|---|---|
+| Xe, Xk | Xe carried the metal-rich M-type row (0.45 metal, 3.80 g/cm³, PGM 2.0), Xk the enstatite row (0.25, 3.60, 1.5) | swapped; Xe's density 2.90 | 13 of 24 Tholen M-types are Xk (Fornasier et al. 2010), Psyche and Lutetia among them; Xe's 0.49 µm band is the E-types'; and Carry (2012) independently pairs Xe with EH enstatite chondrites. Xe at 2.90: enstatite chondrites' 3.55 bulk (Macke et al. 2010) less macroporosity, and Carry (2012) has Xe at 2.60–2.91 |
+| B C Cb Cg Cgh Ch F G | `carbon_fraction` 0.20–0.30 | 0.04 | CI chondrites 3.5–3.9 wt% C (Pearson et al. 2006), Bennu 4.5–4.7 and Ryugu ~4.0 (Lauretta et al. 2024) |
+| S Sa Sk Sl Sq Sr Sv Q | `metal_fraction` 0.08–0.20 | 0.06 | the LL/L chondrites the rows name carry 3.56 and 8.33 wt% metal (Jarosewich 1990); 0.15 is H-chondrite metal |
+| V | `metal_fraction` 0.05 | 0.01 | eucrites carry trace metal only |
+| Xc | `density_est_gcm3` 2.50 | 3.30 | no density known to 20% supports lower than its complex, and the two Xc-types measured that well average 4.86 ± 0.81 (Carry 2012; one of them, Hestia, at his lowest confidence rank) |
+
+**What moves, on the `data-2026-09-26` population** (not yet rebuilt; no
+release carries 1.5.0): `estimated_mass_kg` and `density_gcm3` only for the
+bodies whose density is the class estimate, 37 Xe (×0.76), 60 Xk (×1.06) and
+62 Xc (×1.32), 0.013% of the catalog's mass between them; the `comp_*`
+fraction and `comp_notes` columns of ~1.0 M hydrated C-complex rows, ~505 k
+S-complex and Q rows and ~8 k V rows; every `comp_*` column of the 44 Xe and
+74 Xk rows, `comp_pgm_enrichment` included. No diameter, albedo, class or source moves, except a diameter
+re-derived from a measured mass at an Xe, Xk or Xc class density.
+
+**New: the evidence is in the code, and checked.**
+
+- `taxonomy.DENSITY_EVIDENCE` holds Carry (2012)'s class averages over the
+  bodies measured to 20%, and named bodies, beside each estimate.
+  `test_density_estimates_answer_to_measured_bodies` holds every estimate at
+  or under the average + 2σ, and at or over the average − 2σ unless a named
+  small body says why (B: Bennu 1.19; Sq: Itokawa 1.9; K: one large body). The
+  old Xe row fails it at 3.80 against 2.60 ± 0.20.
+- `tools/albedo_tables.py <catalog>` recomputes derive.py's four albedo
+  tables with one stated selection rule each, and exits non-zero on drift.
+  On `data-2026-09-26` it reproduces 46 of 47 class medians to 0.005 (E has
+  grown to n=37, 0.583 → 0.596) and every orbital bin to 0.001, so those
+  tables are now a measurement anyone can re-run rather than a comment.
+- The 1329 km constant has one definition (`physics.H_DIAMETER_CONSTANT`;
+  `derive._H_DIAMETER_CONSTANT` is now the same object), and a test re-derives
+  it as 2 AU × 10^(V_sun/5) with V_sun = −26.762 (Pravec & Harris 2007).
+- A test holds every class's breakup period under the ~2.2 h observed spin
+  barrier, so the spin screen refuses only what theory and observation both
+  rule out.
+- CITATIONS.md section 3 lists the literature behind every sourced value.
+- The `taxonomy.json` release asset carries `DENSITY_EVIDENCE` beside the
+  tables, so the evidence travels with every release built from here on.
+
+**Claims corrected, moving nothing**
+
+| where | said | now |
+|---|---|---|
+| physics.py, README, audit tool | no asteroid measured above ~4.2 g/cm³; M-types "run 3.4–4.2 (Psyche, Kalliope, Kleopatra)" | 22 Kalliope is 4.40 ± 0.46 (Ferrais et al. 2022); 5.0 still clears it by more than 1σ |
+| physics.py, README | "of the 32 masses known to 5%, the densest is 3.54 (93 Lydia)" | it is 110 Lydia; in `data-2026-09-26`, 77 masses are known to 5% and the densest are Kalliope 4.18 and Psyche 4.14 |
+| derive.py, README | NEOs 1.3–1.8× darker than the belt, beside an example that is 2.4× | 1.4–2.4× |
+| physics.py | Trojans' C-complex "most of them P" | almost all labelled C; P is 1.7% |
+| physics.py | 4.6 AU "the Hilda/Trojan boundary"; README "a ≥ 4.6" (the code tests >) | a choice in a sparse gap (469 bodies between 4.2 and 5.05 AU); moving it 0.2 AU re-types 59–89 of 23,311 bodies |
+| physics.py | H tolerance "~0.75 at the NEOWISE-era worst" | a margin over Pravec et al. (2012)'s 0.4–0.5 mag mean offset; not a measured worst case |
+| physics.py | pallasites 4.1–7.8, mesosiderites 3.1–7.2 (unsourced) | a stony-iron lies between its silicate and iron's 7.87 by its metal fraction |
+| physics.py | CI grain density 2.43 | 2.42 (Macke et al. 2011) |
+| derive.py | 1329 is "the same constant JPL and the MPC use" (unsourced) | the IRAS Minor Planet Survey's, derived by Pravec & Harris (2007) |
+| taxonomy.py | the PGM baseline is "chondritic / mean-iron-meteorite" | the two differ: LL metal carries 50–220 ppm (Kargel 1994), 1.4–6× the baseline; the factors are unsourced and flagged as such |
+| config.py, ssodnet.py | SsODNet "~1.2 M" rows, "~500 MB" | ~1.56 M (1,563,656 bodies of `data-2026-09-26`), ~850 MB |
+
+Citations added where a number had none: Mainzer et al. (2011) for the 10% and
+25% agreement tolerances, Pravec et al. (2012) for H, Pravec & Harris (2000)
+and Holsapple (2007) for the spin limit, Buratti et al. (2004) for the albedo
+floor, Pätzold et al. (2016), Thomas et al. (2013) and Carry (2012) for the
+density floor, Emery et al. (2011) and Gil-Hutton & Brunini (2008) for the
+Trojans and Hildas.
+
+**Left alone, on purpose**
+
+- The PGM factors. They have no source, but the known error is on the
+  conservative side; replacing them with another guess would not fix that.
+- B, Sq and K sit more than 2σ below Carry's large-body averages; each has a
+  named reason in `DENSITY_EVIDENCE`, and the test fails if the reason goes
+  stale.
+- Ice fractions, silicate fractions, and carbon for D, Z, T, P, K and the
+  X-complex: no measurement constrains them, and taxonomy.py now says so.
+- ssodnet.py quotes 244 columns in ssoBFT, while pyproject.toml and a comment
+  say ~915. The IMCCE host did not answer a request for the file's footer
+  during this audit, so the count is unresolved.
+
+---
+
 ## 0.6.0 - 2026-09-26 — data contract **1.4.1**
 
 **A body's size and its class read "no classification" the same way.**

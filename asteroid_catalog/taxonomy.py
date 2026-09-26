@@ -30,8 +30,36 @@ import pandas as pd
 # ─────────────────────────────────────────────────────────────────────────────
 #
 # Bus-DeMeo (2009) taxonomy mapped to mineralogical composition estimates.
-# Fractions are APPROXIMATE (literature mean values) and used as defaults
-# when no direct measurement exists. density_est_gcm3 is the bulk estimate.
+# Fractions are APPROXIMATE and used as defaults when no direct measurement
+# exists. density_est_gcm3 is the bulk estimate.
+#
+# WHERE A NUMBER HAS A SOURCE, THIS IS IT  (data contract 1.5.0):
+#
+#   carbon, hydrated C-complex    0.04.  CI chondrites carry 3.5-3.9 wt% C
+#     (B C Cb Cg Cgh Ch F G)      (Pearson et al. 2006, MAPS 41, 1899); the
+#                                 returned samples of Bennu 4.5-4.7 wt% and
+#                                 Ryugu ~4.0 (Lauretta et al. 2024, MAPS).
+#                                 Until 1.5.0 these read 0.20-0.30, five to
+#                                 seven times any measurement.
+#   metal, S-complex and Q        0.06, the mean of LL (3.56 wt%) and L (8.33)
+#                                 chondrite Fe-Ni-Co metal (Jarosewich 1990,
+#                                 Meteoritics 25, 323), the analogues these
+#                                 rows name; Kargel (1994, JGR 99, 21129)
+#                                 gives LL 1.2-5.3%, and the Itokawa sample
+#                                 is LL.  Until 1.5.0 S read 0.15 and Q 0.20,
+#                                 which is H-chondrite metal (17.8) or more.
+#   metal, V                      0.01.  Eucrites are the most siderophile-
+#                                 depleted achondrites and carry trace metal.
+#   Xe / Xk                       swapped in 1.5.0; see those rows.
+#   density_est_gcm3              checked against Carry (2012) Table 3 in
+#                                 DENSITY_EVIDENCE below, which says where
+#                                 each class sits against measured bodies.
+#
+# WHAT HAS NO SOURCE: the silicate fractions, carbon for D, Z, T, P, K and the
+# X-complex, and every ice fraction.  No meteorite constrains ice at all:
+# CI/CM chondrites and the Bennu and Ryugu samples hold their water in
+# hydrated minerals, not as ice, so an inner-belt C-type's ice_fraction is a
+# guess about its interior, not a reading of its analogue.
 
 TAXONOMY_COMPOSITION: Dict[str, dict] = {
 
@@ -43,9 +71,12 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "density_est_gcm3":  1.30,
         "metal_fraction":    0.01,
         "silicate_fraction": 0.30,
-        "carbon_fraction":   0.30,
+        "carbon_fraction":   0.04,
         "ice_fraction":      0.20,
-        "notes": "Bluest C-complex; possible metamorphic overprint",
+        "notes": "Bluest C-complex; possible metamorphic overprint.  v1.5.0: "
+                 "carbon 0.30 -> 0.04, as C.  Density 1.30 is the small-body "
+                 "value (Bennu, B, 1.19); large B-types run higher (Pallas "
+                 "2.86, Interamnia 1.96).",
     },
     "C": {
         "group": "C-complex",
@@ -54,9 +85,11 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "density_est_gcm3":  1.50,
         "metal_fraction":    0.01,
         "silicate_fraction": 0.35,
-        "carbon_fraction":   0.25,
+        "carbon_fraction":   0.04,
         "ice_fraction":      0.15,
-        "notes": "Most common asteroid type; CI/CM chondrite analogs",
+        "notes": "Most common asteroid type; CI/CM chondrite analogs.  v1.5.0: "
+                 "carbon 0.25 -> 0.04: CI chondrites carry 3.5-3.9 wt% C, the "
+                 "Bennu sample 4.5-4.7 and Ryugu ~4.0.",
     },
     "Cb": {
         "group": "C-complex",
@@ -65,9 +98,9 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "density_est_gcm3":  1.40,
         "metal_fraction":    0.01,
         "silicate_fraction": 0.32,
-        "carbon_fraction":   0.28,
+        "carbon_fraction":   0.04,
         "ice_fraction":      0.18,
-        "notes": "Intermediate between B and C",
+        "notes": "Intermediate between B and C.  v1.5.0: carbon 0.28 -> 0.04, as C.",
     },
     "Cg": {
         "group": "C-complex",
@@ -76,9 +109,9 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "density_est_gcm3":  1.50,
         "metal_fraction":    0.02,
         "silicate_fraction": 0.38,
-        "carbon_fraction":   0.22,
+        "carbon_fraction":   0.04,
         "ice_fraction":      0.12,
-        "notes": "Strong UV absorption feature",
+        "notes": "Strong UV absorption feature.  v1.5.0: carbon 0.22 -> 0.04, as C.",
     },
     "Cgh": {
         "group": "C-complex",
@@ -87,9 +120,10 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "density_est_gcm3":  1.60,
         "metal_fraction":    0.03,
         "silicate_fraction": 0.40,
-        "carbon_fraction":   0.20,
+        "carbon_fraction":   0.04,
         "ice_fraction":      0.10,
-        "notes": "0.7-μm absorption band; high water content",
+        "notes": "0.7-μm absorption band; high water content.  v1.5.0: carbon "
+                 "0.20 -> 0.04, as C.",
     },
     "Ch": {
         "group": "C-complex",
@@ -98,9 +132,10 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "density_est_gcm3":  1.50,
         "metal_fraction":    0.02,
         "silicate_fraction": 0.38,
-        "carbon_fraction":   0.25,
+        "carbon_fraction":   0.04,
         "ice_fraction":      0.10,
-        "notes": "Strongest 0.7-μm feature in C-complex",
+        "notes": "Strongest 0.7-μm feature in C-complex.  v1.5.0: carbon 0.25 "
+                 "-> 0.04, as C.",
     },
 
     # ── S-complex (silicate / stony) ──────────────────────────────────────────
@@ -109,77 +144,85 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "composition": "Stony: olivine, pyroxene, nickel-iron mixture",
         "minerals": ["olivine", "pyroxene", "nickel-iron"],
         "density_est_gcm3":  2.70,
-        "metal_fraction":    0.15,
+        "metal_fraction":    0.06,
         "silicate_fraction": 0.75,
         "carbon_fraction":   0.01,
         "ice_fraction":      0.00,
-        "notes": "Second-most common type; LL/L chondrite analogs",
+        "notes": "Second-most common type; LL/L chondrite analogs.  v1.5.0: "
+                 "metal 0.15 -> 0.06, the mean of LL (3.56 wt%) and L (8.33 wt%) "
+                 "chondrite metal; 0.15 was H-chondrite metal.",
     },
     "Sa": {
         "group": "S-complex",
         "composition": "S/A transitional: olivine-dominated stony",
         "minerals": ["olivine", "pyroxene"],
         "density_est_gcm3":  2.80,
-        "metal_fraction":    0.12,
+        "metal_fraction":    0.06,
         "silicate_fraction": 0.80,
         "carbon_fraction":   0.01,
         "ice_fraction":      0.00,
-        "notes": "High olivine / pyroxene ratio",
+        "notes": "High olivine / pyroxene ratio.  v1.5.0: metal 0.12 -> 0.06, as S.",
     },
     "Sk": {
         "group": "S-complex",
         "composition": "S/K transitional stony",
         "minerals": ["olivine", "pyroxene", "oxides"],
         "density_est_gcm3":  2.60,
-        "metal_fraction":    0.10,
+        "metal_fraction":    0.06,
         "silicate_fraction": 0.78,
         "carbon_fraction":   0.02,
         "ice_fraction":      0.00,
-        "notes": "Intermediate S and K spectral features",
+        "notes": "Intermediate S and K spectral features.  v1.5.0: metal 0.10 -> "
+                 "0.06, as S.",
     },
     "Sl": {
         "group": "S-complex",
         "composition": "S/L transitional: spinel-bearing stony",
         "minerals": ["olivine", "pyroxene", "spinel"],
         "density_est_gcm3":  2.70,
-        "metal_fraction":    0.12,
+        "metal_fraction":    0.06,
         "silicate_fraction": 0.78,
         "carbon_fraction":   0.01,
         "ice_fraction":      0.00,
-        "notes": "Intermediate S and L spectral features",
+        "notes": "Intermediate S and L spectral features.  v1.5.0: metal 0.12 -> "
+                 "0.06, as S.",
     },
     "Sq": {
         "group": "S-complex",
         "composition": "S/Q transitional: LL/L ordinary chondrite analog",
         "minerals": ["olivine", "pyroxene", "nickel-iron"],
         "density_est_gcm3":  2.80,
-        "metal_fraction":    0.15,
+        "metal_fraction":    0.06,
         "silicate_fraction": 0.78,
         "carbon_fraction":   0.01,
         "ice_fraction":      0.00,
-        "notes": "Possible fresh/unweathered S surface",
+        "notes": "Possible fresh/unweathered S surface.  v1.5.0: metal 0.15 -> "
+                 "0.06, as S.  Density 2.80 is below the two large Sq-types "
+                 "measured to 20% (3.43); small ones are rubble (Itokawa 1.9).",
     },
     "Sr": {
         "group": "S-complex",
         "composition": "S/R transitional stony",
         "minerals": ["pyroxene", "olivine"],
         "density_est_gcm3":  2.90,
-        "metal_fraction":    0.12,
+        "metal_fraction":    0.06,
         "silicate_fraction": 0.82,
         "carbon_fraction":   0.01,
         "ice_fraction":      0.00,
-        "notes": "Intermediate S and R spectral features",
+        "notes": "Intermediate S and R spectral features.  v1.5.0: metal 0.12 -> "
+                 "0.06, as S.",
     },
     "Sv": {
         "group": "S-complex",
         "composition": "S/V transitional stony-basaltic",
         "minerals": ["pyroxene", "olivine", "plagioclase"],
         "density_est_gcm3":  3.00,
-        "metal_fraction":    0.08,
+        "metal_fraction":    0.06,
         "silicate_fraction": 0.85,
         "carbon_fraction":   0.01,
         "ice_fraction":      0.00,
-        "notes": "Intermediate S and V spectral features",
+        "notes": "Intermediate S and V spectral features.  v1.5.0: metal 0.08 -> "
+                 "0.06, as S.",
     },
 
     # ── X-complex (metallic / enstatite / primitive) ──────────────────────────
@@ -200,38 +243,48 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "group": "X-complex",
         "composition": "Xc-type: low-albedo metallic, possibly carbonaceous",
         "minerals": ["carbon", "nickel-iron"],
-        "density_est_gcm3":  2.50,
+        "density_est_gcm3":  3.30,
         "metal_fraction":    0.25,
         "silicate_fraction": 0.35,
         "carbon_fraction":   0.20,
         "ice_fraction":      0.00,
-        "notes": "Low albedo suggests carbonaceous metallic mix",
+        "notes": "Low albedo suggests carbonaceous metallic mix.  v1.5.0: "
+                 "density 2.50 -> 3.30, the X-complex value: no density known "
+                 "to 20% supports lower, and the two Xc-types Carry (2012) has "
+                 "at that precision average 4.86 +/- 0.81.",
     },
     "Xe": {
         "group": "X-complex",
-        "composition": "Xe-type (M-type analog): metal-rich, metal-silicate mix",
+        "composition": "Xe-type (E-type analog): enstatite-rich, 0.49-μm sulfide band",
+        "minerals": ["enstatite", "nickel-iron", "troilite"],
+        "density_est_gcm3":  2.90,
+        "metal_fraction":    0.25,
+        "silicate_fraction": 0.65,
+        "carbon_fraction":   0.01,
+        "ice_fraction":      0.00,
+        "notes": "v1.5.0: swapped with Xk.  Xe's 0.49-μm band is the sulfide "
+                 "band of Angelina-like E-types, and Carry (2012) pairs Xe with "
+                 "EH enstatite chondrites, so Xe is the enstatite class; "
+                 "until 1.5.0 it carried the M-type row.  Density 2.90: "
+                 "enstatite chondrites average 3.55 in bulk (Macke et al. 2010) "
+                 "less an S-type's macroporosity, and Carry (2012) has Xe at "
+                 "2.60-2.91.  Metal 0.25: EH/EL chondrites carry ~20-25 wt%.",
+    },
+    "Xk": {
+        "group": "X-complex",
+        "composition": "Xk-type (M-type analog): metal-rich, metal-silicate mix",
         "minerals": ["nickel-iron", "troilite", "enstatite"],
         "density_est_gcm3":  3.80,
         "metal_fraction":    0.45,
         "silicate_fraction": 0.45,
         "carbon_fraction":   0.01,
         "ice_fraction":      0.00,
-        "notes": "High-albedo X; metal-rich but not a bare core.  v1.0.8: "
-                 "was 0.75 metal / 5.00 g/cm³ — tracked down alongside M for "
-                 "the same measured-density reason.",
-    },
-    "Xk": {
-        "group": "X-complex",
-        "composition": "Xk-type: E-chondrite analog, enstatite dominant",
-        "minerals": ["enstatite", "nickel-iron", "troilite"],
-        "density_est_gcm3":  3.60,
-        "metal_fraction":    0.25,
-        "silicate_fraction": 0.65,
-        "carbon_fraction":   0.01,
-        "ice_fraction":      0.00,
-        "notes": "E-chondrite analog; high albedo.  v1.0.8: metal 0.50 → 0.25 "
-                 "— EH/EL enstatite chondrites carry ~20-25 wt% metal, and "
-                 "'enstatite dominant' cannot also be half metal.",
+        "notes": "v1.5.0: swapped with Xe.  13 of 24 Tholen M-types are Xk "
+                 "(Fornasier et al. 2010), 16 Psyche among them, so Xk is the "
+                 "metal-rich class; until 1.5.0 it carried the enstatite row.  "
+                 "Density 3.80: Psyche 3.8-3.9, Carry (2012) Xk 3.79-4.22.  "
+                 "Metal-rich but not a bare core: v1.0.8 (then as Xe) took it "
+                 "down from 0.75 metal / 5.00 g/cm³ alongside M.",
     },
 
     # ── Other spectral types ──────────────────────────────────────────────────
@@ -308,11 +361,13 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "composition": "Ordinary chondrite: olivine, pyroxene, metal",
         "minerals": ["olivine", "pyroxene", "nickel-iron"],
         "density_est_gcm3":  3.00,
-        "metal_fraction":    0.20,
+        "metal_fraction":    0.06,
         "silicate_fraction": 0.72,
         "carbon_fraction":   0.02,
         "ice_fraction":      0.00,
-        "notes": "Fresh/unweathered ordinary chondrite analog",
+        "notes": "Fresh/unweathered ordinary chondrite analog.  v1.5.0: metal "
+                 "0.20 -> 0.06, as S: more than H-chondrite metal was no LL/L "
+                 "chondrite.",
     },
     "R": {
         "group": "R-type",
@@ -341,11 +396,12 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "composition": "Basaltic crust fragment (HED meteorite analog)",
         "minerals": ["pyroxene", "plagioclase", "olivine"],
         "density_est_gcm3":  2.90,
-        "metal_fraction":    0.05,
+        "metal_fraction":    0.01,
         "silicate_fraction": 0.90,
         "carbon_fraction":   0.01,
         "ice_fraction":      0.00,
-        "notes": "Vestoids / Vesta family; strong pyroxene bands",
+        "notes": "Vestoids / Vesta family; strong pyroxene bands.  v1.5.0: metal "
+                 "0.05 -> 0.01; eucrites carry trace metal only.",
     },
 
     # ── Tholen-only types (no direct Bus-DeMeo equivalent) ────────────────────
@@ -362,7 +418,8 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "silicate_fraction": 0.45,
         "carbon_fraction":   0.01,
         "ice_fraction":      0.00,
-        "notes": "Tholen M-type ≈ Bus-DeMeo Xe; high IR albedo, low optical.  "
+        "notes": "Tholen M-type ≈ Bus-DeMeo Xk (13 of 24, Fornasier et al. "
+                 "2010; until 1.5.0 this said Xe); moderate albedo.  "
                  "v1.0.8: was 0.80 metal / 5.30 g/cm³, the pre-Psyche "
                  "'exposed iron core' assumption.  16 Psyche's measured bulk "
                  "density is ~3.8-3.9 g/cm³ (Elkins-Tanton et al. 2020, "
@@ -380,7 +437,8 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "silicate_fraction": 0.85,
         "carbon_fraction":   0.01,
         "ice_fraction":      0.00,
-        "notes": "Tholen E-type ≈ Bus-DeMeo Xk; very high albedo (>0.3).  "
+        "notes": "Tholen E-type ≈ Bus-DeMeo Xe (the 0.49-μm band; until 1.5.0 "
+                 "this said Xk); very high albedo (>0.3).  "
                  "v1.0.8: metal 0.30 → 0.10 — aubrites are enstatite "
                  "achondrites and are very nearly metal-free.",
     },
@@ -402,9 +460,10 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "density_est_gcm3":  1.40,
         "metal_fraction":    0.01,
         "silicate_fraction": 0.35,
-        "carbon_fraction":   0.28,
+        "carbon_fraction":   0.04,
         "ice_fraction":      0.15,
-        "notes": "Tholen F-type ≈ Bus-DeMeo B; flat featureless spectrum",
+        "notes": "Tholen F-type ≈ Bus-DeMeo B; flat featureless spectrum.  "
+                 "v1.5.0: carbon 0.28 -> 0.04, as C.",
     },
     "G": {
         "group": "C-complex",
@@ -413,9 +472,10 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "density_est_gcm3":  1.50,
         "metal_fraction":    0.02,
         "silicate_fraction": 0.38,
-        "carbon_fraction":   0.22,
+        "carbon_fraction":   0.04,
         "ice_fraction":      0.12,
-        "notes": "Tholen G-type ≈ Bus-DeMeo Cg; Ceres-like",
+        "notes": "Tholen G-type ≈ Bus-DeMeo Cg; Ceres-like.  v1.5.0: carbon 0.22 "
+                 "-> 0.04, as C.",
     },
 
     # ── Fallback ──────────────────────────────────────────────────────────────
@@ -430,6 +490,76 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "ice_fraction":      None,
         "notes": "No spectral classification available",
     },
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# DENSITY EVIDENCE  (1.5.0)
+# ─────────────────────────────────────────────────────────────────────────────
+# What measured bodies say about each class's `density_est_gcm3`, so the
+# estimate can be held to it (tests/test_traps.py).  `carry2012` is the class
+# average over the densities known to 20% or better, (mean, sigma, N), from
+# Carry (2012, Planet. Space Sci. 73, 98), Table 3: the tier worth testing
+# against.  Classes with nothing at that precision are absent.  `bodies` are
+# individual densities, for reading, from the same paper's Table 1 unless a
+# later reference is named.
+#
+# THE ESTIMATE MAY SIT BELOW A CLASS AVERAGE, NOT ABOVE IT.  Carry finds C- and
+# S-complex density rising with size, and the bodies measured to 20% are
+# overwhelmingly large, while the estimate sizes the ~1.4 M small bodies that
+# have no mass.  So the rule is:
+#
+#   estimate <= mean + 2 sigma     always: denser than the measured bodies of
+#                                  its class is not an estimate anyone made
+#   estimate >= mean - 2 sigma     unless `below_because` says why the
+#                                  measured bodies do not speak for the small
+#                                  ones the estimate sizes
+#
+# Carry's D-type average (9.56, three bodies at any precision) is not
+# physical and is not used.
+DENSITY_EVIDENCE: Dict[str, dict] = {
+    "S":  {"carry2012": (2.72, 0.54, 11),
+           "bodies": [("433 Eros", 3.00, 0.08), ("243 Ida", 2.35, 0.29),
+                      ("25143 Itokawa", 1.91, 0.21)]},
+    "Sq": {"carry2012": (3.43, 0.20, 2),
+           "bodies": [("3 Juno", 3.68, 0.62), ("11 Parthenope", 3.27, 0.41)],
+           "below_because": "the two Sq-types known to 20% are large (Juno "
+                            "242 km, Parthenope 151 km); small "
+                            "S-types are rubble piles, Itokawa 1.9 +/- 0.13 "
+                            "(Fujiwara et al. 2006)"},
+    "B":  {"carry2012": (2.38, 0.45, 2),
+           "bodies": [("2 Pallas", 2.86, 0.32), ("704 Interamnia", 1.96, 0.28),
+                      ("101955 Bennu", 1.190, 0.013)],   # Lauretta et al. 2019
+           "below_because": "Carry's B-types known to 20% are large (Pallas "
+                            "514 km, Interamnia 317 km); the small B measured "
+                            "by spacecraft, Bennu, "
+                            "is 1.190 +/- 0.013 (Lauretta et al. 2019)"},
+    "C":  {"carry2012": (1.33, 0.58, 5),
+           "bodies": [("1 Ceres", 2.13, 0.15), ("45 Eugenia", 1.34, 0.29),
+                      ("90 Antiope", 0.86, 0.06)]},
+    "Cb": {"carry2012": (1.25, 0.21, 3),
+           "bodies": [("253 Mathilde", 1.32, 0.20), ("762 Pulcova", 1.00, 0.14)]},
+    "Ch": {"carry2012": (1.41, 0.29, 9),
+           "bodies": [("41 Daphne", 2.03, 0.32), ("121 Hermione", 1.27, 0.22),
+                      ("130 Elektra", 1.84, 0.22)]},
+    "X":  {"carry2012": (1.85, 0.81, 8),
+           "bodies": [("87 Sylvia", 1.31, 0.15), ("107 Camilla", 2.28, 0.29),
+                      ("22 Kalliope", 4.40, 0.46)]},   # Ferrais et al. 2022
+    "Xc": {"carry2012": (4.86, 0.81, 2),
+           # Hestia is Carry's confidence rank E, the lowest.
+           "bodies": [("97 Klotho", 4.16, 0.62), ("46 Hestia", 5.81, 0.87)]},
+    "Xe": {"carry2012": (2.60, 0.20, 1),
+           "bodies": [("3169 Ostro", 2.59, 0.20), ("216 Kleopatra", 4.27, 0.86)]},
+    "Xk": {"carry2012": (4.22, 0.65, 3),
+           "bodies": [("16 Psyche", 3.38, 1.16), ("21 Lutetia", 3.44, 0.52)]},
+    "K":  {"carry2012": (3.54, 0.21, 1),
+           "bodies": [("15 Eunomia", 3.54, 0.20)],
+           "below_because": "one body: 15 Eunomia, 256 km, which other "
+                            "catalogs class S; no small K-type has been "
+                            "measured, and the estimate is the CV/CO analogue "
+                            "at an S-type's macroporosity"},
+    "V":  {"carry2012": (1.93, 1.07, 3),
+           "bodies": [("4 Vesta", 3.58, 0.15), ("809 Lundia", 1.64, 0.10),
+                      ("854 Frostia", 0.88, 0.13)]},
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -454,14 +584,36 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
 #
 # These factors only multiply the RARE-METAL portion (Pt, Pd, Ru, Ir, Os,
 # Rh, Au) of the nickel-iron yield in Module 4; base metals (Fe, Ni, Co)
-# are unaffected.  Conservative midpoints; the literature variance is huge
-# (iron meteorite Ir alone ranges 0.01-19 ppm).
+# are unaffected.  Conservative midpoints; the literature variance is huge.
+#
+# ⚠️  NONE OF THESE NUMBERS HAS A SOURCE, AND ONE PREMISE ABOVE IS WRONG.
+# Neither the ~37 ppm baseline nor any factor traces to a publication.  What
+# the literature does say (Kargel 1994, JGR 99, 21129): precious metals in
+# iron meteorites vary "up to several hundred ppm", and the Fe-Ni metal of LL
+# chondrites carries 50-220 ppm.  Other compilations agree on the spread:
+# IIIAB irons run 0.17-75 ppm total PGM from the 10th to the 90th percentile,
+# and six irons measured by AMS 16-270 ppm.  So:
+#
+#   * "chondritic" and "mean iron meteorite" are NOT the same baseline, as
+#     the paragraph above says they are.  PGMs are siderophile: in an
+#     undifferentiated body nearly all of them sit in its metal, and the less
+#     metal there is the richer it is.  LL metal is 1.4-6x the 37 ppm
+#     baseline, not 1x.
+#   * so the ordinary-chondrite classes (S, Sq, Q) at 1.0 UNDERSTATE their
+#     metal's PGM, and more so since 1.5.0 cut their metal fraction to 0.06:
+#     a consumer multiplying metal x ppm x factor now credits an S-type with
+#     less than half the PGM it did.  That is the conservative direction, and
+#     it is left there deliberately rather than replaced by another guess.
+#
+# A calibrated table would start from bulk chondritic PGM (conserved through
+# differentiation) divided by each class's metal fraction.  Until it does,
+# cost nothing that depends on these factors being right.
 
 PGM_ENRICHMENT_BY_TYPE: Dict[str, float] = {
     # ── Differentiated core fragments, PGMs concentrated by metal-segregation ──
     "M":  2.0,   # Tholen metallic (e.g. 16 Psyche)
-    "Xe": 2.0,   # Bus-DeMeo M-analog
-    "Xk": 1.5,   # E-chondrite / aubrite analog, partial differentiation
+    "Xk": 2.0,   # Bus-DeMeo M-analog (13 of 24 Tholen M are Xk; was Xe until 1.5.0)
+    "Xe": 1.5,   # E-chondrite / aubrite analog (the 0.49-um E-type band; was Xk)
     "X":  1.5,   # X-complex ambiguous (assume partial)
     "Xc": 1.2,   # low-albedo X: partially carbonaceous
     "E":  1.5,   # Tholen enstatite, aubrite analog

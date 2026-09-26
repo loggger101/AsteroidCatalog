@@ -130,11 +130,24 @@ def deduplicate_catalog(
 # catalogs did not garble it, and a DISagreement is always informative.
 #
 # The tolerances are a reading of typical catalogue precision, not fitted:
-# NEOWISE quotes ~10% on diameter for well-observed bodies; albedo carries
-# roughly twice the relative error of diameter; published masses scatter by
-# tens of percent; catalogue H values differ systematically by 0.1-0.3 mag; a
-# rotation period is precise enough that 2% catches the half/double-period
-# ambiguity.  `<stem>_spread` is published so a caller can apply their own.
+#
+#   diameter 10%, albedo 25%   the accuracy of a WISE/NEOWISE thermal fit
+#                              against radar and spacecraft sizes, +/-10% in
+#                              diameter and +/-25% in albedo (Mainzer et al.
+#                              2011, ApJ 736, 100): albedo carries roughly
+#                              twice diameter's relative error, as p_V ~ 1/D^2
+#   H 0.30 mag                 catalog H is systematically too bright for small
+#                              bodies, by -0.4 to -0.5 mag on average at
+#                              H ~ 14 and under 0.1 mag for large ones (Pravec
+#                              et al. 2012, Icarus 221, 365); 0.3 separates a
+#                              catalog quoting an older H from one garbling it
+#   mass 25%                   published masses scatter by tens of percent
+#                              (Carry 2012, Planet. Space Sci. 73, 98, where
+#                              only a third of 287 densities reach 20%)
+#   rotation 2%                a period is precise enough that 2% catches the
+#                              half/double-period ambiguity
+#
+# `<stem>_spread` is published so a caller can apply their own.
 #
 # ⚠️  PRECEDENCE PICKS AMONG POSSIBLE VALUES ONLY  (data contract 1.4.0).  Until
 # 1.3.0 the first source with a value won, whatever the value was, and the
@@ -161,7 +174,8 @@ def deduplicate_catalog(
 # identity, not on masses: its SBDB `GM` covers 17 bodies, carries no
 # uncertainty, and gives Hygiea and Interamnia to one significant figure (7.0
 # and 5.0 km^3/s^2, i.e. 1.05e20 and 7.49e19 kg, against 8.7e19 and ~3.5e19 in
-# the literature).  ssoBFT's mass is a weighted, outlier-rejected combination
+# the literature: Carry 2012's weighted averages are 8.63 +/- 0.52e19 and
+# 3.28 +/- 0.45e19).  ssoBFT's mass is a weighted, outlier-rejected combination
 # of every published estimate, the spacecraft masses JPL quotes included (the
 # two agree to 0.2% on Ceres, Vesta, Eros and Bennu).
 MEASURED_FIELDS: Dict[str, dict] = {

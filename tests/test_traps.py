@@ -108,6 +108,49 @@ def test_m_type_is_not_a_bare_metal_core():
     assert float(m["density_est_gcm3"]) < 5.0
 
 
+def test_density_estimates_answer_to_measured_bodies():
+    """Each class estimate against Carry (2012)'s average of the bodies
+    measured to 20%: never above it by more than 2 sigma, and below it by
+    more than 2 sigma only with a stated reason.  A reason that is no longer
+    needed must go too, so the table and its excuses cannot drift apart."""
+    from asteroid_catalog.taxonomy import DENSITY_EVIDENCE
+    for cls, ev in DENSITY_EVIDENCE.items():
+        assert cls in ac.TAXONOMY_COMPOSITION, cls
+        est = float(ac.TAXONOMY_COMPOSITION[cls]["density_est_gcm3"])
+        mean, sigma, n = ev["carry2012"]
+        assert n >= 1
+        assert est <= mean + 2 * sigma, "%s: %.2f above %.2f + 2x%.2f" % (cls, est, mean, sigma)
+        below = est < mean - 2 * sigma
+        assert below == ("below_because" in ev), \
+            "%s: %.2f vs %.2f +/- %.2f, below_because %s" % (
+                cls, est, mean, sigma, "missing" if below else "stale")
+
+
+def test_xk_is_the_metal_class_and_xe_the_enstatite_one():
+    """Most Tholen M-types are Bus-DeMeo Xk (13 of 24, Fornasier et al. 2010),
+    and Xe's 0.49-um band is the E-types'.  Until 1.5.0 the two rows were
+    swapped, so an Xk was valued as enstatite and an Xe as a core fragment."""
+    t = ac.TAXONOMY_COMPOSITION
+    assert t["Xk"]["metal_fraction"] > t["Xe"]["metal_fraction"]
+    assert t["Xk"]["density_est_gcm3"] > t["Xe"]["density_est_gcm3"]
+    assert ac.pgm_enrichment_for_type("Xk") == ac.pgm_enrichment_for_type("M")
+    assert "enstatite" in t["Xe"]["composition"].lower()
+
+
+@pytest.mark.parametrize("cls", ["B", "C", "Cb", "Cg", "Cgh", "Ch", "F", "G"])
+def test_hydrated_c_types_carry_the_carbon_their_meteorites_do(cls):
+    """CI chondrites 3.5-3.9 wt% C, Bennu 4.5-4.7, Ryugu ~4.0.  The 0.20-0.30
+    these rows carried until 1.5.0 was five to seven times any measurement."""
+    assert 0.02 <= ac.TAXONOMY_COMPOSITION[cls]["carbon_fraction"] <= 0.06
+
+
+@pytest.mark.parametrize("cls", ["S", "Sa", "Sk", "Sl", "Sq", "Sr", "Sv", "Q"])
+def test_ordinary_chondrite_classes_carry_ll_to_l_metal(cls):
+    """LL 3.56 and L 8.33 wt% Fe-Ni-Co (Jarosewich 1990).  0.15 was H-chondrite
+    metal, and 0.20 more than any ordinary chondrite."""
+    assert 0.0356 <= ac.TAXONOMY_COMPOSITION[cls]["metal_fraction"] <= 0.0833
+
+
 def test_every_class_carries_the_schema():
     keys = {"group", "composition", "minerals", "density_est_gcm3"}
     for name, entry in ac.TAXONOMY_COMPOSITION.items():
