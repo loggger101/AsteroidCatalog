@@ -102,7 +102,9 @@ class CatalogConfig:
     # Measured 2026-08-08 against the live APIs, which is what the defaults are
     # sized from:
     #     JPL SBDB      1,554,321 asteroids   (139,582 with a measured diameter)
-    #     SsODNet        ~1,200,000 rows      (~500 MB parquet, cached)
+    #     SsODNet        ~1,200,000 rows      (~500 MB parquet, cached; by
+    #                                          2026-09-26 ~1.56 M bodies and
+    #                                          ~850 MB)
     #     NEOWISE V2.0     183,412 rows       (143,318 unique bodies w/ diameter)
     #     MP3C           1,335,502 bodies     (measured 2026-09-22; TAP at
     #                                          dachs.oca.eu since it moved)
@@ -212,7 +214,7 @@ class CatalogConfig:
     # and a bump does NOT mean a number changed, which is why nothing may read
     # a version as evidence that a result moved.  What each bump did, and what
     # was measured to say so, goes in CHANGELOG.md, not here.
-    pipeline_version: str = "1.4.1"
+    pipeline_version: str = "1.5.0"
 
 
 # The defaults.  Configure a build by passing a CatalogConfig of your own;

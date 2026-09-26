@@ -83,6 +83,29 @@ def test_breakup_period():
     assert min_rotation_period_h(8.0) == pytest.approx(1.17, abs=0.01)
 
 
+def test_breakup_at_every_ceiling_is_faster_than_the_observed_spin_barrier():
+    """The screen refuses only what theory AND the observed population rule
+    out: at every class ceiling the breakup period is under the ~2.2 h spin
+    barrier seen among asteroids larger than a few hundred metres (Pravec &
+    Harris 2000).  A ceiling low enough to break that is a ceiling to check."""
+    for lo, hi in DENSITY_LIMITS_GCM3.values():
+        assert min_rotation_period_h(hi) < 2.2
+
+
+def test_the_h_diameter_constant_is_the_sun_at_two_au():
+    """1329 km is 2 AU * 10**(V_sun/5) with V_sun = -26.762 (Campins et al.
+    1985; derived in Pravec & Harris 2007, Appendix A).  Re-derived here so
+    that the constant and the reason for it cannot drift apart, and one copy
+    serves both the derivation and the screens that invert it."""
+    from asteroid_catalog import derive, physics
+    k = 2.0 * physics.AU_KM * 10 ** (physics.V_SUN / 5.0)
+    assert k == pytest.approx(physics.H_DIAMETER_CONSTANT, abs=0.5)
+    assert derive._H_DIAMETER_CONSTANT is physics.H_DIAMETER_CONSTANT
+    # H = 15 at p_V = 0.25 is the textbook 2.66 km.
+    d = physics.H_DIAMETER_CONSTANT / np.sqrt(0.25) * 10 ** (-15 / 5)
+    assert physics.albedo_from_h_and_diameter(15.0, d) == pytest.approx(0.25)
+
+
 # ---------------------------------------------------------------------------
 # masses
 # ---------------------------------------------------------------------------

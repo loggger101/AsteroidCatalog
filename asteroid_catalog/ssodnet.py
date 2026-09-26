@@ -31,8 +31,9 @@ from .jpl import DAYS_PER_YEAR
 # SsODNet ssoBFT FETCHER  (IMCCE, Solar-system Best-estimate Table)
 # ─────────────────────────────────────────────────────────────────────────────
 # SsODNet aggregates ~3,000 published catalogs into a single best-estimate
-# table for ~1.2 M asteroids.  We pull the bulk Apache-Parquet file
-# (~850 MB) ONCE per `cache_max_age_days` and read only the columns we need
+# table for ~1.56 M asteroids (1,563,656 bodies of data-2026-09-26 carry its
+# data).  We pull the bulk Apache-Parquet file (~850 MB) ONCE per
+# `cache_max_age_days` and read only the columns we need
 # via pyarrow column projection so the in-memory footprint is small.
 #
 # Schema notes (parquet column names use dotted paths: 244 cols as of the
@@ -331,7 +332,7 @@ def fetch_ssodnet(config: CatalogConfig) -> pd.DataFrame:
         return pd.DataFrame()
 
     # Cap to config.ssodnet_limit so SsODNet doesn't dominate small runs.
-    # NB: full table is ~1.2 M rows; trimming here keeps merge / dedup fast.
+    # NB: full table is ~1.56 M rows; trimming here keeps merge / dedup fast.
     # IMPORTANT: sort by `number` ASC first so a small-N run gets the LOWEST
     # IAU numbers (Ceres=1, Pallas=2, Juno=3, Vesta=4, …), the most famous
     # bodies, rather than whatever arbitrary order the parquet stores rows in.

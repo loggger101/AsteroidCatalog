@@ -97,8 +97,11 @@ widely used for MPC data (check the MPC's current policy before publishing):
 ### Taxonomy and composition
 
 `TAXONOMY_COMPOSITION` maps a spectral class to a bulk density estimate and
-four mass fractions. The taxonomy itself is Bus-DeMeo; the mineralogy per class
-is literature mean values, and the per-row `notes` field carries the reasoning.
+four mass fractions. The taxonomy itself is Bus-DeMeo; the per-row `notes`
+field carries the reasoning, and section 3 below lists the literature each
+sourced value rests on. Not every value has one: the silicate fractions,
+carbon outside the hydrated C-complex, and every ice fraction are estimates
+with no publication behind them, and the module says so.
 
 > DeMeo, F. E., Binzel, R. P., Slivan, S. M., and Bus, S. J. (2009). *An
 > extension of the Bus asteroid taxonomy into the near-infrared.* Icarus,
@@ -120,10 +123,17 @@ carry it as unknown.
 > Fowler, J. W., and Chillemi, J. R. (1992). *IRAS asteroid data processing.*
 > In *The IRAS Minor Planet Survey*, Tech. Report PL-TR-92-2049.
 
-The constant 1329 km is the standard value. H is measured; the only estimated
-quantity is the geometric albedo `p_V`, which is why every row produced this
-way is tagged in `diameter_source` and flagged in
-`derived_diameter_is_estimate`.
+The constant is 2 AU × 10^(V_sun/5) with the Sun's V = −26.762 ± 0.017
+(Campins et al. 1985), 1329 ± 10 km, derived in Appendix A of:
+
+> Pravec, P., and Harris, A. W. (2007). *Binary asteroid population. 1.
+> Angular momentum content.* Icarus, 190, 250–259.
+
+The V_sun uncertainty is a ~1% systematic in diameter. H is measured; the only
+estimated quantity is the geometric albedo `p_V`, which is why every row
+produced this way is tagged in `diameter_source` and flagged in
+`derived_diameter_is_estimate`. The albedo tables are medians over a release;
+`tools/albedo_tables.py` recomputes them from any built catalog.
 
 ### PGM enrichment by spectral type
 
@@ -133,17 +143,104 @@ scales the platinum-group fraction of a metal phase by parent-body
 differentiation history: core fragments enriched, basaltic crust depleted,
 primitive bodies at a chondritic baseline of 1.0.
 
-The baseline is calibrated to mean iron-meteorite PGM concentration (~37 ppm
-total PGM + Au in the metal phase). The per-type factors are conservative
-midpoints; the literature variance is large — iridium alone ranges roughly
-0.01–19 ppm across iron meteorites.
+The baseline is set to a mean iron-meteorite PGM concentration of ~37 ppm
+total PGM + Au in the metal phase. ⚠️ Neither that figure nor any per-type
+factor traces to a publication, and the premise that chondritic metal sits at
+the same baseline is contradicted: LL-chondrite metal carries 50–220 ppm
+precious metals, while iron meteorites range up to several hundred ppm
+(Kargel 1994, section 3). The chondritic classes at 1.0 therefore understate
+their metal's PGM, which is the conservative direction.
 
 If you are not costing precious metals, ignore the `comp_pgm_enrichment`
 column entirely. Nothing else in the package depends on it.
 
 ---
 
-## 3. Provenance
+## 3. The literature behind the reference values
+
+Each entry names what it backs, so a number in the code can be traced here and
+back. Values checked against the publication (or its abstract) when this
+section was written; where only the journal is given, the volume and pages
+were not.
+
+**Diameters, albedos and absolute magnitudes**
+
+- Fowler, J. W., and Chillemi, J. R. (1992), IRAS Minor Planet Survey,
+  PL-TR-92-2049 — the 1329 km constant.
+- Pravec, P., and Harris, A. W. (2007), Icarus 190, 250 — its derivation from
+  V_sun = −26.762 (Campins et al. 1985).
+- Mainzer, A., et al. (2011), *Thermal model calibration for minor planets
+  observed with WISE/NEOWISE*, ApJ 736, 100 — ±10% diameter and ±25% albedo
+  against radar and spacecraft: the merge's agreement tolerances.
+- Pravec, P., et al. (2012), *Absolute magnitudes of asteroids and a revision
+  of asteroid albedo estimates from WISE thermal observations*, Icarus 221,
+  365 — catalog H too bright by 0.4–0.5 mag near H ≈ 14: the H tolerance, and
+  the independent confirmation of the NEOWISE-era albedo offset (README
+  section 4).
+- Buratti, B. J., et al. (2004), *Deep Space 1 photometry of the nucleus of
+  Comet 19P/Borrelly*, Icarus 167, 16 — p_V 0.029 ± 0.006, the darkest
+  measured whole body: `ALBEDO_FLOOR`.
+
+**Densities**
+
+- Carry, B. (2012), *Density of asteroids*, Planet. Space Sci. 73, 98
+  (arXiv:1203.4336) — the class averages in `DENSITY_EVIDENCE`, the comet and
+  TNO averages behind the density floor, and the Hygiea and Interamnia masses.
+- Ferrais, M., et al. (2022), *M-type (22) Kalliope: A tiny Mercury*, A&A 662,
+  A71 — 4.40 ± 0.46 g/cm³, the densest asteroid measured: the 5.0 ceiling.
+- Consolmagno, G. J., Britt, D. T., and Macke, R. J. (2008), *The significance
+  of meteorite density and porosity*, Chemie der Erde 68, 1; Macke, R. J., et
+  al. (2011), *Density, porosity, and magnetic susceptibility of carbonaceous
+  chondrites*, MAPS 46, 1842 — carbonaceous grain densities, CI 2.42 to CB
+  5.66: the 3.6 carbonaceous ceiling.
+- Macke, R. J., et al. (2010), *Enstatite chondrite density, magnetic
+  susceptibility, and porosity*, MAPS 45, 1513 — bulk 3.55, grain 3.66: the Xe
+  estimate.
+- Pätzold, M., et al. (2016), *A homogeneous nucleus for comet
+  67P/Churyumov–Gerasimenko from its gravity field*, Nature 530, 63 — 0.533 ±
+  0.006 g/cm³; Thomas, P. C., et al. (2013), Icarus — 9P/Tempel 1, 0.47
+  +0.78/−0.24: the density floor.
+- Lauretta, D. S., et al. (2019), *The unexpected surface of asteroid (101955)
+  Bennu*, Nature 568, 55 — 1.190 ± 0.013 g/cm³; Fujiwara, A., et al. (2006),
+  *The rubble-pile asteroid Itokawa as observed by Hayabusa*, Science 312,
+  1330 — 1.9 ± 0.13: why the B and Sq estimates sit below Carry's large-body
+  averages.
+
+**Composition**
+
+- DeMeo, F. E., et al. (2009), Icarus 202, 160 — the Bus-DeMeo classes.
+- Fornasier, S., et al. (2010), *Spectroscopic survey of M-type asteroids*,
+  Icarus, doi:10.1016/j.icarus.2010.07.001 — 13 of 24 Tholen M-types are
+  Bus-DeMeo Xk: why Xk, not Xe, carries the metal-rich row.
+- Pearson, V. K., et al. (2006), *Carbon and nitrogen in carbonaceous
+  chondrites*, MAPS 41, 1899 — CI chondrites 3.5–3.9 wt% C.
+- Lauretta, D. S., et al. (2024), *Asteroid (101955) Bennu in the laboratory*,
+  MAPS, doi:10.1111/maps.14227 — Bennu 4.5–4.7 wt% C, Ryugu ~4.0: the
+  C-complex carbon fraction.
+- Jarosewich, E. (1990), *Chemical analyses of meteorites: A compilation of
+  stony and iron meteorite analyses*, Meteoritics 25, 323 — Fe-Ni-Co metal in
+  H 17.8, L 8.33 and LL 3.56 wt%: the S-complex metal fraction.
+- Kargel, J. S. (1994), *Metalliferous asteroids as potential sources of
+  precious metals*, JGR 99(E10), 21129 — LL-chondrite metal 1.2–5.3% carrying
+  50–220 ppm precious metals: the PGM caveat.
+
+**Rotation and the outer Solar System**
+
+- Pravec, P., and Harris, A. W. (2000), *Fast and slow rotation of asteroids*,
+  Icarus 148, 12 — the breakup period, 3.3 h / √ρ.
+- Holsapple, K. A. (2007), *Spin limits of Solar System bodies: From the small
+  fast-rotators to 2003 EL61*, Icarus 187, 500 — gravity dominates strength
+  above ~10 km.
+- Emery, J. P., Burr, D. M., and Cruikshank, D. P. (2011), *Near-infrared
+  spectroscopy of Trojan asteroids: evidence for two compositional groups*,
+  AJ 141, 25 — the Trojans' D-type majority.
+- Gil-Hutton, R., and Brunini, A. (2008), *Surface composition of Hilda
+  asteroids from the analysis of the Sloan Digital Sky Survey colors*, Icarus
+  193, 567 — the Hildas' P/D bimodality.
+
+---
+
+## 4. Provenance
 
 Extracted from Module 1 of
 [economicspace](https://github.com/loggger101/economicspace), an

@@ -30,6 +30,7 @@ import pandas as pd
 
 from asteroid_catalog._frame import numeric as _col
 from asteroid_catalog.physics import (
+    _MEASURED_RECORD_CEILING,
     albedo_from_h_and_diameter, bulk_density_gcm3, density_limits, groups_of,
 )
 from asteroid_catalog.query import read_catalog
@@ -59,11 +60,12 @@ def suspects(df: pd.DataFrame):
     out.append(("measured mass outside its class's possible density",
                 mass_meas & ((rho < lo) | (rho > hi))))
 
-    # Possible, but denser than any asteroid whose mass is known to 25%
-    # (Psyche, Kalliope and Kleopatra run 3.4-4.2): a stony-iron at best,
-    # more often a mass or a diameter that is off.
+    # Possible, but denser than any asteroid measured: the densest is 22
+    # Kalliope, 4.40 +/- 0.46 (Ferrais et al. 2022), and Kleopatra and Psyche
+    # run 3.4-4.2.  A stony-iron at best, more often a mass or a diameter
+    # that is off.  The same 5.0 as physics._MEASURED_RECORD_CEILING.
     out.append(("measured mass implies more than 5 g/cm3 (possible, implausible)",
-                mass_meas & (rho > 5.0)))
+                mass_meas & (rho > _MEASURED_RECORD_CEILING)))
 
     p = pd.Series(albedo_from_h_and_diameter(h, diam), index=df.index)
     # Inside the gate's 0.005-2.0 but beyond any surface without an H error.
