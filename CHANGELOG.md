@@ -29,6 +29,13 @@ published parquet), and on synthetic sources built to contain them only those
 rows' `albedo_assumed_for_diameter`, `diameter_km`, `diameter_source` and
 `estimated_mass_kg` change.
 
+**Published as [`data-2026-09-26`](https://github.com/loggger101/AsteroidCatalog/releases/tag/data-2026-09-26)**,
+the first 1.4.1 release: 1,567,657 bodies, built from `d912cd6`, audit clean,
+every asset's sha256 as its manifest says.  Against `data-2026-09-25`: 188
+bodies JPL added, none gone, and 19 H-derived diameters and masses moved
+because JPL revised those bodies' H and orbit; no body's class, albedo,
+density, source list or diameter source changed.
+
 Everything else below moves no number: a full offline build against faked
 services writes the same catalog, cell for cell, under pandas 3 and 2.2.
 
