@@ -14,7 +14,7 @@ moving it is not evidence that a number changed.
 
 ---
 
-## Unreleased — data contract **1.4.1**
+## 0.6.0 - 2026-09-26 — data contract **1.4.1**
 
 **A body's size and its class read "no classification" the same way.**
 `derive_missing_diameters` recognised three spellings of an empty class
@@ -80,7 +80,8 @@ writing the CSV.
 used to fall back to reading all ~915 columns, which `pyproject.toml` already
 calls worse than failing; pyarrow is a declared dependency.
 
-⚠️  **`CatalogConfig.preview_rows` and `top_n_spectral_types` are removed.**
+⚠️  **A breaking change to the public surface**, which is why the minor version
+moves: `CatalogConfig.preview_rows` and `top_n_spectral_types` are removed.
 Nothing read them; the preview they configured stayed in economicspace. Code
 passing either by keyword must drop it.
 
@@ -98,7 +99,8 @@ the code aligns columns by hand.  The publish workflow reads `allow_shrink`
 through the environment like its other input, as its own header says every
 input must.
 
-Also: `say()` / `warn()` continuation lines realigned (they still sat where
+Also: validation no longer logs `FAIL  Rejected : 0` for a clean run;
+`say()` / `warn()` continuation lines realigned (they still sat where
 `print(` had put them), SsODNet's parquet size corrected to the ~850 MB it now
 is, the package docstring's "76-class table" (it has 32 classes) and "says so
 on stderr" (`warn` writes to stdout) corrected, and comments that pointed at
