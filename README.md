@@ -18,12 +18,14 @@ The current release is
 1,567,469 bodies, data contract 1.4.0, the first release built under the
 physical limits in [section 5](#5-nothing-physically-impossible-is-published).
 `data-2026-09-23` (contract 1.3.0) stays published and unchanged, and carries
-the impossible values that section lists.
+the impossible values that section lists. The code on `main` builds contract
+1.4.1, whose one change is in [CHANGELOG.md](CHANGELOG.md) and moves no row
+of `data-2026-09-25`.
 
 To build your own from the live sources:
 
 ```bash
-pip install git+https://github.com/loggger101/AsteroidCatalog@v0.4.0
+pip install git+https://github.com/loggger101/AsteroidCatalog@v0.5.0
 asteroid-catalog build --out ./data
 ```
 
@@ -85,9 +87,10 @@ https://github.com/loggger101/AsteroidCatalog/releases/download/<tag>/manifest.j
 ```python
 import pandas as pd
 df = pd.read_parquet("asteroid_catalog.parquet")
-# or, from the CSV; designation MUST be read as a string
+# or, from the CSV; the identifier columns MUST be read as strings
 df = pd.read_csv("asteroid_catalog.csv.gz", low_memory=False,
-                 dtype={"designation": str})
+                 dtype={"designation": str, "provisional_designation": str,
+                        "name": str, "spk_id": str})
 ```
 
 ### How a release is made
@@ -106,7 +109,8 @@ builds from the four live sources on a GitHub runner, then runs
   source's bodies (the `allow_shrink` input overrides this one gate only);
 - carries anything physically impossible: a mass and diameter implying a
   bulk density outside 0.25–8 g/cm³, a mass that is not density × volume, an
-  albedo of 1 or more, or a body 10 km or more across spinning faster than
+  albedo of 1 or more or below 0.01, a measured diameter that its H puts at an
+  albedo no surface has, or a body 10 km or more across spinning faster than
   it could without flying apart. See [5](#5-nothing-physically-impossible-is-published).
 
 Every failed gate is listed and nothing is published. `dry_run` builds and
@@ -127,7 +131,7 @@ JPL adds bodies daily. A catalog built today is a different length from one
 built last week, so **a result measured against one build must name the build
 it used**. Every row carries `catalog_date` and `pipeline_version`.
 
-This is also why `build_catalog` asks before overwriting an existing catalog:
+This is also why `asteroid-catalog build` asks before overwriting an existing catalog:
 the file it would replace cannot be fetched again. And it is why builds are
 published as [releases](#published-releases): a tag is a build you can name
 and fetch again.
@@ -287,7 +291,11 @@ Since 1.4.0, source by source and before precedence picks a value:
 - **When every mass contradicts the diameter,** the quantity fewer sources
   report goes: De Sitter's lone MP3C mass, or a TNO binary's lone MP3C
   diameter, which is then re-derived.
-- **Albedos of 1 or more are refused**, which are fits at their ceiling.
+- **Albedos of 1 or more are refused**, which are fits at their ceiling, and
+  so are albedos below 0.01, darker than any whole body ever measured.
+- **A measured diameter must fit the body's H:** together they imply an
+  albedo, and outside 0.005–2.0 (the albedo limits widened by 0.75 mag of H
+  error) the diameter belongs to another body or is a failed fit.
   **Rotation periods** faster than breakup, `sqrt(3π/Gρ)` at the class's
   density ceiling, are refused for bodies 10 km or more across.
 
@@ -350,7 +358,7 @@ depleted, primitive bodies at a chondritic 1.0.
 
 It is a **valuation layer, not an observation**, and it is the one part of this
 package that assumes you care about precious metals. If you do not, ignore the
-`pgm_enrichment` column; nothing else depends on it.
+`comp_pgm_enrichment` column; nothing else depends on it.
 
 ---
 
@@ -378,7 +386,7 @@ asteroid-catalog taxonomy M                  # one class
 asteroid-catalog taxonomy                    # all of them
 ```
 
-A full build downloads ~435 MB from JPL and a ~500 MB SsODNet parquet (cached
+A full build downloads ~435 MB from JPL and a ~850 MB SsODNet parquet (cached
 for 7 days by default), and takes a few minutes on a warm connection.
 
 ---
@@ -401,6 +409,7 @@ exactly like a clean result.
 ```bash
 pip install -e ".[test]"
 pytest -q
+ruff check          # unused imports and undefined names; CI runs it too
 ```
 
 No network and no catalog required. The suite is mostly **the documented traps,

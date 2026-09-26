@@ -40,9 +40,19 @@ import os
 import shutil
 from typing import Dict, List, Optional
 
+import numpy as np
 import pandas as pd
 
+from . import __version__
+from ._frame import numeric
 from .config import CONFIG
+from .physics import (
+    ALBEDO_CEILING, ALBEDO_FLOOR, DENSITY_LIMITS_ANY_GCM3, DENSITY_LIMITS_GCM3,
+    IMPLIED_ALBEDO_RANGE, albedo_from_h_and_diameter, bulk_density_gcm3,
+    rotation_is_impossible, smallest_diameter_km,
+)
+from .query import read_catalog  # noqa: F401  (re-exported: tools and tests read it here)
+from .taxonomy import PGM_ENRICHMENT_BY_TYPE, TAXONOMY_COMPOSITION
 
 MANIFEST_VERSION = 1
 
@@ -98,18 +108,6 @@ def gzip_deterministic(src: str, dst: str) -> None:
             shutil.copyfileobj(fin, fout, 1 << 20)
 
 
-def read_catalog(path: str) -> pd.DataFrame:
-    """Read a catalog CSV the way every reader must: designation as a string.
-
-    A numbered asteroid's designation looks like an integer, so a slice in
-    which every row happens to be numbered infers int64 and every string
-    comparison against it matches nothing.
-    """
-    return pd.read_csv(path, low_memory=False,
-                       dtype={"designation": str, "provisional_designation": str,
-                              "name": str, "spk_id": str})
-
-
 def _typed_for_parquet(df: pd.DataFrame) -> pd.DataFrame:
     """Give every object column one Arrow type.
 
@@ -129,6 +127,13 @@ def _typed_for_parquet(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
+def measured_diameters(df: pd.DataFrame) -> int:
+    """How many rows carry a measured, not derived, diameter."""
+    if "diameter_source" not in df.columns:
+        return 0
+    return int((df["diameter_source"] == "measured").sum())
+
+
 def source_counts(df: pd.DataFrame) -> Dict[str, int]:
     """How many bodies each source knows, from the per-row `sources` column."""
     if "sources" not in df.columns:
@@ -146,16 +151,8 @@ def physical_problems(df: pd.DataFrame) -> List[str]:
     ones, any class's, so a failure here is an impossible value and never a
     judgement call.  A catalog without the columns is not judged on them.
     """
-    import numpy as np
-    from .physics import (
-        ALBEDO_CEILING, ALBEDO_FLOOR, DENSITY_LIMITS_ANY_GCM3, IMPLIED_ALBEDO_RANGE,
-        albedo_from_h_and_diameter, bulk_density_gcm3, rotation_is_impossible,
-        smallest_diameter_km,
-    )
-
     def num(col):
-        return (pd.to_numeric(df[col], errors="coerce") if col in df.columns
-                else pd.Series(np.nan, index=df.index))
+        return numeric(df, col)
 
     def report(mask, what):
         mask = pd.Series(mask, index=df.index).fillna(False).astype(bool)
@@ -235,8 +232,7 @@ def check_release(df: pd.DataFrame, previous: Optional[dict] = None,
             problems.append("pipeline_version: catalog says %s, this package "
                             "writes %s" % (sorted(vals), CONFIG.pipeline_version))
 
-    measured = (int((df["diameter_source"] == "measured").sum())
-                if "diameter_source" in df.columns else 0)
+    measured = measured_diameters(df)
     if measured < floors["measured_diameters"]:
         problems.append("measured diameters: %d, below the floor of %d"
                         % (measured, floors["measured_diameters"]))
@@ -267,8 +263,6 @@ def check_release(df: pd.DataFrame, previous: Optional[dict] = None,
 
 def write_taxonomy(path: str) -> None:
     """The composition tables, exactly: JSON floats round-trip through repr."""
-    from .physics import DENSITY_LIMITS_GCM3
-    from .taxonomy import PGM_ENRICHMENT_BY_TYPE, TAXONOMY_COMPOSITION
     with open(path, "w", encoding="utf-8", newline="\n") as fh:
         # DENSITY_LIMITS_GCM3 decides which measured masses and densities a
         # build accepted, so it ships with the tables it is keyed on.
@@ -320,8 +314,6 @@ def package_release(build_dir: str, out_dir: str, tag: str,
     Raises ValueError, listing every failed gate, before writing anything if
     the build must not be published.  Returns the manifest.
     """
-    from . import __version__
-
     catalog_path = os.path.join(build_dir, CATALOG_CSV)
     rejected_path = os.path.join(build_dir, REJECTED_CSV)
     if not os.path.exists(catalog_path):
@@ -361,7 +353,7 @@ def package_release(build_dir: str, out_dir: str, tag: str,
         "source_commit": source_commit,
         "rows": int(len(df)),
         "columns": list(df.columns),
-        "measured_diameters": int((df["diameter_source"] == "measured").sum()),
+        "measured_diameters": measured_diameters(df),
         "rejected_rows": int(n_rejected),
         "sources": source_counts(df),
         "catalog_csv": _file_entry(catalog_path),

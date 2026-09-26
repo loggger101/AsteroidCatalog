@@ -12,13 +12,12 @@ about a side effect is exactly the kind nothing else here would catch: the
 package works perfectly either way.
 """
 
+import ast
 import os
 import subprocess
 import sys
 
-import pytest
-
-REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from _support import REPO, repo_env
 
 
 def _run(code, cwd):
@@ -28,11 +27,9 @@ def _run(code, cwd):
     imported the package, so an in-process check would be asking whether an
     import that already happened is about to print.
     """
-    env = dict(os.environ)
-    env["PYTHONPATH"] = REPO + os.pathsep + env.get("PYTHONPATH", "")
-    env.pop("ASTEROID_CATALOG_OUTPUT_DIR", None)
     return subprocess.run([sys.executable, "-c", code], cwd=str(cwd),
-                          capture_output=True, text=True, env=env)
+                          capture_output=True, text=True,
+                          env=repo_env(ASTEROID_CATALOG_OUTPUT_DIR=None))
 
 
 def test_import_prints_nothing(tmp_path):
@@ -90,16 +87,14 @@ def test_printed_output_is_ascii():
     prose and data, not output, so only the arguments of a `say`/`print`/`warn`
     call are checked.
     """
-    import ast
-    import io
-
     bad = []
     pkg = os.path.join(REPO, "asteroid_catalog")
     for fname in sorted(os.listdir(pkg)):
         if not fname.endswith(".py"):
             continue
         path = os.path.join(pkg, fname)
-        src = io.open(path, encoding="utf-8").read()
+        with open(path, encoding="utf-8") as fh:
+            src = fh.read()
         for node in ast.walk(ast.parse(src)):
             if not (isinstance(node, ast.Call)
                     and isinstance(node.func, ast.Name)

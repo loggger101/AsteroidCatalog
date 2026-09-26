@@ -22,6 +22,7 @@ import numpy as np
 import pandas as pd
 import requests
 
+from ._frame import coerce_numeric
 from ._log import say
 
 from .config import CatalogConfig
@@ -160,9 +161,7 @@ def fetch_mp3c(config: CatalogConfig) -> pd.DataFrame:
 
     df = best.rename(columns=_MP3C_RENAME)
     df = df.drop(columns=[c for c in ("bid", "name", "number") if c in df.columns])
-    for col in _MP3C_NUMERIC:
-        if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors="coerce")
+    coerce_numeric(df, _MP3C_NUMERIC)
     df = _mask_mp3c_sentinels(df)
     df["family"] = df["family"].astype("string").str.strip().replace({"": pd.NA})
 

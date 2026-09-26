@@ -25,8 +25,9 @@ Best-of-literature compilation: diameter, albedo, mass, density, rotation and
 taxonomy, cross-matched from roughly 3,000 published catalogs. Fetched as a
 bulk parquet by `fetch_ssodnet`.
 
-> Berthier, J., Carry, B., Vachier, F., et al. (2023). *Astronomy &
-> Astrophysics.* SsODNet: Solar system Open Database Network.
+> Berthier, J., Carry, B., Mahlke, M., and Normand, J. (2023). SsODNet:
+> Solar system Open Database Network. *Astronomy & Astrophysics*, 671, A151.
+> https://doi.org/10.1051/0004-6361/202244878
 
 **The service asks explicitly**: "For any use of the table, we ask the citation
 of the article: Berthier et al., 2023." It further asks that, where possible,
@@ -137,8 +138,8 @@ total PGM + Au in the metal phase). The per-type factors are conservative
 midpoints; the literature variance is large — iridium alone ranges roughly
 0.01–19 ppm across iron meteorites.
 
-If you are not costing precious metals, ignore the `pgm_enrichment` column
-entirely. Nothing else in the package depends on it.
+If you are not costing precious metals, ignore the `comp_pgm_enrichment`
+column entirely. Nothing else in the package depends on it.
 
 ---
 

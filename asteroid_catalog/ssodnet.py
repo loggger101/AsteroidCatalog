@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """IMCCE SsODNet ssoBFT: best-of-literature physical properties.
 
-Bulk-downloaded once as a ~500 MB parquet and cached, read with column
+Bulk-downloaded once as a ~850 MB parquet and cached, read with column
 projection so the ~915-column table is never materialised.
 
 TEST COLUMN MEMBERSHIP AGAINST `schema_arrow`, NEVER `schema`.  The latter is
@@ -10,31 +10,29 @@ path, so `spins.period.value` reads as absent and the projection silently
 drops it.
 """
 
-import json
 import os
-import sys
 import time as _time
-import warnings
-from dataclasses import dataclass
-from datetime import datetime
-from typing import Dict, Optional, Tuple
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
 import requests
-from tqdm.auto import tqdm
 
+from ._frame import coerce_numeric
+from ._http import write_body
 from ._log import say, warn
 
-from .config import CatalogConfig, _PY, _resolve_cache_dir
+from .config import (CatalogConfig, _PY, _cache_age_days, _cache_is_fresh,
+                     _resolve_cache_dir)
 from .designations import _extract_canonical_designation, _looks_like_designation
+from .jpl import DAYS_PER_YEAR
 
 # ─────────────────────────────────────────────────────────────────────────────
 # SsODNet ssoBFT FETCHER  (IMCCE, Solar-system Best-estimate Table)
 # ─────────────────────────────────────────────────────────────────────────────
 # SsODNet aggregates ~3,000 published catalogs into a single best-estimate
 # table for ~1.2 M asteroids.  We pull the bulk Apache-Parquet file
-# (~500 MB) ONCE per `cache_max_age_days` and read only the columns we need
+# (~850 MB) ONCE per `cache_max_age_days` and read only the columns we need
 # via pyarrow column projection so the in-memory footprint is small.
 #
 # Schema notes (parquet column names use dotted paths: 244 cols as of the
@@ -102,7 +100,7 @@ _SSODNET_WANTED = [
     "spins.period.value",
 ]
 
-# Without these three the frame cannot be merged; `merge_sources` keys on
+# Without these two the frame cannot be merged; `merge_sources` keys on
 # `designation`, which is built from `number` falling back to `name`.  Losing
 # them silently is the failure documented above, so the fetcher treats their
 # absence as fatal for this source rather than returning a useless frame.
@@ -159,7 +157,7 @@ _SSODNET_NUMERIC = [
 
 
 def _ssodnet_cache_path(config: CatalogConfig) -> str:
-    """Where the ~500 MB ssoBFT parquet is cached.
+    """Where the ~850 MB ssoBFT parquet is cached.
 
     Through `_resolve_cache_dir`, which defaults to the system temp directory
     rather than beside the CSVs, so a working copy on Google Drive does not
@@ -168,15 +166,7 @@ def _ssodnet_cache_path(config: CatalogConfig) -> str:
     return os.path.join(_resolve_cache_dir(config), _SSODNET_CACHE_FILE)
 
 
-def _ssodnet_cache_is_fresh(path: str, max_age_days: float) -> bool:
-    """Return True if a cached parquet exists and is < max_age_days old."""
-    if not os.path.exists(path):
-        return False
-    age_days = (datetime.now().timestamp() - os.path.getmtime(path)) / 86400.0
-    return age_days <= max_age_days
-
-
-# The bulk download is ~500 MB from one host, and the host has bad minutes:
+# The bulk download is ~850 MB from one host, and the host has bad minutes:
 # the first `data-2026-09-25` publish run lost SsODNet to a single timeout
 # 135 s in, with JPL, NEOWISE and MP3C all fine, and the release gate refused
 # the build.  A transient failure is retried; a 4xx or a local error is not.
@@ -215,31 +205,9 @@ def _download_ssodnet_once(dest: str, config: CatalogConfig) -> Tuple[bool, bool
             stream=True,
         ) as resp:
             resp.raise_for_status()
-            total = int(resp.headers.get("content-length") or 0) or None
-            tmp = dest + ".part"
-            with open(tmp, "wb") as fh, tqdm(
-                total=total,
-                desc="     SsODNet ssoBFT",
-                unit="B",
-                unit_scale=True,
-                unit_divisor=1024,
-                leave=True,
-                mininterval=0.5,
-            ) as pbar:
-                for chunk in resp.iter_content(chunk_size=1 << 20):  # 1 MB chunks
-                    if chunk:
-                        fh.write(chunk)
-                        pbar.update(len(chunk))
-            # Windows can briefly hold the freshly-closed file open via the
-            # indexer or AV, retry the atomic rename a few times before giving up.
-            for _ in range(8):
-                try:
-                    os.replace(tmp, dest)
-                    break
-                except PermissionError:
-                    _time.sleep(0.5)
-            else:
-                os.replace(tmp, dest)  # final attempt → raises if still locked
+            # Leaves no `.part` behind on failure, so a retry never trips the
+            # freshness check on a half-written file.
+            write_body(resp, dest, "     SsODNet ssoBFT")
         return True, False
     except requests.exceptions.Timeout:
         say("     FAIL  SsODNet download timed out")
@@ -257,19 +225,35 @@ def _download_ssodnet_once(dest: str, config: CatalogConfig) -> Tuple[bool, bool
         retryable = True
     except Exception as exc:
         say(f"     FAIL  SsODNet download error: {type(exc).__name__}: {exc}")
-    # Clean partial file on failure so a retry doesn't trip the freshness check
-    try:
-        os.remove(dest + ".part")
-    except OSError:
-        pass
     return False, retryable
+
+
+def _first_period(v) -> float:
+    """Best-ranked rotation period from one body's spin-solution list.
+
+    ssoBFT ships the solutions best-rank-first, so the first non-null
+    positive element is the answer, which reproduces the old
+    "best rank wins, lower ranks fill the gap" behaviour over a list.
+    The `TypeError` arm catches a scalar arriving through a future
+    schema change rather than assuming the column stays a list.
+    """
+    # pyarrow hands back None for absent lists and np.ndarray otherwise.
+    if v is None:
+        return np.nan
+    try:
+        for x in v:
+            if x is not None and not pd.isna(x) and float(x) > 0:
+                return float(x)
+    except TypeError:          # scalar sneaking through a schema change
+        return float(v) if pd.notna(v) else np.nan
+    return np.nan
 
 
 def fetch_ssodnet(config: CatalogConfig) -> pd.DataFrame:
     """
     Fetch the SsODNet ssoBFT best-estimate table.
 
-    The bulk parquet (~500 MB) is cached at
+    The bulk parquet (~850 MB) is cached at
         {cache_dir}/ssoBFT-latest_Asteroid.parquet
     (system tmp by default; see _resolve_cache_dir) and refreshed only when
     older than config.cache_max_age_days.
@@ -279,66 +263,65 @@ def fetch_ssodnet(config: CatalogConfig) -> pd.DataFrame:
     """
     say("\n   SsODNet ssoBFT  (ssp.imcce.fr) ...")
 
-    # pyarrow is required for column-projection parquet reads.  If somehow it
-    # didn't install, fall back to pandas' built-in parquet engine, which is
-    # usually pyarrow anyway but may be fastparquet on bare systems.
+    # pyarrow is a declared dependency, not an optional one: the column
+    # projection below is what keeps the ~915-column table out of memory, and a
+    # fallback that reads all of it is worse than no SsODNet (pyproject.toml).
+    # Checked before the download, so a broken install does not fetch 850 MB.
     try:
-        import pyarrow.parquet as pq          # noqa: F401  (engine probe)
-        engine = "pyarrow"
+        import pyarrow.parquet as pq
     except ImportError:
-        say("     WARN  pyarrow not available - falling back to pandas default engine")
-        engine = "auto"
+        warn("     FAIL  pyarrow is not installed - skipping SsODNet.  It is a "
+             "dependency of asteroid-catalog; reinstall the package.")
+        return pd.DataFrame()
 
     cache_path = _ssodnet_cache_path(config)
-    if _ssodnet_cache_is_fresh(cache_path, config.cache_max_age_days):
-        age_h = (datetime.now().timestamp() - os.path.getmtime(cache_path)) / 3600
+    if _cache_is_fresh(cache_path, config.cache_max_age_days):
+        age_h = _cache_age_days(cache_path) * 24
         say(f"       Using cached parquet ({age_h:.1f} h old): {cache_path}")
     else:
         say(f"     v   Downloading bulk parquet from {_SSODNET_PARQUET_URL}")
         if not _download_ssodnet_parquet(cache_path, config):
-            return pd.DataFrame()
+            # A failed refresh leaves the previous file untouched (the
+            # download writes to `.part` and replaces only on success), and
+            # stale best-of-literature values beat losing the source, as the
+            # MPC links already decide for their own cache.
+            age = _cache_age_days(cache_path)
+            if age is None:
+                return pd.DataFrame()
+            say(f"     NOTE  refresh failed - using the stale cached parquet "
+                f"({age:.1f} days old)")
 
     # Read only the columns that actually exist in the schema (the schema does
     # drift between SsODNet releases).
     try:
-        if engine == "pyarrow":
-            import pyarrow.parquet as pq
-            pf = pq.ParquetFile(cache_path)
-            # schema_arrow, NOT schema.  The parquet PHYSICAL schema flattens a
-            # list column into its inner path, so `spins.period.value` is absent
-            # from pf.schema.names while present in pf.schema_arrow.names, and
-            # read(columns=…) expects the arrow-level name.  Testing membership
-            # against the physical schema silently drops every nested column.
-            schema_names = set(pf.schema_arrow.names)
-            cols = [c for c in _SSODNET_WANTED if c in schema_names]
-            missing = [c for c in _SSODNET_WANTED if c not in schema_names]
-            if missing:
-                # SsODNet renames flattened columns between releases, so a few
-                # misses are normal and tolerable.  Say which, at every scale, 
-                # the old code only spoke up when fewer than 5 columns matched,
-                # which is exactly why a release that renamed the IDENTITY
-                # columns (and 6 others) passed for healthy: 14 still matched.
-                say(f"     NOTE   Schema drift: {len(cols)}/{len(_SSODNET_WANTED)} "
-                      f"columns matched, missing {missing}")
-            absent_required = [c for c in _SSODNET_REQUIRED if c not in schema_names]
-            if absent_required:
-                warn(f"     FAIL  ssoBFT schema is missing the merge key(s) "
-                      f"{absent_required} - cannot build `designation`, so every "
-                      f"row would be dropped at merge time.  Skipping SsODNet.")
-                say(f"         Inspect the real schema and update "
-                      f"_SSODNET_WANTED / _SSODNET_RENAME:")
-                say(f"         {_PY} -c \"import pyarrow.parquet as pq; "
-                      f"print(pq.ParquetFile(r'{cache_path}').schema_arrow.names)\"")
-                return pd.DataFrame()
-            df = pf.read(columns=cols).to_pandas()
-        else:
-            df = pd.read_parquet(cache_path)
-            absent_required = [c for c in _SSODNET_REQUIRED if c not in df.columns]
-            if absent_required:
-                warn(f"     FAIL  ssoBFT schema is missing the merge key(s) "
-                      f"{absent_required} - skipping SsODNet.")
-                return pd.DataFrame()
-            df = df[[c for c in _SSODNET_WANTED if c in df.columns]]
+        pf = pq.ParquetFile(cache_path)
+        # schema_arrow, NOT schema.  The parquet PHYSICAL schema flattens a
+        # list column into its inner path, so `spins.period.value` is absent
+        # from pf.schema.names while present in pf.schema_arrow.names, and
+        # read(columns=…) expects the arrow-level name.  Testing membership
+        # against the physical schema silently drops every nested column.
+        schema_names = set(pf.schema_arrow.names)
+        cols = [c for c in _SSODNET_WANTED if c in schema_names]
+        missing = [c for c in _SSODNET_WANTED if c not in schema_names]
+        if missing:
+            # SsODNet renames flattened columns between releases, so a few
+            # misses are normal and tolerable.  Say which, at every scale:
+            # the old code only spoke up when fewer than 5 columns matched,
+            # which is exactly why a release that renamed the IDENTITY
+            # columns (and 6 others) passed for healthy: 14 still matched.
+            say(f"     NOTE   Schema drift: {len(cols)}/{len(_SSODNET_WANTED)} "
+                f"columns matched, missing {missing}")
+        absent_required = [c for c in _SSODNET_REQUIRED if c not in schema_names]
+        if absent_required:
+            warn(f"     FAIL  ssoBFT schema is missing the merge key(s) "
+                 f"{absent_required} - cannot build `designation`, so every "
+                 f"row would be dropped at merge time.  Skipping SsODNet.")
+            say("         Inspect the real schema and update "
+                "_SSODNET_WANTED / _SSODNET_RENAME:")
+            say(f"         {_PY} -c \"import pyarrow.parquet as pq; "
+                f"print(pq.ParquetFile(r'{cache_path}').schema_arrow.names)\"")
+            return pd.DataFrame()
+        df = pf.read(columns=cols).to_pandas()
     except Exception as exc:
         say(f"     FAIL  Parquet read failed: {type(exc).__name__}: {exc}")
         return pd.DataFrame()
@@ -347,7 +330,7 @@ def fetch_ssodnet(config: CatalogConfig) -> pd.DataFrame:
         say("     WARN  Parquet returned 0 rows")
         return pd.DataFrame()
 
-    # Cap to config.jpl_limit so SsODNet doesn't dominate runtime on small runs.
+    # Cap to config.ssodnet_limit so SsODNet doesn't dominate small runs.
     # NB: full table is ~1.2 M rows; trimming here keeps merge / dedup fast.
     # IMPORTANT: sort by `number` ASC first so a small-N run gets the LOWEST
     # IAU numbers (Ceres=1, Pallas=2, Juno=3, Vesta=4, …), the most famous
@@ -369,26 +352,6 @@ def fetch_ssodnet(config: CatalogConfig) -> pd.DataFrame:
     # first.  Take the first non-null element; same "best rank wins, lower
     # ranks fill the gap" behaviour as before, expressed over a list.
     if "spins.period.value" in df.columns:
-        def _first_period(v) -> float:
-            """Best-ranked rotation period from one body's spin-solution list.
-
-            ssoBFT ships the solutions best-rank-first, so the first non-null
-            positive element is the answer, which reproduces the old
-            "best rank wins, lower ranks fill the gap" behaviour over a list.
-            The `TypeError` arm catches a scalar arriving through a future
-            schema change rather than assuming the column stays a list.
-            """
-            # pyarrow hands back None for absent lists and np.ndarray otherwise.
-            if v is None:
-                return np.nan
-            try:
-                for x in v:
-                    if x is not None and not pd.isna(x) and float(x) > 0:
-                        return float(x)
-            except TypeError:          # scalar sneaking through a schema change
-                return float(v) if pd.notna(v) else np.nan
-            return np.nan
-
         df["rotation_period_h"] = df["spins.period.value"].apply(_first_period)
         df = df.drop(columns=["spins.period.value"])
 
@@ -406,7 +369,7 @@ def fetch_ssodnet(config: CatalogConfig) -> pd.DataFrame:
                              + df[hi].astype("float64").abs()) / 2.0
             df = df.drop(columns=[lo, hi])
 
-    df = df.rename(columns={k: v for k, v in _SSODNET_RENAME.items() if k in df.columns})
+    df = df.rename(columns=_SSODNET_RENAME)
 
     # Designation: prefer `number` (numbered → "1"), fall back to `name`
     # (provisional designations / unnumbered).
@@ -435,14 +398,11 @@ def fetch_ssodnet(config: CatalogConfig) -> pd.DataFrame:
     if "density_gcm3" in df.columns:
         df["density_gcm3"] = pd.to_numeric(df["density_gcm3"], errors="coerce") / 1000.0
 
-    # Coerce all numerics
-    for col in _SSODNET_NUMERIC:
-        if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors="coerce")
+    coerce_numeric(df, _SSODNET_NUMERIC)
 
     # ssoBFT's orbital period is in days, the same as JPL's.
     if "orbital_period_yr" in df.columns:
-        df["orbital_period_yr"] = df["orbital_period_yr"] / 365.25
+        df["orbital_period_yr"] = df["orbital_period_yr"] / DAYS_PER_YEAR
 
     # `name` must stay an IAU NAME.  ssoBFT fills it with the provisional
     # designation for every unnamed body, and because the merge fills gaps,
@@ -462,5 +422,5 @@ def fetch_ssodnet(config: CatalogConfig) -> pd.DataFrame:
 
     df["source_ssodnet"] = True
     say(f"     OK  {len(df):,} records ingested from SsODNet ssoBFT "
-          f"({len(df.columns)} columns)")
+        f"({len(df.columns)} columns)")
     return df

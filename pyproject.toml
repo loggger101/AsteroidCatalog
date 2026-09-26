@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]   # 77: PEP 639 `license = "MIT"` and `license-files`
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "asteroid-catalog"
-version = "0.5.0"
+dynamic = ["version"]   # asteroid_catalog.__version__, the one place it is set
 description = "A merged, provenance-tagged catalog of the known asteroids: JPL SBDB, SsODNet, NEOWISE and MP3C cross-matched, validated, and enriched with a cited per-taxonomy composition estimate."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -23,7 +23,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Astronomy",
 ]
 
-# pyarrow is NOT optional.  SsODNet's ssoBFT is a ~500 MB parquet read with
+# pyarrow is NOT optional.  SsODNet's ssoBFT is a ~850 MB parquet read with
 # column projection so the ~915-column table is never materialised, and the
 # pandas default engine reads the whole thing.  A source that quietly needs
 # 20x the memory is worse than one that fails to install.
@@ -49,5 +49,16 @@ asteroid-catalog = "asteroid_catalog.cli:main"
 [tool.setuptools]
 packages = ["asteroid_catalog"]
 
+[tool.setuptools.dynamic]
+version = { attr = "asteroid_catalog.__version__" }
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+# Correctness only (the CI lint job).  No style rules and no formatter: the
+# code aligns columns by hand, which a formatter would undo everywhere.
+[tool.ruff]
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["F", "E9"]

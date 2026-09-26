@@ -24,10 +24,12 @@ from typing import Dict, List, Optional
 import numpy as np
 import pandas as pd
 
+from ._frame import numeric
 from ._log import say, warn
 
-from .designations import _extract_canonical_designation
+from .designations import _designation_key, _extract_canonical_designation
 from .identity import build_alias_map, resolve_designations
+from .neowise import combine_neowise_fits
 from .physics import (
     ALBEDO_CEILING, ALBEDO_FLOOR, IMPLIED_ALBEDO_RANGE, albedo_from_h_and_diameter,
     bulk_density_gcm3, density_limits, groups_of, rotation_is_impossible,
@@ -37,22 +39,6 @@ from .physics import (
 # ─────────────────────────────────────────────────────────────────────────────
 # DEDUPLICATION
 # ─────────────────────────────────────────────────────────────────────────────
-def _normalise_designation_key(s: pd.Series) -> pd.Series:
-    """
-    Normalisation used ONLY for duplicate detection.
-
-    Defers to the shared canonical extractor for the actual designation work
-    (collapsing "(1) Ceres", "1 Ceres", "00001" all to "1"; preserving
-    "2024 BX1" intact so distinct provisional designations stay distinct),
-    then uppercases the result so case variation can't fragment groups.
-
-    This is the SAME logic the fetchers run when they produce `designation`,
-    so a designation produced by the JPL pdes field and one produced from
-    another catalog's variant form are guaranteed to compare equal as dedup keys.
-    """
-    return _extract_canonical_designation(s).str.upper().str.strip()
-
-
 def deduplicate_catalog(
     df: pd.DataFrame,
     key: str = "designation",
@@ -83,7 +69,7 @@ def deduplicate_catalog(
     n_before = len(df)
 
     work = df.copy()
-    work["_dedup_key"] = _normalise_designation_key(work[key])
+    work["_dedup_key"] = _designation_key(work[key])
 
     # Drop rows whose normalised key is null; they can't be safely grouped.
     null_key = work["_dedup_key"].isna()
@@ -212,12 +198,12 @@ def _first(usable: np.ndarray, rank: List[int]) -> np.ndarray:
     return np.where(u.any(axis=1), np.asarray(rank)[first], -1)
 
 
-def _names(mask: np.ndarray, order: List[str]) -> pd.Series:
+def _names(mask: np.ndarray, order: List[str], index=None) -> pd.Series:
     """';'-joined source names per row where `mask` is set, NA where none."""
     out = np.full(len(mask), "", dtype=object)
     for j, s in enumerate(order):
         out = np.where(mask[:, j], np.where(out == "", s, out + ";" + s), out)
-    return pd.Series(out, dtype="string").replace("", pd.NA)
+    return pd.Series(out, index=index, dtype="string").replace("", pd.NA)
 
 
 def _say_screened(merged: pd.DataFrame, stem: str, V: np.ndarray,
@@ -283,24 +269,19 @@ def _resolve_measured(merged: pd.DataFrame, order: List[str]) -> pd.DataFrame:
         if screen == "albedo":
             refused = has & ((V >= ALBEDO_CEILING) | (V < ALBEDO_FLOOR))
         elif screen == "h_diameter":
-            h_cat = (pd.to_numeric(merged["absolute_magnitude_h"], errors="coerce")
-                     .to_numpy("float64") if "absolute_magnitude_h" in merged.columns
-                     else np.full(n, np.nan))
+            h_cat = numeric(merged, "absolute_magnitude_h").to_numpy("float64")
             p = albedo_from_h_and_diameter(h_cat[:, None], V)
             lo_p, hi_p = IMPLIED_ALBEDO_RANGE
             refused = has & ~np.isnan(p) & ((p < lo_p) | (p > hi_p))
         elif screen == "spin":
             _, ceiling = density_limits(groups)
-            smallest = smallest_diameter_km(
-                merged["diameter_km"] if "diameter_km" in merged.columns else np.full(n, np.nan),
-                merged["absolute_magnitude_h"] if "absolute_magnitude_h" in merged.columns
-                else np.full(n, np.nan))
+            smallest = smallest_diameter_km(numeric(merged, "diameter_km"),
+                                            numeric(merged, "absolute_magnitude_h"))
             refused = has & rotation_is_impossible(V, smallest[:, None], ceiling[:, None])
         elif screen == "density":
             floor, ceiling = density_limits(groups)
             no_sigma = has & (S >= V) if S is not None else np.zeros_like(has)
-            d_cat = (pd.to_numeric(merged["diameter_km"], errors="coerce").to_numpy("float64")
-                     if "diameter_km" in merged.columns else np.full(n, np.nan))
+            d_cat = numeric(merged, "diameter_km").to_numpy("float64")
             d_own = diam[0] if diam is not None else np.full_like(V, np.nan)
             rho_own = bulk_density_gcm3(V, d_own)
             rho_cat = bulk_density_gcm3(V, d_cat[:, None])
@@ -400,12 +381,8 @@ def _resolve_measured(merged: pd.DataFrame, order: List[str]) -> pd.DataFrame:
 # DATA MERGER
 # ─────────────────────────────────────────────────────────────────────────────
 #
-# Designed to scale to N sources.  Adding a new catalog later is:
-#   1. write fetch_<name>(config) returning a DataFrame keyed on 'designation'
-#   2. add a matching `use_<name>: bool = True` toggle to CatalogConfig
-#   3. inside build_catalog(), populate `sources["<Name>"] = fetch_<name>(...)
-#                                          if config.use_<name> else pd.DataFrame()`
-# merge_sources / dedup / validation pick the new source up automatically.
+# Designed to scale to N sources; merge_sources, dedup and validation pick a
+# new one up automatically.  What adding one takes: build.py, ADDING A SOURCE.
 #
 # The first non-empty source in the dict becomes the BACKBONE; remaining sources
 # are merged in with an OUTER join so designations unique to any source are
@@ -520,14 +497,14 @@ def merge_sources(
             merged.drop(columns=[src_col], inplace=True)
 
         say(f"     OK   Merged {src_name}: {len(supp):,} supplement records "
-              f"({overlap:,} matched the backbone, {n_rekeyed:,} of them re-keyed "
-              f"from another designation; +{new_rows:,} new entries)")
+            f"({overlap:,} matched the backbone, {n_rekeyed:,} of them re-keyed "
+            f"from another designation; +{new_rows:,} new entries)")
         if len(supp) and not overlap:
             warn(f"     ALERT  {src_name} matched ZERO backbone designations. "
-                  f"Every one of its {len(supp):,} rows entered as a new body "
-                  f"with no orbital elements, and validation will drop them "
-                  f"all.  Check how fetch_* builds `designation` - a float-typed "
-                  f"identifier stringifies to \"3.0\" and joins nothing.")
+                 f"Every one of its {len(supp):,} rows entered as a new body "
+                 f"with no orbital elements, and validation will drop them "
+                 f"all.  Check how fetch_* builds `designation` - a float-typed "
+                 f"identifier stringifies to \"3.0\" and joins nothing.")
 
     # The backbone's own measured columns join the per-source set under the
     # same naming, so one routine resolves them all.
@@ -539,10 +516,7 @@ def merge_sources(
     present = [f"_present__{s}" for s in order]
     flags = merged[present].eq(True)
     merged["n_sources"] = flags.sum(axis=1).astype("int64")
-    label = pd.Series("", index=merged.index, dtype="object")
-    for s, col in zip(order, present):
-        label = label.where(~flags[col], label + np.where(label == "", "", ";") + s)
-    merged["sources"] = label.astype("string")
+    merged["sources"] = _names(flags.to_numpy(), order, index=merged.index)
     merged.drop(columns=present, inplace=True)
 
     merged = merged[_column_order(backbone_cols, list(merged.columns))]
@@ -587,7 +561,6 @@ def _dedup_source(df: pd.DataFrame, name: str) -> pd.DataFrame:
     # 2026-09-22, median diameter spread 14.7%) rather than letting the more
     # complete row win.  Keyed on the column, not the source's display name.
     if "neowise_n_fits" in df.columns and "designation" in df.columns:
-        from .neowise import combine_neowise_fits
         df = combine_neowise_fits(df)
     out = deduplicate_catalog(df, key="designation", label=name)
     # A source that arrives with rows and leaves with none has a broken
@@ -597,7 +570,7 @@ def _dedup_source(df: pd.DataFrame, name: str) -> pd.DataFrame:
     # on every large run up to v1.1.0.  Fail loud.
     if n_raw and out.empty:
         warn(f"     ALERT  {name} fetched {n_raw:,} rows and NONE survived "
-              f"keying - its `designation` column is unusable, so the whole "
-              f"source is about to contribute nothing.  This is a BUG in "
-              f"fetch_{name.split()[0].lower()}, not an empty upstream table.")
+             f"keying - its `designation` column is unusable, so the whole "
+             f"source is about to contribute nothing.  This is a BUG in the "
+             f"{name} fetcher, not an empty upstream table.")
     return out

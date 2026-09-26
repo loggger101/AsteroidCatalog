@@ -26,13 +26,14 @@ against the 2026-09-23 release; see CHANGELOG.md.  Read-only; no network.
 import argparse
 import sys
 
-import numpy as np
 import pandas as pd
 
+from asteroid_catalog._frame import numeric as _col
 from asteroid_catalog.physics import (
     albedo_from_h_and_diameter, bulk_density_gcm3, density_limits, groups_of,
 )
-from asteroid_catalog.release import physical_problems, read_catalog
+from asteroid_catalog.query import read_catalog
+from asteroid_catalog.release import physical_problems
 
 
 def _read(path: str) -> pd.DataFrame:
@@ -41,15 +42,12 @@ def _read(path: str) -> pd.DataFrame:
     return read_catalog(path)
 
 
-def _col(df, name):
-    return (pd.to_numeric(df[name], errors="coerce") if name in df.columns
-            else pd.Series(np.nan, index=df.index))
-
-
 def suspects(df: pd.DataFrame):
     """(label, mask) for every check that flags a row without proving it wrong."""
     out = []
-    mass, diam, h = _col(df, "estimated_mass_kg"), _col(df, "diameter_km"), _col(df, "absolute_magnitude_h")
+    mass = _col(df, "estimated_mass_kg")
+    diam = _col(df, "diameter_km")
+    h = _col(df, "absolute_magnitude_h")
     measured_d = df.get("diameter_source", pd.Series("", index=df.index)).eq("measured")
     mass_meas = df.get("mass_measured", pd.Series(False, index=df.index)).fillna(False).astype(bool)
 

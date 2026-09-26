@@ -39,25 +39,19 @@ MPC links on every one, so the bulk file loses nothing but the risk.
 import gzip
 import os
 import re
-from datetime import datetime
 from typing import Dict, Optional
 
 import pandas as pd
 import requests
-from tqdm.auto import tqdm
 
+from ._http import write_body
 from ._log import say, warn
 
-from .config import CatalogConfig, _resolve_cache_dir
-from .designations import _extract_canonical_designation
+from .config import CatalogConfig, _cache_is_fresh, _resolve_cache_dir
+from .designations import _designation_key, _extract_canonical_designation
 
 MPC_EXTENDED_URL = "https://minorplanetcenter.net/Extended_Files/mpcorb_extended.json.gz"
 _MPC_CACHE_FILE = "mpcorb_extended.json.gz"
-
-
-def _key(s: pd.Series) -> pd.Series:
-    """The comparison form of a designation: canonical, upper-cased."""
-    return _extract_canonical_designation(s).str.upper().str.strip()
 
 
 def _unambiguous(alias: pd.Series, to: pd.Series, what: str) -> Dict[str, str]:
@@ -80,11 +74,11 @@ def build_alias_map(backbone: pd.DataFrame) -> Dict[str, str]:
     Reads `designation`, `provisional_designation` and `name`.
     """
     des = _extract_canonical_designation(backbone["designation"])
-    alias = [_key(backbone["designation"])]
+    alias = [_designation_key(backbone["designation"])]
     to = [des]
     for col in ("provisional_designation", "name"):
         if col in backbone.columns:
-            alias.append(_key(backbone[col]))
+            alias.append(_designation_key(backbone[col]))
             to.append(des)
     return _unambiguous(pd.concat(alias, ignore_index=True),
                         pd.concat(to, ignore_index=True), "backbone")
@@ -107,13 +101,13 @@ def resolve_designations(
     the merge as a new body and still shows up in the match counts.  Nothing
     is dropped here.
     """
-    keys = _key(designations)
+    keys = _designation_key(designations)
     out = keys.map(alias_map).astype("string")
 
     if links:
         todo = out.isna() & keys.notna()
         via = keys[todo].map(links).astype("string")
-        via = _key(via).map(alias_map).astype("string").fillna(
+        via = _designation_key(via).map(alias_map).astype("string").fillna(
             _extract_canonical_designation(via))
         out.loc[via.index] = via
 
@@ -143,28 +137,14 @@ def _mpc_cache_path(config: CatalogConfig) -> str:
 
 def _download_mpc(dest: str, config: CatalogConfig) -> bool:
     """Stream the MPC file to `dest` atomically; False on any failure."""
-    tmp = dest + ".part"
     try:
         with requests.get(MPC_EXTENDED_URL, stream=True,
                           timeout=config.request_timeout) as resp:
             resp.raise_for_status()
-            total = int(resp.headers.get("content-length") or 0) or None
-            with open(tmp, "wb") as fh, tqdm(
-                total=total, desc="     MPC designations", unit="B",
-                unit_scale=True, unit_divisor=1024, leave=True, mininterval=0.5,
-            ) as pbar:
-                for chunk in resp.iter_content(chunk_size=1 << 20):
-                    if chunk:
-                        fh.write(chunk)
-                        pbar.update(len(chunk))
-        os.replace(tmp, dest)
+            write_body(resp, dest, "     MPC designations")
         return True
     except (requests.exceptions.RequestException, OSError) as exc:
         say(f"     FAIL  MPC download failed: {type(exc).__name__}: {str(exc)[:80]}")
-        try:
-            os.remove(tmp)
-        except OSError:
-            pass
         return False
 
 
@@ -212,10 +192,7 @@ def fetch_mpc_identifications(config: CatalogConfig) -> Dict[str, str]:
     """
     say("\n  MPC designation links  (minorplanetcenter.net) ...")
     path = _mpc_cache_path(config)
-    fresh = (os.path.exists(path) and
-             (datetime.now().timestamp() - os.path.getmtime(path)) / 86400.0
-             <= config.cache_max_age_days)
-    if fresh:
+    if _cache_is_fresh(path, config.cache_max_age_days):
         say(f"       Using cached file: {path}")
     elif not _download_mpc(path, config):
         if not os.path.exists(path):
@@ -231,7 +208,7 @@ def fetch_mpc_identifications(config: CatalogConfig) -> Dict[str, str]:
         warn(f"     WARN  MPC file unreadable ({type(exc).__name__}) - "
              f"designation links skipped; delete {path} to re-download")
         return {}
-    links = _unambiguous(_key(pairs["alias"]),
+    links = _unambiguous(_designation_key(pairs["alias"]),
                          _extract_canonical_designation(pairs["to"]), "MPC")
     say(f"     OK  {len(links):,} designations linked to "
         f"{pairs['to'].nunique():,} bodies")
