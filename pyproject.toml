@@ -24,7 +24,7 @@ classifiers = [
 ]
 
 # pyarrow is NOT optional.  SsODNet's ssoBFT is a ~850 MB parquet read with
-# column projection so the ~915-column table is never materialised, and the
+# column projection so the 266-column table is never materialised, and the
 # pandas default engine reads the whole thing.  A source that quietly needs
 # 20x the memory is worse than one that fails to install.
 dependencies = [

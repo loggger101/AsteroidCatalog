@@ -14,6 +14,139 @@ moving it is not evidence that a number changed.
 
 ---
 
+## 0.8.0 - 2026-09-27 — data contract **1.6.0**
+
+**The X complex is split by albedo, and every class density now answers to a
+second route.** The evidence registry in
+[General_Research](https://github.com/loggger101/General_Research) had
+opened eight revision candidates against this repo (rc-001, -002, -007,
+-012, -013, -014, -045, -046). Each was re-checked against the paper itself
+(or Crossref, or the live service where the paper is not to hand), and
+against the masses `data-2026-09-26b` publishes. That found the X complex
+treated as one population when it is two.
+
+**X and Xc, by albedo.** Tholen's E, M and P share one featureless spectrum
+and differ in albedo; by convention an X-type with a measured albedo is a P
+below p_V 0.10, an M from 0.10 to 0.30 and an E above (Fornasier, Clark &
+Dotto 2011, p. 5). Until now a body labelled X or Xc read one row whatever its
+albedo: 3.30 g/cm³ and 25–30% metal, for bodies 58% of which have P-type
+albedos. Three routes agree that the albedo separates them:
+
+- Berthier et al. (2023, Fig. 5): X-complex densities are bimodal, the P
+  sub-class (mean p_V 0.044) below 2 g/cm³ and M (0.129) above.
+- The release's own masses: the X-complex bodies known to 20% have a median
+  of 1.44 below p_V 0.10 (N=15) and 3.45 from 0.10 to 0.30 (N=17).
+- The cuts reproduce JPL's own Tholen labels: 80 of the 83 bodies it types E,
+  M or P that carry an albedo in the release fall in the bin their label names.
+
+So a body whose class resolves to X or Xc (X, Xc, and sub-types such as Xn or
+Xt) and which has a **measured** albedo takes its composition from the P, M
+or E row. `spectral_type` keeps the source's label; the new column
+**`comp_class`** names the row every body's `comp_*` columns were read from
+(D past 5.5 AU as before, P/M/E for a split X). A body with no albedo keeps
+the X or Xc row, which is now the **mixture** of the three, weighted as the
+bodies with that label and an albedo divide (X 58/37/4% P/M/E, Xc 54/36/9%;
+`taxonomy.X_SPLIT_COUNTS`): the density by count, the fractions and PGM
+factor by mass. A test recomputes both rows from P, M and E.
+
+Measurements are still judged by the label. P's group is carbonaceous, with a
+3.6 g/cm³ ceiling, but which of P, M or E a body is is this package's
+inference, and an inference is not grounds to refuse a measured mass or
+density; they stay screened against the X-complex's 5.0.
+
+| class | was | now | routes that agree |
+|---|---|---|---|
+| X (no albedo) | 3.30 g/cm³; metal 0.30, silicate 0.50, carbon 0.05, ice 0; PGM 1.5 | 2.29; 0.33, 0.44, 0.08, 0.05; PGM 2.0 | the mixture of P, M and E; Carry (2012) averages X at 1.85 ± 0.81; the CV chondrites Carry pairs X with are 2.79, which 3.30 exceeded and 2.29 does not |
+| Xc (no albedo) | 3.30; 0.25, 0.35, 0.20, 0; PGM 1.2 | 2.37; 0.32, 0.47, 0.08, 0.04; PGM 2.0 | the mixture; 1.5.0's 3.30 rested on Carry's two Xc-types, one of them Hestia at his lowest confidence rank, whose SsODNet mass (nine solutions, 2001–2026) now gives 1.11 ± 0.31, not 5.81; the five Xc-types the release has masses for to 20% run 1.02–2.08 |
+| P | 1.80 | 1.20 | the P-types with a published density average 1.16 ± 0.26 (87 Sylvia 1.39 ± 0.08, Hanuš et al. 2017; 617 Patroclus 0.88 ± 0.17, Carry 2012; 223 Rosa 1.2 ± 0.5, Kretlow 2022), weighted mean 1.30; Kretlow calls ~1.3 typical of P; SsODNet's five Mahlke P-types known to 30% run 0.86–1.51. 1.80 was above the P-types' mean + 2σ (rc-007) |
+| Q | 3.00 | 2.70 | Q is an unweathered S surface with S's analogue, so S's value; 3.00 implied less macroporosity than S (12% against 20%) although Q-types are the smaller bodies (median 1.37 km against 1.79), and was denser than all nine Q-type NEAs with Yarkovsky densities (median 1.47, at most 2.79; Dziadura et al. 2023) |
+| S, Q | `notes` | + the small-body caveat | sub-km S-type NEAs have a Yarkovsky median of 1.37 over 23 bodies (rc-045, rc-046) |
+| M, Xk | `notes` | Psyche 3.8–4.2 | Siltala & Granvik (2021) 3.88 ± 0.25; Farnocchia et al. (2024) 4.17 ± 0.15 (GM 1.601 km³/s² over their 5.75 × 10⁶ km³ reproduces it); SsODNet's 4.14 in the release |
+
+**What moves**, counted on `data-2026-09-26b`: `density_gcm3` and
+`estimated_mass_kg` for the 17,237 bodies whose density is the class estimate
+and whose row changed:
+
+| was | now | bodies | density × |
+|---|---|---|---|
+| X | P / M / E / X (no albedo) | 4,717 / 3,011 / 348 / 6,898 | 0.364 / 1.182 / 0.970 / 0.694 |
+| Xc | P / M / E / Xc (no albedo) | 25 / 25 / 6 / 6 | 0.364 / 1.182 / 0.970 / 0.718 |
+| P (and Pd) | P | 244 | 0.667 |
+| Q (and Qv, Qo, Qw) | Q | 1,957 | 0.9 |
+
+A net −4.7 × 10¹⁹ kg, 0.06% of the catalog's mass. Every `comp_*` column of
+the 15,092 X and Xc rows (`comp_pgm_enrichment` included: 1.0 for P, 2.0 for M
+and the no-albedo rows, 1.5 for E); `comp_density_est_gcm3` and `comp_notes`
+for P and Q; `comp_notes` for S (502,673 rows), M and Xk; and `comp_class`,
+new, in every row. No diameter, albedo, class or source moves: none of these
+bodies has a diameter re-derived from its mass.
+
+**Declined, with the evidence recorded** (`taxonomy.DENSITY_EVIDENCE`):
+
+- **K 2.50** (rc-001 proposed ~3.5). The 3.5 is one large body, Eunomia,
+  which other catalogs class S. The CV/CO analogue (bulk 2.79/3.03, Carry 2012
+  Table 2) at an S-type's 16–20% macroporosity gives 2.2–2.5, and the one small
+  K-type measured, 2100 Ra-Shalom (2.3 km), is 1.28 +0.33/−0.51.
+- **L 2.80** (rc-002 proposed ~3.2). Carry's L average is 3.22 ± 0.97 at 50%
+  precision, which 2.80 sits within half a sigma of; the two L-types the
+  release has masses for to 20%, 12 Victoria 2.73 and 42 Isis 2.62, agree with
+  2.80; and SiMDA's median, 4.95, is above the carbonaceous ceiling, so the
+  masses behind it are ones `physics.py` would refuse for an L-type.
+- rc-012 (Cb/Xc metal), rc-013 (D/P ice) and rc-014 (C-complex water as
+  structural) need a class-to-meteorite mapping or an end-member choice no
+  source makes; unchanged.
+
+**New: three routes to each class density, each re-runnable.**
+
+- `taxonomy.METEORITE_ANALOGUE_GCM3`: the bulk density of each class's
+  meteorite (Carry 2012 Table 2, from laboratory measurements). No asteroid is
+  denser than the rock it is made of, so
+  `test_no_class_is_denser_than_its_meteorite` holds every estimate at or under
+  it, a bound independent of every asteroid mass. The implied macroporosities
+  read like the spacecraft ones: S 20% against Eros's 21%, C-complex 33–44%
+  against Bennu's 40 ± 10% (Chesley et al. 2014). Ships in `taxonomy.json`.
+- `tools/density_evidence.py <catalog>` applies `DENSITY_EVIDENCE`'s rule
+  (never above mean + 2 SD) to the masses a built catalog carries, grouped by
+  the row each body's composition is read from, and recounts the X/Xc split.
+  On `data-2026-09-26b`, with the split, every row it can test passes (S, Ch,
+  C, P, M, B, Cb, Sl, Xk, Xe); before it, Xc failed.
+- `DENSITY_EVIDENCE` gains P (`measured`, recomputed from its bodies by a
+  test), Q, and second routes: Bennu 1.26 ± 0.07 from its Yarkovsky drift
+  (Chesley et al. 2014) beside the spacecraft's 1.190 ± 0.013; Psyche by three
+  methods; Eros from NEAR's shape volume, 2.67, beside Carry's 3.00 (the same
+  mass over a sphere of the 16.2 km mean diameter).
+- The 1329 km constant has three routes: the V_sun derivation, the IRAS
+  survey's own Eq. (31), 10^3.1236 = 1329.2 (read off the page image of
+  Fowler & Chillemi 1992; now a test), and SsODNet's Eq. (5) (Berthier et al.
+  2023), so the ssoBFT albedos this catalog merges used it too.
+- Hydrated C-complex carbon 0.04 has five sources that agree: CI 3.5–3.9 wt%
+  (Pearson et al. 2006) and 3.48 (Lodders 2010 Table 2), Bennu 4.5–4.7
+  (Lauretta et al. 2024; re-measured by Glavin et al. 2025), Ryugu 4.63 ± 0.23
+  (Yokoyama et al. 2023, as General_Research read it; not re-read here).
+- The PGM caveat gains a second route: CI's bulk PGM, 3.29 ppm (Lodders 2010),
+  in S's 0.06 metal is 55 ppm, 1.5× the baseline and inside Kargel's LL-metal
+  50–220 ppm. Only the X and Xc factors move, to their mixtures.
+
+Also found, and only documented: a measured density is a mass over **a**
+diameter, and ssoBFT's best diameter is not always the one the mass paper
+used. 433 Eros is 2.34 in the release (SsODNet's 17.6 km), 2.67 on NEAR's
+shape volume and 3.00 in Carry (2012), all one mass; 1862 Apollo is 3.70 (a
+binary mass from 2014 over a 1.2 km radar diameter from 1981) where SsODNet's
+own density is 2.05 ± 0.35; 617 Patroclus is 2.27 (the binary system's mass
+over a 106 km diameter) where Carry, on the system's 143 km
+volume-equivalent, has 0.88. All are within the limits, so nothing refuses
+them; `density_gcm3` and `mass_provider` are where to look.
+
+**Claims corrected, moving nothing**
+
+| where | said | now |
+|---|---|---|
+| ssodnet.py, pyproject.toml | ssoBFT has "~915" or "244" columns | 266: the file of 2026-09-22 read from its footer, 1,563,708 rows in 7 row groups, and every column the fetcher projects is in it. General_Research R41 counted the same. (Berthier et al. 2023 describe 591 fields at publication.) Resolves the question 0.7.0 left open |
+| config.py | SsODNet "by 2026-09-26 ~1.56 M bodies and ~850 MB" | the file of 2026-09-22: 1,563,708 rows, 856 MB |
+| taxonomy.py | K: "no small K-type has been measured" | 2100 Ra-Shalom, 1.28 +0.33/−0.51 (Dziadura et al. 2023) |
+
+---
+
 ## 0.7.0 - 2026-09-26 — data contract **1.5.0**
 
 **Reference values the literature contradicts are corrected, and every value
