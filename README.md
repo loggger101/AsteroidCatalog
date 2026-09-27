@@ -26,6 +26,13 @@ same day, stays published with the old values. `data-2026-09-25` (contract
 `data-2026-09-23` (contract 1.3.0) stays published and unchanged, and carries
 the impossible values that section lists.
 
+The package on `main` (0.8.0) writes data contract **1.6.0**, which splits the
+X complex by albedo (a dark X-type is composed as a P, a moderate one as an M,
+a bright one as an E), holds every class density to a second route, and
+corrects the two that fail it: P 1.80 → 1.20 and Q 3.00 → 2.70 (see
+[CHANGELOG.md](CHANGELOG.md)). No release has been built under it yet, so
+`data-2026-09-26b` still carries the 1.5.0 values.
+
 To build your own from the live sources:
 
 ```bash
@@ -78,7 +85,7 @@ build, frozen. Releases are never overwritten or rebuilt under the same tag.
 | `asteroid_catalog.csv.gz` | the catalog exactly as the build wrote it (CRLF), gzipped deterministically |
 | `asteroid_catalog.parquet` | the same rows, typed: designations are strings, flag columns nullable booleans |
 | `rejected_entries.csv` | every row validation dropped, and why |
-| `taxonomy.json` | `TAXONOMY_COMPOSITION` and `PGM_ENRICHMENT_BY_TYPE` as this build used them, so the `comp_*` columns can be re-derived without installing the package, and `DENSITY_LIMITS_GCM3`, which decided the measured masses and densities it accepted, and (from 1.5.0) `DENSITY_EVIDENCE`, the measured bodies each class density answers to |
+| `taxonomy.json` | `TAXONOMY_COMPOSITION` and `PGM_ENRICHMENT_BY_TYPE` as this build used them, so the `comp_*` columns can be re-derived without installing the package, and `DENSITY_LIMITS_GCM3`, which decided the measured masses and densities it accepted, and (from 1.5.0) `DENSITY_EVIDENCE`, the measured bodies each class density answers to, and (from 1.6.0) `METEORITE_ANALOGUE_GCM3`, the meteorite density none may exceed |
 | `manifest.json` | release tag, `catalog_date`, `pipeline_version`, package version and commit, row count, bodies per source, and a sha256 for every asset and for the CSV inside the gzip |
 
 Download by tag, so you always get the same file:
@@ -354,28 +361,57 @@ the part the literature does not resolve. Floor it at a bulk-silicate value or
 carry it as unknown; normalising it away invents composition.
 
 **Where a number has a source, the table says which.** Since data contract
-1.5.0:
+1.5.0, and where two or more routes agree, the table names each:
 
 | what | value | backed by |
 |---|---|---|
-| carbon, hydrated C-complex (B, C, Cb, Cg, Cgh, Ch, F, G) | 0.04 | CI chondrites 3.5–3.9 wt% (Pearson et al. 2006); Bennu 4.5–4.7 and Ryugu ~4.0 (Lauretta et al. 2024). It was 0.20–0.30. |
+| carbon, hydrated C-complex (B, C, Cb, Cg, Cgh, Ch, F, G) | 0.04 | CI chondrites 3.5–3.9 wt% (Pearson et al. 2006) and 3.48 (Lodders 2010); Bennu 4.5–4.7 (Lauretta et al. 2024, and again Glavin et al. 2025) and Ryugu ~4.0–4.6 (Lauretta et al. 2024; Yokoyama et al. 2023). It was 0.20–0.30. |
 | metal, S-complex and Q | 0.06 | the mean of LL (3.56 wt%) and L (8.33 wt%) chondrite metal (Jarosewich 1990), the analogues the rows name; it was 0.15–0.20, H-chondrite metal or more |
 | metal, V | 0.01 | eucrites carry trace metal only; it was 0.05 |
 | Xe and Xk | swapped | most Tholen M-types are Xk (13 of 24, Fornasier et al. 2010), Xe's 0.49 µm band is the E-types', and Carry (2012) pairs Xe with EH enstatite chondrites; the metal-rich row sat under Xe |
-| density, Xc | 3.30 | the X-complex value: no density known to 20% supports lower, and the two Xc-types measured that well average 4.86 ± 0.81 (Carry 2012). It was 2.50. |
+| X and Xc | split by albedo | P below p_V 0.10, M to 0.30, E above, the convention for Tholen's classes (Fornasier et al. 2011); see below. Since 1.6.0 |
+| density, P | 1.20 | the P-types with a published density, 1.16 ± 0.26 (87 Sylvia, Hanuš et al. 2017; 617 Patroclus, Carry 2012; 223 Rosa, Kretlow 2022), and Kretlow's "~1.3 typical"; SsODNet's five Mahlke P-types known to 30% run 0.86–1.51. It was 1.80 (1.6.0). |
+| density, Q | 2.70 | S's value, the same ordinary-chondrite body unweathered; the nine Q-type NEAs with Yarkovsky densities have a median of 1.47, the densest 2.79 (Dziadura et al. 2023). It was 3.00 (1.6.0). |
 
-Every class density is held to [Carry (2012)](https://arxiv.org/abs/1203.4336)'s
-average over the bodies measured to 20% (`taxonomy.DENSITY_EVIDENCE`): never
-more than 2σ above it, and more than 2σ below it only with a named small body
-to say why (B: Bennu 1.19; Sq: Itokawa 1.9; K: one large body measured). The
-silicate fractions, carbon outside the hydrated C-complex, and every ice
+Every class density answers to three routes, each run by a test or a tool:
+
+- **Asteroid masses, Carry's.** [Carry (2012)](https://arxiv.org/abs/1203.4336)'s
+  average over the bodies measured to 20% (`taxonomy.DENSITY_EVIDENCE`; for P,
+  the published P-types): never more than 2σ above it, and more than 2σ below
+  it only with a named small body to say why (B: Bennu 1.19; Sq: Itokawa 1.9;
+  K: one large body measured, and Ra-Shalom at 1.28).
+- **Meteorites.** No asteroid is denser than the rock it is made of, so no
+  estimate may exceed its analogue's laboratory bulk density
+  (`taxonomy.METEORITE_ANALOGUE_GCM3`, Carry 2012 Table 2). The macroporosity
+  each estimate implies reads like the spacecraft ones: S 20% against Eros's
+  21%, the hydrated C-complex 33–44% against Bennu's 40 ± 10%.
+- **The catalog's own masses.** `python tools/density_evidence.py <catalog>`
+  holds each estimate to the bodies a build has masses for to 20%, grouped by
+  the row each body's composition is read from. On `data-2026-09-26b` every
+  row it can test passes.
+
+**The X complex is two populations, so it is split by albedo.** Tholen's E, M
+and P share one featureless spectrum and differ only in albedo. Since 1.6.0 a
+body whose class is X or Xc and which has a *measured* albedo takes the P, M
+or E row; `spectral_type` keeps the source's label, and `comp_class` names the
+row every body's `comp_*` columns were read from. Three routes agree the split
+is real: X-complex densities are bimodal by albedo (Berthier et al. 2023); in
+the release the dark X-types with good masses have a median of 1.44 g/cm³ and
+the moderate ones 3.45; and the cuts reproduce 80 of the 83 E, M and P labels
+JPL gives. An X or Xc with no albedo keeps its row, now the mixture of the
+three as the bodies with an albedo divide (X: 2.29 g/cm³, 33% metal), and
+measured masses and densities are still judged against the label's group, so
+an inferred class never refuses a measurement.
+
+The silicate fractions, carbon outside the hydrated C-complex, and every ice
 fraction have no source; no meteorite constrains ice at all.
 
 `Unknown` is the deliberate exception, with all four fractions `None`, so the
 residual is the whole body.
 
 **M-type is not a bare metal core.** No M-type has ever been measured near
-iron-meteorite density; Psyche is ~3.8–3.9 g/cm³, and the table is set
+iron-meteorite density; Psyche is 3.8–4.2 g/cm³ by three routes (Siltala &
+Granvik 2021; Farnocchia et al. 2024; SsODNet), and the table is set
 accordingly. `tests/test_traps.py` asserts it, because "restoring" 0.80/5.30 is
 a tempting and wrong edit.
 
@@ -461,7 +497,9 @@ is a row of the `data-2026-09-23` release that was impossible or unrealistic
 (De Sitter at 495 g/cm³, Interamnia's one-figure JPL mass, TNO binaries, NEOs
 sized off the belt), reduced to the columns that made it wrong. For a built
 catalog, `python tools/audit_catalog.py <catalog>` runs the release gate plus
-the checks no limit can decide.
+the checks no limit can decide, and `tools/albedo_tables.py` and
+`tools/density_evidence.py` re-derive the albedo tables and re-check the class
+densities against its measurements.
 
 ---
 

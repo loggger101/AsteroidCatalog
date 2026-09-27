@@ -100,8 +100,9 @@ def test_unknown_is_the_all_none_sentinel():
 def test_m_type_is_not_a_bare_metal_core():
     """No M-type has ever been measured near iron-meteorite density.
 
-    Psyche is ~3.8-3.9 g/cm3.  The 0.80 / 5.30 pair is what this table must
-    never be "restored" to.
+    Psyche is 3.8-4.2 g/cm3 by three routes (Siltala & Granvik 2021;
+    Farnocchia et al. 2024; SsODNet).  The 0.80 / 5.30 pair is what this table
+    must never be "restored" to.
     """
     m = ac.TAXONOMY_COMPOSITION["M"]
     assert float(m["metal_fraction"]) < 0.80
@@ -109,21 +110,98 @@ def test_m_type_is_not_a_bare_metal_core():
 
 
 def test_density_estimates_answer_to_measured_bodies():
-    """Each class estimate against Carry (2012)'s average of the bodies
-    measured to 20%: never above it by more than 2 sigma, and below it by
-    more than 2 sigma only with a stated reason.  A reason that is no longer
-    needed must go too, so the table and its excuses cannot drift apart."""
+    """Each class estimate against the average of the bodies measured to 20%
+    (Carry 2012's, or for P the published P-types'): never above it by more
+    than 2 sigma, and below it by more than 2 sigma only with a stated reason.
+    A reason that is no longer needed must go too, so the table and its
+    excuses cannot drift apart.  The P row read 1.80 until 1.6.0, above the
+    P-types' 1.16 + 2 x 0.26, as the Xe row did until 1.5.0."""
     from asteroid_catalog.taxonomy import DENSITY_EVIDENCE
     for cls, ev in DENSITY_EVIDENCE.items():
         assert cls in ac.TAXONOMY_COMPOSITION, cls
         est = float(ac.TAXONOMY_COMPOSITION[cls]["density_est_gcm3"])
-        mean, sigma, n = ev["carry2012"]
+        average = ev.get("carry2012") or ev.get("measured")
+        if average is None:
+            # No class average anywhere (Q): the entry is the small bodies.
+            assert "small" in ev and "below_because" not in ev, cls
+            continue
+        mean, sigma, n = average
         assert n >= 1
         assert est <= mean + 2 * sigma, "%s: %.2f above %.2f + 2x%.2f" % (cls, est, mean, sigma)
         below = est < mean - 2 * sigma
         assert below == ("below_because" in ev), \
             "%s: %.2f vs %.2f +/- %.2f, below_because %s" % (
                 cls, est, mean, sigma, "missing" if below else "stale")
+
+
+def test_a_measured_average_is_its_bodies_average():
+    """Where the table computes a class average itself (P), it is the mean and
+    sample standard deviation of the bodies it lists, so the number and its
+    evidence cannot drift apart."""
+    from asteroid_catalog.taxonomy import DENSITY_EVIDENCE
+    for cls, ev in DENSITY_EVIDENCE.items():
+        if "measured" not in ev:
+            continue
+        assert "carry2012" not in ev, "%s: one class average, not two" % cls
+        rho = np.array([b[1] for b in ev["bodies"]])
+        mean, sigma, n = ev["measured"]
+        assert n == len(rho)
+        assert mean == pytest.approx(rho.mean(), abs=0.005)
+        assert sigma == pytest.approx(rho.std(ddof=1), abs=0.005)
+
+
+def test_no_class_is_denser_than_its_meteorite():
+    """A meteorite's bulk density counts its microporosity; an asteroid made
+    of it can only add macroporosity, so it can only be lighter (Carry 2012
+    Table 2).  A bound from laboratory samples, independent of every asteroid
+    mass.  Every class has an analogue except the two the table names.  X,
+    at 3.30 until 1.6.0, was denser than the CV Carry pairs it with."""
+    from asteroid_catalog.taxonomy import METEORITE_ANALOGUE_GCM3
+    t = ac.TAXONOMY_COMPOSITION
+    assert set(t) - set(METEORITE_ANALOGUE_GCM3) == {"T", "Unknown"}
+    for cls, (analogue, rho, sigma) in METEORITE_ANALOGUE_GCM3.items():
+        est = float(t[cls]["density_est_gcm3"])
+        assert est <= rho, "%s: %.2f denser than %s at %.2f" % (cls, est, analogue, rho)
+
+
+@pytest.mark.parametrize("row", ["X", "Xc"])
+def test_x_and_xc_are_the_mixture_of_p_m_and_e(row):
+    """An X or Xc with an albedo takes P, M or E (1.6.0), so the row is only
+    ever applied to one without, and is what such a body is on average: the
+    three rows weighted as the bodies with that label and an albedo divide,
+    density by count, fractions and the PGM factor by mass.  Recomputed here
+    so a row edited without its mixture, or the reverse, goes red."""
+    from asteroid_catalog.taxonomy import X_SPLIT_CLASSES, X_SPLIT_COUNTS
+    t = ac.TAXONOMY_COMPOSITION
+    n = dict(zip(X_SPLIT_CLASSES, X_SPLIT_COUNTS[row]))
+    mass = {c: n[c] * t[c]["density_est_gcm3"] for c in n}
+    assert t[row]["density_est_gcm3"] == pytest.approx(
+        sum(mass.values()) / sum(n.values()), abs=0.005)
+    for f in FRACTIONS:
+        want = sum(mass[c] * t[c][f] for c in n) / sum(mass.values())
+        assert t[row][f] == pytest.approx(want, abs=0.005), f
+    metal = {c: mass[c] * t[c]["metal_fraction"] for c in n}
+    pgm = sum(metal[c] * ac.pgm_enrichment_for_type(c) for c in n) / sum(metal.values())
+    assert ac.pgm_enrichment_for_type(row) == pytest.approx(pgm, abs=0.05)
+
+
+def test_the_x_split_reads_tholens_cuts():
+    """P below 0.10, M to 0.30, E above (Fornasier et al. 2011, p. 5); only a
+    measured albedo splits, and only X and Xc."""
+    from asteroid_catalog.taxonomy import split_x_by_albedo
+    keys = pd.Series(["X", "X", "X", "X", "Xc", "Xk", "C", "X", "X"])
+    alb = pd.Series([0.05, 0.10, 0.29, 0.30, 0.05, 0.05, 0.05, np.nan, 1.0])
+    got = split_x_by_albedo(keys, alb).tolist()
+    assert got == ["P", "M", "M", "E", "P", "Xk", "C", "X", "X"]
+
+
+def test_q_is_not_denser_than_s():
+    """Q is an S-type surface the solar wind has not yet weathered: the same
+    ordinary-chondrite body.  Until 1.6.0 it read 3.00 against S's 2.70, less
+    macroporous than S although Q-types are the smaller bodies, and denser
+    than every Q-type density published (at most 2.79; Dziadura et al. 2023)."""
+    q, s = (ac.TAXONOMY_COMPOSITION[c]["density_est_gcm3"] for c in ("Q", "S"))
+    assert q <= s, "Q %.2f denser than S %.2f" % (q, s)
 
 
 def test_xk_is_the_metal_class_and_xe_the_enstatite_one():

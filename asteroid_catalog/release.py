@@ -52,7 +52,8 @@ from .physics import (
     rotation_is_impossible, smallest_diameter_km,
 )
 from .query import read_catalog  # noqa: F401  (re-exported: tools and tests read it here)
-from .taxonomy import DENSITY_EVIDENCE, PGM_ENRICHMENT_BY_TYPE, TAXONOMY_COMPOSITION
+from .taxonomy import (DENSITY_EVIDENCE, METEORITE_ANALOGUE_GCM3, PGM_ENRICHMENT_BY_TYPE,
+                       TAXONOMY_COMPOSITION)
 
 MANIFEST_VERSION = 1
 
@@ -266,13 +267,16 @@ def write_taxonomy(path: str) -> None:
     with open(path, "w", encoding="utf-8", newline="\n") as fh:
         # DENSITY_LIMITS_GCM3 decides which measured masses and densities a
         # build accepted, so it ships with the tables it is keyed on; and
-        # DENSITY_EVIDENCE (1.5.0) with the estimates it backs, so a reader
-        # of the asset can see what each class density answers to.
+        # DENSITY_EVIDENCE (1.5.0) and METEORITE_ANALOGUE_GCM3 (1.6.0) with
+        # the estimates they back, so a reader of the asset can see what
+        # each class density answers to.
         json.dump({"TAXONOMY_COMPOSITION": TAXONOMY_COMPOSITION,
                    "PGM_ENRICHMENT_BY_TYPE": PGM_ENRICHMENT_BY_TYPE,
                    "DENSITY_LIMITS_GCM3": {k: list(v) for k, v in
                                            DENSITY_LIMITS_GCM3.items()},
-                   "DENSITY_EVIDENCE": DENSITY_EVIDENCE},
+                   "DENSITY_EVIDENCE": DENSITY_EVIDENCE,
+                   "METEORITE_ANALOGUE_GCM3": {k: list(v) for k, v in
+                                               METEORITE_ANALOGUE_GCM3.items()}},
                   fh, indent=1, ensure_ascii=False)
         fh.write("\n")
 

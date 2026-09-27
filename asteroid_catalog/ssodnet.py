@@ -2,7 +2,7 @@
 """IMCCE SsODNet ssoBFT: best-of-literature physical properties.
 
 Bulk-downloaded once as a ~850 MB parquet and cached, read with column
-projection so the ~915-column table is never materialised.
+projection so the 266-column table is never materialised.
 
 TEST COLUMN MEMBERSHIP AGAINST `schema_arrow`, NEVER `schema`.  The latter is
 the PHYSICAL parquet schema, which names a nested list column by its inner
@@ -36,8 +36,12 @@ from .jpl import DAYS_PER_YEAR
 # `cache_max_age_days` and read only the columns we need
 # via pyarrow column projection so the in-memory footprint is small.
 #
-# Schema notes (parquet column names use dotted paths: 244 cols as of the
-# 2026-08 release; verify against the cached file, not this comment):
+# Schema notes (parquet column names use dotted paths; verify against the
+# cached file, not this comment).  The file of 2026-09-22 has 1,563,708 rows
+# and 266 columns in 7 row groups, read from its footer on 2026-09-27, and
+# carries every column in _SSODNET_WANTED; General_Research R41 counted the
+# same 1,563,708 x 266.  Berthier et al. (2023) describe 591 fields for
+# 1,223,984 bodies at publication; this bulk file is a subset of them.
 #   Identity:  id, number, name
 #   Physical:  diameter.value, diameter.error.{min,max}        (km)
 #              albedo.value                                    (geometric)
@@ -265,7 +269,7 @@ def fetch_ssodnet(config: CatalogConfig) -> pd.DataFrame:
     say("\n   SsODNet ssoBFT  (ssp.imcce.fr) ...")
 
     # pyarrow is a declared dependency, not an optional one: the column
-    # projection below is what keeps the ~915-column table out of memory, and a
+    # projection below is what keeps the 266-column table out of memory, and a
     # fallback that reads all of it is worse than no SsODNet (pyproject.toml).
     # Checked before the download, so a broken install does not fetch 850 MB.
     try:

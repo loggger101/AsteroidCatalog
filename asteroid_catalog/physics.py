@@ -138,6 +138,13 @@ ALBEDO_FLOOR = 0.01
 # (Fowler & Chillemi 1992), derived in Appendix A of Pravec & Harris (2007,
 # Icarus 190, 250).  The V_sun uncertainty is a ~1% systematic in diameter,
 # 3% in mass, well inside the albedo's.  tests/test_physics.py re-derives it.
+#
+# Three routes give the same number.  The derivation above; the IRAS survey's
+# own Eq. (31), D = 10**(3.1236 - 0.2 H - 0.5 log p), where 10**3.1236 =
+# 1329.2 (Fowler & Chillemi 1992, PL-TR-92-2049 ch. 4 p. 43, read off the
+# page image because the scan's text layer garbles it); and SsODNet, whose
+# Eq. (5) is the same relation with 1329 (Berthier et al. 2023), so the
+# ssoBFT albedos this catalog merges were derived with this constant too.
 H_DIAMETER_CONSTANT = 1329.0
 AU_KM = 1.495978707e8          # IAU 2012 Resolution B2, exact
 V_SUN = -26.762
