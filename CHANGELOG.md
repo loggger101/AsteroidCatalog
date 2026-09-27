@@ -81,6 +81,18 @@ for P and Q; `comp_notes` for S (502,673 rows), M and Xk; and `comp_class`,
 new, in every row. No diameter, albedo, class or source moves: none of these
 bodies has a diameter re-derived from its mass.
 
+**Published as [`data-2026-09-27`](https://github.com/loggger101/AsteroidCatalog/releases/tag/data-2026-09-27)**,
+the first 1.6.0 release: 1,568,641 bodies, built from `1e772e0`, audit clean
+with all five reference bodies `measured`, every asset's sha256 as its
+manifest says, `tools/albedo_tables.py` finds no table stale, and
+`tools/density_evidence.py` passes every row it can test and recounts the
+split exactly as committed. Against `data-2026-09-26b`, exactly what the
+above predicts: density and mass moved for 17,237 bodies (4,742 to P ×0.364,
+3,036 to M ×1.182, 354 to E ×0.970, 6,898 X ×0.694 and 6 Xc ×0.718 with no
+albedo, 244 P ×0.667, 1,957 Q ×0.9), −0.0598% of the catalog's mass; no
+albedo or class moved. Apart from that, 782 bodies JPL added, none gone, and
+5 H-derived diameters that moved with JPL's revised H.
+
 **Declined, with the evidence recorded** (`taxonomy.DENSITY_EVIDENCE`):
 
 - **K 2.50** (rc-001 proposed ~3.5). The 3.5 is one large body, Eunomia,

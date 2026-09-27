@@ -14,29 +14,24 @@ that names its build date, data contract and checksums. Pin a tag and you have
 the same rows every time. See [Published releases](#published-releases).
 
 The current release is
-[`data-2026-09-26b`](https://github.com/loggger101/AsteroidCatalog/releases/tag/data-2026-09-26b):
-1,567,859 bodies, data contract 1.5.0, built by asteroid_catalog 0.7.0. It
-corrects reference values the literature contradicts (the Xe/Xk rows,
-C-complex carbon, S-complex and V metal, the Xc density; see
-[CHANGELOG.md](CHANGELOG.md)), which moved the mass of 159 bodies and the
-composition columns of ~1.5 M. `data-2026-09-26` (contract 1.4.1), built the
-same day, stays published with the old values. `data-2026-09-25` (contract
-1.4.0) was the first release built under the physical limits in
+[`data-2026-09-27`](https://github.com/loggger101/AsteroidCatalog/releases/tag/data-2026-09-27):
+1,568,641 bodies, data contract 1.6.0, built by asteroid_catalog 0.8.0. It
+splits the X complex by albedo (a dark X-type is composed as a P, a moderate
+one as an M, a bright one as an E; the new `comp_class` column says which),
+holds every class density to a second route, and corrects the two that fail
+it, P 1.80 → 1.20 and Q 3.00 → 2.70 (see [CHANGELOG.md](CHANGELOG.md)). That
+moved the density and mass of 17,237 bodies, 0.06% of the catalog's mass.
+`data-2026-09-26b` (contract 1.5.0) stays published with the old values, as
+does `data-2026-09-26` (1.4.1). `data-2026-09-25` (contract 1.4.0) was the
+first release built under the physical limits in
 [section 5](#5-nothing-physically-impossible-is-published).
 `data-2026-09-23` (contract 1.3.0) stays published and unchanged, and carries
 the impossible values that section lists.
 
-The package on `main` (0.8.0) writes data contract **1.6.0**, which splits the
-X complex by albedo (a dark X-type is composed as a P, a moderate one as an M,
-a bright one as an E), holds every class density to a second route, and
-corrects the two that fail it: P 1.80 → 1.20 and Q 3.00 → 2.70 (see
-[CHANGELOG.md](CHANGELOG.md)). No release has been built under it yet, so
-`data-2026-09-26b` still carries the 1.5.0 values.
-
 To build your own from the live sources:
 
 ```bash
-pip install git+https://github.com/loggger101/AsteroidCatalog@v0.7.0
+pip install git+https://github.com/loggger101/AsteroidCatalog@v0.8.0
 asteroid-catalog build --out ./data
 ```
 
@@ -149,8 +144,8 @@ and fetch again.
 
 ### 2. Most diameters are derived, not measured
 
-Only 9.5% of bodies have a measured diameter (149,718 of 1,567,859 in
-`data-2026-09-26b`). The rest are sized from
+Only 9.5% of bodies have a measured diameter (149,718 of 1,568,641 in
+`data-2026-09-27`). The rest are sized from
 absolute magnitude and an **estimated** albedo:
 
     D_km = (1329 / sqrt(p_V)) * 10 ** (-H / 5)
@@ -387,7 +382,7 @@ Every class density answers to three routes, each run by a test or a tool:
   21%, the hydrated C-complex 33–44% against Bennu's 40 ± 10%.
 - **The catalog's own masses.** `python tools/density_evidence.py <catalog>`
   holds each estimate to the bodies a build has masses for to 20%, grouped by
-  the row each body's composition is read from. On `data-2026-09-26b` every
+  the row each body's composition is read from. On `data-2026-09-27` every
   row it can test passes.
 
 **The X complex is two populations, so it is split by albedo.** Tholen's E, M
