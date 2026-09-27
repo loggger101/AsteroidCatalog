@@ -20,14 +20,16 @@ from .physics import (
     diameter_from_mass_km, sphere_volume_m3,
 )
 from .taxonomy import (
-    _BLANK_CLASSES, _bus_demeo_case, _by_distinct, composition_entry,
-    pgm_enrichment_for_type,
+    TAXONOMY_COMPOSITION, _BLANK_CLASSES, _bus_demeo_case, _by_distinct,
+    composition_key, pgm_enrichment_for_type, split_x_by_albedo,
 )
 
 # The TAXONOMY_COMPOSITION fields copied into every row as `comp_<field>`.
 # `minerals` and `notes` are included because for a mining-profitability
 # pipeline the dominant minerals + the literature note are first-class
 # outputs; a user looking at one row wants to know what's actually there.
+# `comp_class` (1.6.0) names the row they were read from, which is not always
+# the label: D past Jupiter, and P, M or E for an X or Xc with an albedo.
 _COMP_FIELDS = [
     "group", "composition", "minerals", "notes",
     "density_est_gcm3",
@@ -59,7 +61,9 @@ def enrich_composition(df: pd.DataFrame) -> pd.DataFrame:
                                  H-derived diameter (step 2c), the weakest
                                  class, and the bulk of a default v1.1.0 run
             • "unknown"        → still missing after every fallback
-      3. Look up TAXONOMY_COMPOSITION fields for each type → `comp_*` cols.
+      3. Look up TAXONOMY_COMPOSITION fields for each type → `comp_*` cols,
+         D past 5.5 AU, and P, M or E for an X or Xc with an albedo (1.6.0);
+         `comp_class` records the row.
       4/5. Density and mass, so that mass = density × volume in every row:
          a measured mass sets the density; failing that a source density
          within its class's possible range; failing that the class estimate.
@@ -69,8 +73,8 @@ def enrich_composition(df: pd.DataFrame) -> pd.DataFrame:
     say("\n  Enriching composition data ...")
     df = df.copy()
     _classify(df)
-    _add_composition(df)
-    _reconcile_density_and_mass(df)
+    limits_group = _add_composition(df)
+    _reconcile_density_and_mass(df, limits_group)
     return df
 
 
@@ -187,20 +191,49 @@ def _classify(df: pd.DataFrame) -> None:
             f"with no albedo)")
 
 
-def _add_composition(df: pd.DataFrame) -> None:
-    """Steps 3-3b: the `comp_*` columns, looked up on each row's class."""
-    # ── 3. Look up composition fields ────────────────────────────────────────
-    # One factorisation of `spectral_type`, nine columns read off it.  The
-    # codes are identical for every field, so factorising once and indexing
-    # nine times is nine passes of C-level take instead of nine of `.apply`.
-    # Composition is looked up on the class, except past Jupiter, where it is
-    # D whatever the label (physics.ICY_COMPOSITION_AU).
-    comp_key = df["spectral_type"]
+def composition_classes(df: pd.DataFrame):
+    """(comp_class, limits_group): the TAXONOMY_COMPOSITION row each body's
+    composition is read from, and the group its MEASUREMENTS are judged by.
+
+    The row is the class's, except past Jupiter, where it is D whatever the
+    label (physics.ICY_COMPOSITION_AU), and for an X or Xc with a measured
+    albedo, which takes P, M or E (taxonomy.X_SPLIT_BOUNDS).  The group is the
+    row's BEFORE the albedo split: which of P, M or E an X-type is, is this
+    function's inference, and an inference is not grounds to refuse a
+    measured mass or density (see `_reconcile_density_and_mass`).  Reads
+    `spectral_type` as `_classify` leaves it, so a built catalog works too.
+    """
+    key = _row_keys(df)
+    limits_group = key.map({k: v["group"] for k, v in TAXONOMY_COMPOSITION.items()})
+    return split_x_by_albedo(key, numeric(df, "albedo")), limits_group
+
+
+def _row_keys(df: pd.DataFrame) -> pd.Series:
+    """Each row's TAXONOMY_COMPOSITION key before the albedo split."""
+    label = df["spectral_type"]
     if "semi_major_axis_au" in df.columns:
         icy = pd.to_numeric(df["semi_major_axis_au"], errors="coerce") > ICY_COMPOSITION_AU
-        comp_key = comp_key.where(~icy, OUTER_SOLAR_SYSTEM_CLASS)
+        label = label.where(~icy, OUTER_SOLAR_SYSTEM_CLASS)
+    return _by_distinct(label, composition_key).astype(object)
+
+
+def _add_composition(df: pd.DataFrame) -> pd.Series:
+    """Steps 3-3b: the `comp_*` columns, looked up on each row's class.
+
+    Returns the group each row's measurements are judged by
+    (`composition_classes`).
+    """
+    # ── 3. Look up composition fields ────────────────────────────────────────
+    # One factorisation of the row key, nine columns read off it.  The
+    # codes are identical for every field, so factorising once and indexing
+    # nine times is nine passes of C-level take instead of nine of `.apply`.
+    comp_key, limits_group = composition_classes(df)
+    df["comp_class"] = comp_key
+    n_split = int(comp_key.ne(_row_keys(df)).sum())
+    if n_split:
+        say(f"       X-complex by albedo: {n_split:,} X/Xc bodies take P, M or E")
     codes, uniques = pd.factorize(comp_key, use_na_sentinel=False)
-    entries = [composition_entry(u) for u in uniques]
+    entries = [TAXONOMY_COMPOSITION[u] for u in uniques]
     for field in _COMP_FIELDS:
         vals = np.empty(len(entries), dtype=object)
         for i, entry in enumerate(entries):
@@ -221,9 +254,10 @@ def _add_composition(df: pd.DataFrame) -> None:
     if n_enriched or n_depleted:
         say(f"       PGM enrichment: {n_enriched:,} enriched (>1x)  |  "
             f"{n_depleted:,} depleted (<1x)  |  rest baseline (1x)")
+    return limits_group
 
 
-def _reconcile_density_and_mass(df: pd.DataFrame) -> None:
+def _reconcile_density_and_mass(df: pd.DataFrame, limits_group=None) -> None:
     """Steps 4/5: density, mass and diameter made to agree, in place.
 
     Until 1.3.0 these were three independent columns: a measured mass from
@@ -241,7 +275,12 @@ def _reconcile_density_and_mass(df: pd.DataFrame) -> None:
 
     `density_measured` is True only when the density rests on measurements
     alone: a measured mass over a measured diameter, or a source's density.
+
+    `limits_group` is the group each row's measurements are judged by
+    (`composition_classes`); `comp_group` when not given.
     """
+    if limits_group is None:
+        limits_group = df["comp_group"]
     mass_src = numeric(df, "estimated_mass_kg")
     rho_src = numeric(df, "density_gcm3")
     rho_est = numeric(df, "comp_density_est_gcm3")
@@ -254,7 +293,7 @@ def _reconcile_density_and_mass(df: pd.DataFrame) -> None:
     # possible range (physics.py) is dropped; SsODNet carries Ch-types at
     # 4.8-5.2 g/cm3, P-types at 5.3 and a D-type at 6.3.
     sourced = df["spectral_type_source"].isin(["source", "tholen"])
-    lo_m, hi_m = density_limits(df["comp_group"].where(sourced, "Unknown"))
+    lo_m, hi_m = density_limits(limits_group.where(sourced, "Unknown"))
     bad_rho = rho_src.notna() & ~((rho_src >= lo_m) & (rho_src <= hi_m))
     rho_src = rho_src.mask(bad_rho)
 
@@ -266,7 +305,7 @@ def _reconcile_density_and_mass(df: pd.DataFrame) -> None:
     # diameter is re-derived from it at the class's density, labelled
     # "derived_mass".  If even that needs an albedo no surface has, the mass
     # cannot belong to this body and is dropped instead.
-    lo_c, hi_c = density_limits(df["comp_group"])
+    lo_c, hi_c = density_limits(limits_group)
     rho_md = pd.Series(bulk_density_gcm3(mass_src, diam), index=df.index)
     refuted = mass_src.notna() & estimate & ~((rho_md >= lo_c) & (rho_md <= hi_c))
     d_from_m = pd.Series(diameter_from_mass_km(mass_src, rho_est), index=df.index)

@@ -100,6 +100,9 @@ def test_the_h_diameter_constant_is_the_sun_at_two_au():
     from asteroid_catalog import derive, physics
     k = 2.0 * physics.AU_KM * 10 ** (physics.V_SUN / 5.0)
     assert k == pytest.approx(physics.H_DIAMETER_CONSTANT, abs=0.5)
+    # The IRAS survey's Eq. (31) writes it as 10**3.1236 (Fowler & Chillemi
+    # 1992, ch. 4 p. 43): a second route, printed four decimals deep.
+    assert 10 ** 3.1236 == pytest.approx(physics.H_DIAMETER_CONSTANT, abs=0.5)
     assert derive._H_DIAMETER_CONSTANT is physics.H_DIAMETER_CONSTANT
     # H = 15 at p_V = 0.25 is the textbook 2.66 km.
     d = physics.H_DIAMETER_CONSTANT / np.sqrt(0.25) * 10 ** (-15 / 5)
@@ -241,6 +244,37 @@ def test_a_source_density_impossible_for_its_class_is_dropped():
     row = _build(jpl, ssod).loc["799"]
     assert row["density_gcm3"] == ac.TAXONOMY_COMPOSITION["C"]["density_est_gcm3"]
     assert not row["density_measured"]
+
+
+def test_an_x_type_takes_its_composition_from_its_albedo():
+    """Tholen's E, M and P share one spectrum and differ in albedo.  An X or
+    Xc with a measured albedo takes the row its albedo names; one without
+    keeps its row, their mixture.  Xk keeps its own: its band says M-like.
+    The source's label is kept, and `comp_class` names the row used."""
+    labels = ["X", "X", "X", "X", "Xc", "Xk"]
+    jpl = {"designation": ["87", "16", "44", "100", "46", "21"],
+           "semi_major_axis_au": [3.49, 2.92, 2.42, 2.6, 2.53, 2.43],
+           "diameter_km": [270.0, 220.0, 70.0, 20.0, 125.0, 98.0],
+           "albedo": [0.046, 0.12, 0.48, np.nan, 0.046, 0.05],
+           "spectral_type": labels}
+    out = _build(jpl)
+    want = {"87": "P", "16": "M", "44": "E", "100": "X", "46": "P", "21": "Xk"}
+    assert out["comp_class"].to_dict() == want
+    assert out.loc[list(want), "spectral_type"].tolist() == labels
+    for d, cls in want.items():
+        assert out.loc[d, "density_gcm3"] == ac.TAXONOMY_COMPOSITION[cls]["density_est_gcm3"]
+
+
+def test_an_x_types_measurement_is_judged_by_its_label_not_its_albedo():
+    """A dark X-type takes P's composition, and P's group is carbonaceous
+    (3.6), but which of P, M or E it is is this package's inference.  A
+    source's 4.2 is inside the X-complex's 5.0, so it stands."""
+    jpl = {"designation": ["5000"], "semi_major_axis_au": [2.7],
+           "diameter_km": [100.0], "albedo": [0.05], "spectral_type": ["X"]}
+    ssod = {"designation": ["5000"], "density_gcm3": [4.2]}
+    row = _build(jpl, ssod).loc["5000"]
+    assert row["comp_class"] == "P"
+    assert row["density_gcm3"] == pytest.approx(4.2) and row["density_measured"]
 
 
 # ---------------------------------------------------------------------------

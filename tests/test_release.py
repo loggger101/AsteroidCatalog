@@ -134,6 +134,9 @@ def test_the_taxonomy_ships_exactly(tmp_path):
         == DENSITY_LIMITS_GCM3
     from asteroid_catalog.taxonomy import DENSITY_EVIDENCE
     assert shipped["DENSITY_EVIDENCE"] == json.loads(json.dumps(DENSITY_EVIDENCE))
+    from asteroid_catalog.taxonomy import METEORITE_ANALOGUE_GCM3
+    assert {k: tuple(v) for k, v in shipped["METEORITE_ANALOGUE_GCM3"].items()} \
+        == METEORITE_ANALOGUE_GCM3
 
 
 def test_the_parquet_keeps_designations_as_strings(tmp_path):
