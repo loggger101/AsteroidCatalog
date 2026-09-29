@@ -14,12 +14,16 @@ that names its build date, data contract and checksums. Pin a tag and you have
 the same rows every time. See [Published releases](#published-releases).
 
 The current release is
-[`data-2026-09-29`](https://github.com/loggger101/AsteroidCatalog/releases/tag/data-2026-09-29):
-1,568,748 bodies, data contract 1.7.0, built by asteroid_catalog 0.9.0. It
-adds one column, `comp_phases`: the minerals each class's four coarse
-fractions are made of, and the sulfides, oxides and carbonates in what the
-four leave (see [Mineral phases](#mineral-phases-what-the-four-fractions-are-made-of-since-170)).
-No existing column moved. `data-2026-09-27` (contract 1.6.0) split the X
+[`data-2026-09-29b`](https://github.com/loggger101/AsteroidCatalog/releases/tag/data-2026-09-29b):
+1,568,882 bodies, data contract 1.8.0, built by asteroid_catalog 0.10.0. It
+adds one column, `comp_phases_detailed`: `comp_phases` with the metal resolved
+into kamacite, taenite, tetrataenite and cohenite and the sulfide into its
+species, and the phosphates and CAI oxides named (see
+[Detailed phases](#detailed-phases-the-alloy-and-the-sulfides-resolved-since-180)).
+No `comp_*` column moved. `data-2026-09-29` (contract 1.7.0) added
+`comp_phases`, the minerals each class's four coarse fractions are made of
+(see [Mineral phases](#mineral-phases-what-the-four-fractions-are-made-of-since-170)),
+and stays published. `data-2026-09-27` (contract 1.6.0) split the X
 complex by albedo (a dark X-type is composed as a P, a moderate one as an M, a
 bright one as an E; the `comp_class` column says which), held every class
 density to a second route, and corrected the two that fail it, P 1.80 → 1.20
@@ -33,7 +37,7 @@ the impossible values that section lists.
 To build your own from the live sources:
 
 ```bash
-pip install git+https://github.com/loggger101/AsteroidCatalog@v0.9.0
+pip install git+https://github.com/loggger101/AsteroidCatalog@v0.10.0
 asteroid-catalog build --out ./data
 ```
 

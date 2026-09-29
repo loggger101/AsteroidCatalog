@@ -59,6 +59,25 @@ entry (1e-15), the group sums, the residual bound, the X mixture, that
 nickel-iron is gone, that S-type metal is Ni-richer than M-type, and plants a
 wrong split to prove the check fails.
 
+**Published as [`data-2026-09-29b`](https://github.com/loggger101/AsteroidCatalog/releases/tag/data-2026-09-29b)**,
+the first 1.8.0 release (the `b` because `data-2026-09-29` was taken that
+morning): 1,568,882 bodies, built from `d30a34f`, `tools/audit_catalog.py`
+clean with all five reference bodies `measured`, `tools/albedo_tables.py`
+finds no table stale, and `tools/density_evidence.py` fails no row and
+recounts the X split as committed. Against `data-2026-09-29`: one new column,
+`comp_phases_detailed`, missing only on the 4 Unknown-class bodies, and **no
+`comp_*` column moved on any of the 1,568,748 bodies the two share**. Apart
+from that, 134 bodies JPL added, none gone, 82 orbit refits and 9 H revisions.
+
+⚠️  **74,414 diameters and 124,109 masses differ in the LAST BIT between the
+two builds**, median 2.2e-16 relative, and only the 9 H-revised bodies move by
+more than 1e-12. Both builds ran on GitHub's hosted runners with the same
+Python 3.12.14, numpy 2.5.3, pandas 3.0.6 and pyarrow 25.0.1, eleven hours
+apart. The likeliest cause is the runner's CPU, since numpy picks its SIMD
+float kernels per CPU and the hosted runners are not one CPU; that is an
+inference, not a measurement. It is not data, and it is why two releases are
+compared by value with a tolerance, never by hash.
+
 ---
 
 ## 0.9.0 - 2026-09-29 — data contract **1.7.0**
