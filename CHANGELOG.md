@@ -14,6 +14,53 @@ moving it is not evidence that a number changed.
 
 ---
 
+## 0.10.0 - 2026-09-29 — data contract **1.8.0**
+
+**The alloy and the sulfides are resolved into the minerals they are.**
+`comp_phases` stops at two family names: "nickel-iron" for every class's
+metal, and "troilite" for every sulfide. Neither is one mineral, and the
+difference is worth money: siderophile metals ride with nickel, so an
+LL-leaning chondrite's Ni-rich metal carries more platinum per kilogram than
+an iron meteorite's, and a CI chondrite's nickel sits in pentlandite, not in
+metal at all.
+
+**New column `comp_phases_detailed`**, beside `comp_phases`, which is
+**unchanged**: identical on all 32 class/phase pairs of `data-2026-09-29`. It
+is a refinement of it, by two new tables in `mineralogy.py`:
+
+- `PHASE_DETAIL`: per class, a `comp_phases` entry divided into finer phases
+  as shares that sum to one, so each entry adds back from its detail.
+  - **nickel-iron** becomes **kamacite**, **taenite** and **tetrataenite**
+    (ordinary chondrites, 0.55 / 0.38 / 0.07, LL-leaning), kamacite, taenite
+    and **cohenite** (M and Xk, 0.88 / 0.11 / 0.01, an octahedrite), taenite
+    and kamacite (K, oxidised CV), and kamacite everywhere else. It is gone
+    from every detailed row.
+  - **troilite** becomes **pyrrhotite** and **pentlandite** in the C complex,
+    P, D, Z, Cgh and K, and troilite with **niningerite**, **oldhamite** and
+    **daubreelite** in Xe and E. The ordinary chondrites', irons' and the
+    rest's stays troilite, which is what it is there.
+- `DETAIL_ACCESSORIES`: phases new to the residual, **merrillite** 0.004 and
+  **chlorapatite** 0.002 in the S complex and Q, and **perovskite** and
+  **hibonite** beside K's and L's spinel. They fit inside what the coarse
+  fractions and 1.7.0's accessories leave.
+
+X and Xc are derived as the P/M/E mixture, a parent's split weighted by how
+much of that parent each member brings. Thirteen phases join `PHASE_GROUP`.
+Sources: Jarosewich 1990 for the metal, King et al. 2015 and Howard et al.
+2015 for the CI/CM sulfides, Keil 1968 and 2010 for the enstatite sulfides,
+Jones et al. 2014 for the phosphates; every sulfide ratio, the K alloy split
+and the CAI oxide fractions have none, and the module says so. The alloy
+compositions themselves (Ni, PGMs) belong to whoever prices them.
+
+`taxonomy.json` carries the two new tables; `reference/mineral_phases_detailed.csv`
+renders them, one row per class and detailed phase with the `comp_phases`
+entry it refines. `tests/test_mineralogy.py` holds the add-back of every
+entry (1e-15), the group sums, the residual bound, the X mixture, that
+nickel-iron is gone, that S-type metal is Ni-richer than M-type, and plants a
+wrong split to prove the check fails.
+
+---
+
 ## 0.9.0 - 2026-09-29 — data contract **1.7.0**
 
 **Every row now says which minerals its composition is made of, and how much

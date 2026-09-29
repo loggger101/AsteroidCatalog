@@ -77,7 +77,7 @@ the mining-specific layer is one clearly-labelled column.
 
 # Set before the submodules load, so any of them can import it at the top.
 # The one place the package version is written; pyproject.toml reads it here.
-__version__ = "0.9.0"
+__version__ = "0.10.0"
 
 from ._log import say, warn, set_verbose, is_verbose
 
@@ -93,6 +93,9 @@ from .mineralogy import (
     PHASE_SHARES,
     ACCESSORY_PHASES,
     phase_fractions,
+    PHASE_DETAIL,
+    DETAIL_ACCESSORIES,
+    detailed_fractions,
 )
 
 # Private, but reached as `ac._extract_canonical_designation` by the trap tests.
@@ -131,6 +134,7 @@ __all__ = [
     # reference data
     "TAXONOMY_COMPOSITION", "PGM_ENRICHMENT_BY_TYPE", "pgm_enrichment_for_type",
     "PHASE_GROUP", "PHASE_SHARES", "ACCESSORY_PHASES", "phase_fractions",
+    "PHASE_DETAIL", "DETAIL_ACCESSORIES", "detailed_fractions",
     "ALBEDO_FALLBACK", "ALBEDO_BY_SPECTRAL_TYPE", "ALBEDO_BY_SEMI_MAJOR_AXIS_AU",
     "ALBEDO_BY_SEMI_MAJOR_AXIS_AU_NEO", "ALBEDO_BEYOND_JUPITER_BY_H",
     # sources

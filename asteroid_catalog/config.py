@@ -214,7 +214,7 @@ class CatalogConfig:
     # and a bump does NOT mean a number changed, which is why nothing may read
     # a version as evidence that a result moved.  What each bump did, and what
     # was measured to say so, goes in CHANGELOG.md, not here.
-    pipeline_version: str = "1.7.0"
+    pipeline_version: str = "1.8.0"
 
 
 # The defaults.  Configure a build by passing a CatalogConfig of your own;

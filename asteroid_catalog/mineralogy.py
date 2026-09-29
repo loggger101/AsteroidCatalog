@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-"""The mineral PHASES inside each class's four coarse fractions  (data contract 1.7.0).
+"""The mineral PHASES inside each class's four coarse fractions  (data contracts 1.7.0, 1.8.0).
+
+1.8.0 resolves two of them further, into `comp_phases_detailed`: see the
+section of that name at the foot of this module.
 
 `TAXONOMY_COMPOSITION` gives every class four mass fractions (metal, silicate,
 carbon, ice) and a `minerals` list that NAMES what is there without saying how
@@ -113,6 +116,11 @@ ACCESSORY = "accessory"
 # consumer's price keys, so they are spelled as its mineral table spells them.
 PHASE_GROUP: Dict[str, str] = {
     "nickel-iron":     "metal",      # kamacite + taenite
+    # 1.8.0: the alloy resolved into the phases it is made of, and a carbide
+    "kamacite":        "metal",      # alpha-(Fe,Ni), ~6.5 wt% Ni
+    "taenite":         "metal",      # gamma-(Fe,Ni), ~30 wt% Ni, with plessite
+    "tetrataenite":    "metal",      # ordered FeNi, ~50 wt% Ni
+    "cohenite":        "metal",      # (Fe,Ni)3C
     "schreibersite":   "metal",      # (Fe,Ni)3P
     "olivine":         "silicate",
     "orthopyroxene":   "silicate",   # low-Ca pyroxene
@@ -127,11 +135,22 @@ PHASE_GROUP: Dict[str, str] = {
     "carbon dioxide":  "ice",
     "ammonia":         "ice",
     "troilite":        ACCESSORY,    # FeS, standing for all Fe sulfides
+    # 1.8.0: the sulfides troilite stood for, by species
+    "pyrrhotite":      ACCESSORY,    # Fe(1-x)S, as Fe7S8
+    "pentlandite":     ACCESSORY,    # (Fe,Ni)9S8
+    "niningerite":     ACCESSORY,    # (Mg,Fe,Mn)S
+    "oldhamite":       ACCESSORY,    # CaS
+    "daubreelite":     ACCESSORY,    # FeCr2S4
     "magnetite":       ACCESSORY,    # Fe3O4
     "chromite":        ACCESSORY,    # FeCr2O4
     "ilmenite":        ACCESSORY,    # FeTiO3
+    "perovskite":      ACCESSORY,    # CaTiO3, a CAI oxide (1.8.0)
     "spinel":          ACCESSORY,    # MgAl2O4, the CAI oxide
+    "hibonite":        ACCESSORY,    # CaAl12O19, a CAI oxide (1.8.0)
     "carbonates":      ACCESSORY,    # calcite, dolomite, breunnerite
+    # 1.8.0: the calcium phosphates, where a chondrite's phosphorus sits
+    "merrillite":      ACCESSORY,    # Ca9NaMg(PO4)7
+    "chlorapatite":    ACCESSORY,    # Ca5(PO4)3Cl
 }
 
 # ── Shares within a group, reused across the classes that share an analogue ──
@@ -320,4 +339,206 @@ def phases_json(cls: str) -> Optional[str]:
 # Derived last, because the mixture reads the typed rows through phase_fractions.
 for _row_name in X_SPLIT_ROWS:
     PHASE_SHARES[_row_name], ACCESSORY_PHASES[_row_name] = _mixture(_row_name)
+del _row_name
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# DATA CONTRACT 1.8.0: THE DETAILED PHASES  (`comp_phases_detailed`)
+# ═════════════════════════════════════════════════════════════════════════════
+# `comp_phases` stops at "nickel-iron" and "troilite", each standing for a
+# family.  The detailed column resolves them, and adds the phosphates and the
+# CAI oxides the residual was holding without a name:
+#
+#   the alloy       nickel-iron is kamacite (alpha, ~6.5 wt% Ni) and taenite
+#                   (gamma, ~30%, taken with the plessite it grades into), and
+#                   in slowly cooled chondrites tetrataenite (ordered FeNi,
+#                   ~50%); irons add cohenite, (Fe,Ni)3C.  WHICH class holds
+#                   WHICH mix is the point: siderophile metals ride with
+#                   nickel, so a Ni-rich chondrite metal carries more platinum
+#                   per kilogram than an iron meteorite's, which one
+#                   "nickel-iron" for every class could not say.
+#   the sulfides    "troilite" is FeS in the ordinary chondrites and the irons,
+#                   and stays so there.  In the hydrated and primitive classes
+#                   the sulfide is pyrrhotite with pentlandite, the nickel
+#                   sulfide; in the enstatite classes it is troilite with the
+#                   reduced sulfides niningerite, oldhamite and daubreelite.
+#   the phosphates  merrillite and chlorapatite, ~0.6 wt% of an ordinary
+#                   chondrite, carved out of the residual.
+#   CAI oxides      perovskite and hibonite beside the spinel K and L carry.
+#
+# TWO TABLES, THE SAME CONTRACT AS 1.7.0'S, ONE LEVEL DOWN:
+#
+#   `PHASE_DETAIL`         per class, a phase of `comp_phases` divided into
+#                          finer phases as SHARES that sum to one.  A phase
+#                          with no entry passes through unchanged.  So the
+#                          detailed phases of a `comp_phases` entry add back to
+#                          it, every group adds back to its coarse fraction,
+#                          and nothing in `comp_phases` moves.
+#   `DETAIL_ACCESSORIES`   phases new to the residual, as absolute fractions of
+#                          the body, which must fit inside what the four coarse
+#                          fractions and `ACCESSORY_PHASES` leave.
+#
+# WHERE A NUMBER HAS A SOURCE (fractions are rounded; shares of the parent):
+#
+#   ordinary chondrite    metal: Fe-Ni-Co metal falls from 17.8 (H) to 8.33
+#     (S complex, Q)      (L) to 3.56 wt% (LL) while bulk Ni barely moves
+#                         (Jarosewich 1990, Meteoritics 25, 323): the iron
+#                         oxidises into the silicate and the nickel stays, so
+#                         Ni in the metal climbs from roughly 9 to 14 to 25+
+#                         wt%, and LL metal is mostly taenite.  S-types lean
+#                         LL (Itokawa), so kamacite 0.55, taenite 0.38,
+#                         tetrataenite 0.07, which is ~18.5 wt% Ni at the
+#                         consumer's alloy compositions, the L/LL middle.
+#                         Phosphates: merrillite ~0.4 and chlorapatite ~0.2
+#                         wt% (Jones et al. 2014, GCA 132, 120, LL chondrites).
+#   iron meteorite        M, Xk: kamacite 0.88, taenite 0.11, cohenite 0.01 of
+#                         the Fe-Ni: a Widmanstatten octahedrite whose bulk Ni
+#                         (~9%) the lever rule between 6.5 and 30 wt% returns.
+#   CI / CM / Tagish Lake the sulfide is pyrrhotite with lesser pentlandite
+#                         (King et al. 2015; Howard et al. 2015); CK (Cgh) and
+#                         the oxidised CV (K) are pentlandite-rich.
+#   enstatite chondrite   Xe (EH): troilite ~5, niningerite ~2, oldhamite ~0.7
+#                         and daubreelite ~0.3 wt% of the body, within the 8%
+#                         of sulfide the row already carries (Keil 1968, JGR
+#                         73, 6945).  Aubrite (E): oldhamite and a little
+#                         daubreelite beside troilite (Keil 2010, Chemie der
+#                         Erde 70, 295).
+#   CV / CO               K, L: perovskite and hibonite are CAI minerals; L,
+#                         which needs the most CAI of any spectrum (Sunshine et
+#                         al. 2008), carries the most.
+#
+# WHAT HAS NO SOURCE: every sulfide split as a number (the sources name the
+# species, not a ratio this table could quote); the K alloy split; the CAI
+# oxide fractions; and "kamacite" for every class with no known Ni-rich metal
+# (the C complex, A, R, O, T, V, D, Z, P), which overstates a eucrite's nearly
+# Ni-free metal.  The composition of each alloy belongs to whoever prices it;
+# this table says only how much of each a class holds.
+
+_ALLOY_KAMACITE = {"kamacite": 1.0}
+_ALLOY_OC       = {"kamacite": 0.55, "taenite": 0.38, "tetrataenite": 0.07}
+_ALLOY_IRON     = {"kamacite": 0.88, "taenite": 0.11, "cohenite": 0.01}
+_ALLOY_CV       = {"taenite": 0.60, "kamacite": 0.40}
+
+_SULFIDE_CI = {"pyrrhotite": 0.70, "pentlandite": 0.30}
+_SULFIDE_CM = {"pyrrhotite": 0.65, "pentlandite": 0.35}      # also Tagish Lake
+_SULFIDE_NI = {"pentlandite": 0.50, "pyrrhotite": 0.50}      # CK, oxidised CV
+_SULFIDE_EH = {"troilite": 0.625, "niningerite": 0.25, "oldhamite": 0.0875,
+               "daubreelite": 0.0375}
+_SULFIDE_AUBRITE = {"troilite": 0.60, "oldhamite": 0.30, "daubreelite": 0.10}
+
+_PHOSPHATE_OC = {"merrillite": 0.004, "chlorapatite": 0.002}
+
+
+def _detail(alloy, sulfide=None):
+    """One PHASE_DETAIL row: how nickel-iron divides, and troilite if it does."""
+    out = {"nickel-iron": alloy}
+    if sulfide is not None:
+        out["troilite"] = sulfide
+    return out
+
+
+PHASE_DETAIL: Dict[str, Dict[str, Dict[str, float]]] = {
+    # ── C complex ───────────────────────────────────────────────────────────
+    "B":   _detail(_ALLOY_KAMACITE, _SULFIDE_CI),
+    "C":   _detail(_ALLOY_KAMACITE, _SULFIDE_CI),
+    "Cb":  _detail(_ALLOY_KAMACITE, _SULFIDE_CI),
+    "F":   _detail(_ALLOY_KAMACITE, _SULFIDE_CI),
+    "Cg":  _detail(_ALLOY_KAMACITE, _SULFIDE_CM),
+    "Ch":  _detail(_ALLOY_KAMACITE, _SULFIDE_CM),
+    "G":   _detail(_ALLOY_KAMACITE, _SULFIDE_CM),
+    "Cgh": _detail(_ALLOY_KAMACITE, _SULFIDE_NI),
+    # ── S complex and Q: ordinary chondrite, whose sulfide IS troilite ──────
+    "S":   _detail(_ALLOY_OC), "Sq": _detail(_ALLOY_OC), "Q":  _detail(_ALLOY_OC),
+    "Sa":  _detail(_ALLOY_OC), "Sr": _detail(_ALLOY_OC), "Sv": _detail(_ALLOY_OC),
+    "Sk":  _detail(_ALLOY_OC), "Sl": _detail(_ALLOY_OC),
+    # ── X complex members (X and Xc are derived below) ──────────────────────
+    "M":   _detail(_ALLOY_IRON),
+    "Xk":  _detail(_ALLOY_IRON),
+    "Xe":  _detail(_ALLOY_KAMACITE, _SULFIDE_EH),
+    "E":   _detail(_ALLOY_KAMACITE, _SULFIDE_AUBRITE),
+    "P":   _detail(_ALLOY_KAMACITE, _SULFIDE_CM),
+    # ── primitive outer bodies ──────────────────────────────────────────────
+    "D":   _detail(_ALLOY_KAMACITE, _SULFIDE_CM),
+    "Z":   _detail(_ALLOY_KAMACITE, _SULFIDE_CM),
+    "T":   _detail(_ALLOY_KAMACITE),
+    # ── the rest ────────────────────────────────────────────────────────────
+    "A":   _detail(_ALLOY_KAMACITE),
+    "R":   _detail(_ALLOY_KAMACITE),
+    "O":   _detail(_ALLOY_KAMACITE),
+    "K":   _detail(_ALLOY_CV, _SULFIDE_NI),
+    "L":   _detail(_ALLOY_KAMACITE),
+    "V":   _detail(_ALLOY_KAMACITE),
+}
+
+DETAIL_ACCESSORIES: Dict[str, Dict[str, float]] = {
+    "S": _PHOSPHATE_OC, "Sq": _PHOSPHATE_OC, "Q": _PHOSPHATE_OC,
+    "Sa": _PHOSPHATE_OC, "Sr": _PHOSPHATE_OC, "Sv": _PHOSPHATE_OC,
+    "Sk": _PHOSPHATE_OC, "Sl": _PHOSPHATE_OC,
+    "K":  {"perovskite": 0.002, "hibonite": 0.003},
+    "L":  {"perovskite": 0.003, "hibonite": 0.005},
+}
+
+
+def _detail_mixture(row: str):
+    """(PHASE_DETAIL, DETAIL_ACCESSORIES) for X or Xc, over P, M and E.
+
+    A parent phase's split is the mixture of the members' splits of it,
+    weighted by how much of that parent each member brings, so X's nickel-iron
+    divides as M's, P's and E's metal would in those proportions.  Its new
+    accessories are the members', by mass, as `_mixture` weights them.
+    """
+    counts = dict(zip(X_SPLIT_CLASSES, X_SPLIT_COUNTS[row]))
+    mass = {c: n * TAXONOMY_COMPOSITION[c]["density_est_gcm3"] for c, n in counts.items()}
+    total = sum(mass.values())
+    num: Dict[str, Dict[str, float]] = {}
+    den: Dict[str, float] = {}
+    extra: Dict[str, float] = {}
+    for c, m in mass.items():
+        split = PHASE_DETAIL.get(c, {})
+        for phase, frac in phase_fractions(c).items():   # P, M, E are typed
+            w = m * frac
+            den[phase] = den.get(phase, 0.0) + w
+            into = num.setdefault(phase, {})
+            for finer, share in split.get(phase, {phase: 1.0}).items():
+                into[finer] = into.get(finer, 0.0) + w * share
+        for phase, frac in DETAIL_ACCESSORIES.get(c, {}).items():
+            extra[phase] = extra.get(phase, 0.0) + m * frac / total
+    detail = {p: {q: v / den[p] for q, v in num[p].items()}
+              for p in num if den[p] > 0 and set(num[p]) != {p}}
+    return detail, extra
+
+
+def detailed_fractions(cls: str) -> Optional[Dict[str, float]]:
+    """`phase_fractions` with each family resolved, plus the new accessories.
+
+    None for a class with no phases.  A phase of `comp_phases` with no
+    `PHASE_DETAIL` entry passes through, so every entry of the coarser column
+    is the sum of its detailed phases; tests/test_mineralogy.py holds it.
+    """
+    fracs = phase_fractions(cls)
+    if fracs is None:
+        return None
+    split = PHASE_DETAIL.get(cls, {})
+    out: Dict[str, float] = {}
+    for phase, frac in fracs.items():
+        for finer, share in split.get(phase, {phase: 1.0}).items():
+            if share > 0:
+                out[finer] = out.get(finer, 0.0) + frac * share
+    for phase, frac in DETAIL_ACCESSORIES.get(cls, {}).items():
+        if frac > 0:
+            out[phase] = out.get(phase, 0.0) + frac
+    return _in_table_order(out)
+
+
+def phases_detailed_json(cls: str) -> Optional[str]:
+    """`detailed_fractions` as the JSON a build writes to `comp_phases_detailed`."""
+    fracs = detailed_fractions(cls)
+    if fracs is None:
+        return None
+    return json.dumps(fracs, separators=(",", ":"))
+
+
+# After the 1.7.0 derivation above, because the mixture reads phase_fractions.
+for _row_name in X_SPLIT_ROWS:
+    PHASE_DETAIL[_row_name], DETAIL_ACCESSORIES[_row_name] = _detail_mixture(_row_name)
 del _row_name
