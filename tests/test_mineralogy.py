@@ -272,3 +272,24 @@ def test_enrich_writes_comp_phases_detailed_beside_comp_phases():
         want = mi.phases_json(cls)
         got = dict(zip(out["designation"], out["comp_phases"]))[d]
         assert (got is None or pd.isna(got)) if want is None else got == want
+
+
+# The classes whose metal has a SOURCE for being something other than an iron
+# meteorite's; see mineralogy.py.  Every other class keeps the bulk alloy.
+SOURCED_METAL = {"S", "Sq", "Q", "Sa", "Sr", "Sv", "Sk", "Sl",   # OC, Jarosewich 1990
+                 "M", "Xk",                                       # octahedrite + cohenite
+                 "K",                                             # oxidised CV
+                 "E", "Xe", "V"}                                  # Keil 1968/2010, Mittlefehldt 2015
+
+
+@pytest.mark.parametrize("cls", [c for c in CLASSES
+                                 if c not in SOURCED_METAL and c not in X_SPLIT_ROWS])
+def test_no_source_means_no_change_to_the_metal(cls):
+    """An unsourced class's metal stays the ~9 wt% Ni alloy `nickel-iron` meant.
+
+    1.8.0 gave these classes pure kamacite (~6.5%), which moved their value
+    for a choice nothing supports; 1.8.1 put them back.  Checked at the
+    nominal alloy Ni (6.5 / 30 / 50 wt%), within 0.2 wt% of 9."""
+    ni = {"kamacite": 0.065, "taenite": 0.30, "tetrataenite": 0.50, "cohenite": 0.03}
+    split = mi.PHASE_DETAIL[cls]["nickel-iron"]
+    assert sum(s * ni[p] for p, s in split.items()) == pytest.approx(0.09, abs=0.002), cls

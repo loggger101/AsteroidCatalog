@@ -1,5 +1,6 @@
 spectral_type,phase,group,refines,fraction_of_body
-B,kamacite,metal,nickel-iron,0.01
+B,kamacite,metal,nickel-iron,0.0089
+B,taenite,metal,nickel-iron,0.0011
 B,olivine,silicate,olivine,0.015
 B,phyllosilicates,silicate,phyllosilicates,0.285
 B,carbon,carbon,carbon,0.028
@@ -9,7 +10,8 @@ B,pyrrhotite,accessory,troilite,0.035
 B,pentlandite,accessory,troilite,0.015
 B,magnetite,accessory,magnetite,0.07
 B,carbonates,accessory,carbonates,0.03
-C,kamacite,metal,nickel-iron,0.01
+C,kamacite,metal,nickel-iron,0.0089
+C,taenite,metal,nickel-iron,0.0011
 C,olivine,silicate,olivine,0.0175
 C,phyllosilicates,silicate,phyllosilicates,0.3325
 C,carbon,carbon,carbon,0.028
@@ -19,7 +21,8 @@ C,pyrrhotite,accessory,troilite,0.035
 C,pentlandite,accessory,troilite,0.015
 C,magnetite,accessory,magnetite,0.07
 C,carbonates,accessory,carbonates,0.03
-Cb,kamacite,metal,nickel-iron,0.01
+Cb,kamacite,metal,nickel-iron,0.0089
+Cb,taenite,metal,nickel-iron,0.0011
 Cb,olivine,silicate,olivine,0.016
 Cb,phyllosilicates,silicate,phyllosilicates,0.304
 Cb,carbon,carbon,carbon,0.028
@@ -29,7 +32,8 @@ Cb,pyrrhotite,accessory,troilite,0.035
 Cb,pentlandite,accessory,troilite,0.015
 Cb,magnetite,accessory,magnetite,0.07
 Cb,carbonates,accessory,carbonates,0.03
-Cg,kamacite,metal,nickel-iron,0.02
+Cg,kamacite,metal,nickel-iron,0.0178
+Cg,taenite,metal,nickel-iron,0.0022
 Cg,olivine,silicate,olivine,0.038
 Cg,pyroxene,silicate,pyroxene,0.019
 Cg,phyllosilicates,silicate,phyllosilicates,0.323
@@ -40,7 +44,8 @@ Cg,pyrrhotite,accessory,troilite,0.0195
 Cg,pentlandite,accessory,troilite,0.0105
 Cg,magnetite,accessory,magnetite,0.02
 Cg,carbonates,accessory,carbonates,0.01
-Cgh,kamacite,metal,nickel-iron,0.03
+Cgh,kamacite,metal,nickel-iron,0.0267
+Cgh,taenite,metal,nickel-iron,0.0033
 Cgh,olivine,silicate,olivine,0.16
 Cgh,pyroxene,silicate,pyroxene,0.04
 Cgh,phyllosilicates,silicate,phyllosilicates,0.2
@@ -50,7 +55,8 @@ Cgh,water,ice,water,0.1
 Cgh,pyrrhotite,accessory,troilite,0.01
 Cgh,pentlandite,accessory,troilite,0.01
 Cgh,magnetite,accessory,magnetite,0.05
-Ch,kamacite,metal,nickel-iron,0.02
+Ch,kamacite,metal,nickel-iron,0.0178
+Ch,taenite,metal,nickel-iron,0.0022
 Ch,olivine,silicate,olivine,0.038
 Ch,pyroxene,silicate,pyroxene,0.019
 Ch,phyllosilicates,silicate,phyllosilicates,0.323
@@ -147,8 +153,8 @@ Sv,troilite,accessory,troilite,0.055
 Sv,chromite,accessory,chromite,0.005
 Sv,merrillite,accessory,,0.004
 Sv,chlorapatite,accessory,,0.002
-X,kamacite,metal,nickel-iron,0.287666
-X,taenite,metal,nickel-iron,0.034436
+X,kamacite,metal,nickel-iron,0.286991
+X,taenite,metal,nickel-iron,0.035111
 X,cohenite,metal,nickel-iron,0.003131
 X,schreibersite,metal,schreibersite,0.004767
 X,olivine,silicate,olivine,0.029313
@@ -167,8 +173,8 @@ X,oldhamite,accessory,troilite,0.000181
 X,daubreelite,accessory,troilite,6e-05
 X,magnetite,accessory,magnetite,0.015298
 X,carbonates,accessory,carbonates,0.009179
-Xc,kamacite,metal,nickel-iron,0.279818
-Xc,taenite,metal,nickel-iron,0.032685
+Xc,kamacite,metal,nickel-iron,0.279213
+Xc,taenite,metal,nickel-iron,0.03329
 Xc,cohenite,metal,nickel-iron,0.002971
 Xc,schreibersite,metal,schreibersite,0.004525
 Xc,olivine,silicate,olivine,0.02891
@@ -205,13 +211,15 @@ Xk,enstatite,silicate,enstatite,0.315
 Xk,plagioclase,silicate,plagioclase,0.09
 Xk,carbon,carbon,carbon,0.01
 Xk,troilite,accessory,troilite,0.02
-A,kamacite,metal,nickel-iron,0.05
+A,kamacite,metal,nickel-iron,0.0445
+A,taenite,metal,nickel-iron,0.0055
 A,olivine,silicate,olivine,0.855
 A,orthopyroxene,silicate,orthopyroxene,0.045
 A,carbon,carbon,carbon,0.01
 A,troilite,accessory,troilite,0.01
 A,chromite,accessory,chromite,0.01
-D,kamacite,metal,nickel-iron,0.01
+D,kamacite,metal,nickel-iron,0.0089
+D,taenite,metal,nickel-iron,0.0011
 D,silicates,silicate,silicates,0.25
 D,carbon,carbon,carbon,0.12
 D,organics,carbon,organics,0.18
@@ -222,7 +230,8 @@ D,pyrrhotite,accessory,troilite,0.0195
 D,pentlandite,accessory,troilite,0.0105
 D,magnetite,accessory,magnetite,0.05
 D,carbonates,accessory,carbonates,0.03
-Z,kamacite,metal,nickel-iron,0.01
+Z,kamacite,metal,nickel-iron,0.0089
+Z,taenite,metal,nickel-iron,0.0011
 Z,silicates,silicate,silicates,0.25
 Z,carbon,carbon,carbon,0.12
 Z,organics,carbon,organics,0.18
@@ -246,7 +255,8 @@ K,magnetite,accessory,magnetite,0.03
 K,perovskite,accessory,,0.002
 K,spinel,accessory,spinel,0.03
 K,hibonite,accessory,,0.003
-L,kamacite,metal,nickel-iron,0.05
+L,kamacite,metal,nickel-iron,0.0445
+L,taenite,metal,nickel-iron,0.0055
 L,olivine,silicate,olivine,0.51
 L,pyroxene,silicate,pyroxene,0.255
 L,plagioclase,silicate,plagioclase,0.085
@@ -255,7 +265,8 @@ L,troilite,accessory,troilite,0.02
 L,perovskite,accessory,,0.003
 L,spinel,accessory,spinel,0.05
 L,hibonite,accessory,,0.005
-O,kamacite,metal,nickel-iron,0.08
+O,kamacite,metal,nickel-iron,0.0712
+O,taenite,metal,nickel-iron,0.0088
 O,olivine,silicate,olivine,0.425
 O,orthopyroxene,silicate,orthopyroxene,0.425
 O,carbon,carbon,carbon,0.01
@@ -272,7 +283,8 @@ Q,troilite,accessory,troilite,0.055
 Q,chromite,accessory,chromite,0.005
 Q,merrillite,accessory,,0.004
 Q,chlorapatite,accessory,,0.002
-R,kamacite,metal,nickel-iron,0.05
+R,kamacite,metal,nickel-iron,0.0445
+R,taenite,metal,nickel-iron,0.0055
 R,olivine,silicate,olivine,0.54
 R,orthopyroxene,silicate,orthopyroxene,0.27
 R,pyroxene,silicate,pyroxene,0.045
@@ -280,7 +292,8 @@ R,plagioclase,silicate,plagioclase,0.045
 R,carbon,carbon,carbon,0.01
 R,troilite,accessory,troilite,0.01
 R,chromite,accessory,chromite,0.005
-T,kamacite,metal,nickel-iron,0.05
+T,kamacite,metal,nickel-iron,0.0445
+T,taenite,metal,nickel-iron,0.0055
 T,silicates,silicate,silicates,0.4
 T,carbon,carbon,carbon,0.1
 T,organics,carbon,organics,0.15
@@ -315,7 +328,8 @@ E,carbon,carbon,carbon,0.01
 E,troilite,accessory,troilite,0.006
 E,oldhamite,accessory,troilite,0.003
 E,daubreelite,accessory,troilite,0.001
-P,kamacite,metal,nickel-iron,0.02
+P,kamacite,metal,nickel-iron,0.0178
+P,taenite,metal,nickel-iron,0.0022
 P,silicates,silicate,silicates,0.35
 P,carbon,carbon,carbon,0.1
 P,organics,carbon,organics,0.15
@@ -326,7 +340,8 @@ P,pyrrhotite,accessory,troilite,0.0195
 P,pentlandite,accessory,troilite,0.0105
 P,magnetite,accessory,magnetite,0.05
 P,carbonates,accessory,carbonates,0.03
-F,kamacite,metal,nickel-iron,0.01
+F,kamacite,metal,nickel-iron,0.0089
+F,taenite,metal,nickel-iron,0.0011
 F,olivine,silicate,olivine,0.0175
 F,phyllosilicates,silicate,phyllosilicates,0.3325
 F,carbon,carbon,carbon,0.028
@@ -336,7 +351,8 @@ F,pyrrhotite,accessory,troilite,0.035
 F,pentlandite,accessory,troilite,0.015
 F,magnetite,accessory,magnetite,0.07
 F,carbonates,accessory,carbonates,0.03
-G,kamacite,metal,nickel-iron,0.02
+G,kamacite,metal,nickel-iron,0.0178
+G,taenite,metal,nickel-iron,0.0022
 G,olivine,silicate,olivine,0.038
 G,pyroxene,silicate,pyroxene,0.019
 G,phyllosilicates,silicate,phyllosilicates,0.323
