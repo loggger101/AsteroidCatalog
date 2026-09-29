@@ -54,6 +54,18 @@ module says so. `tests/test_mineralogy.py` holds the group sums (to 1e-12),
 the residual bound, the X mixture, the JSON round trip and byte order, and
 plants a wrong share to prove the sum check fails.
 
+**Published as [`data-2026-09-29`](https://github.com/loggger101/AsteroidCatalog/releases/tag/data-2026-09-29)**,
+the first 1.7.0 release: 1,568,748 bodies, built from `ff0812f`, audit clean
+with all five reference bodies `measured`, every asset's sha256 as its
+manifest says, `tools/albedo_tables.py` finds no table stale, and
+`tools/density_evidence.py` passes every row it can test and recounts the
+X split exactly as committed. Against `data-2026-09-27`, exactly what the
+above predicts: one new column, `comp_phases`, missing only on the 4
+Unknown-class bodies, and **no `comp_*` column moved on any of the 1,568,641
+bodies the two share**. Apart from that, 107 bodies JPL added, none gone, 102
+orbit refits, and 19 H revisions that moved those bodies' H-derived diameter
+and mass.
+
 ---
 
 ## 0.8.0 - 2026-09-27 — data contract **1.6.0**
