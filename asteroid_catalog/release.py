@@ -13,9 +13,10 @@ into the assets for one release:
     asteroid_catalog.parquet    the same rows, typed, for readers who want them
     rejected_entries.csv        the rejection log, as written
     taxonomy.json               TAXONOMY_COMPOSITION and PGM_ENRICHMENT_BY_TYPE
-                                as this build used them, so a consumer can
-                                re-derive the comp_* columns without
-                                installing the package
+                                as this build used them, and (1.7.0) the
+                                mineral-phase tables behind `comp_phases`, so a
+                                consumer can re-derive the comp_* columns
+                                without installing the package
     manifest.json               what the release is: tag, build date, data
                                 contract, row counts per source, and a sha256
                                 for every file, including the CSV inside the gz
@@ -52,6 +53,7 @@ from .physics import (
     rotation_is_impossible, smallest_diameter_km,
 )
 from .query import read_catalog  # noqa: F401  (re-exported: tools and tests read it here)
+from .mineralogy import ACCESSORY_PHASES, PHASE_GROUP, PHASE_SHARES
 from .taxonomy import (DENSITY_EVIDENCE, METEORITE_ANALOGUE_GCM3, PGM_ENRICHMENT_BY_TYPE,
                        TAXONOMY_COMPOSITION)
 
@@ -272,6 +274,10 @@ def write_taxonomy(path: str) -> None:
         # each class density answers to.
         json.dump({"TAXONOMY_COMPOSITION": TAXONOMY_COMPOSITION,
                    "PGM_ENRICHMENT_BY_TYPE": PGM_ENRICHMENT_BY_TYPE,
+                   # 1.7.0: what `comp_phases` was derived from
+                   "PHASE_GROUP": PHASE_GROUP,
+                   "PHASE_SHARES": PHASE_SHARES,
+                   "ACCESSORY_PHASES": ACCESSORY_PHASES,
                    "DENSITY_LIMITS_GCM3": {k: list(v) for k, v in
                                            DENSITY_LIMITS_GCM3.items()},
                    "DENSITY_EVIDENCE": DENSITY_EVIDENCE,

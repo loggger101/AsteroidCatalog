@@ -23,6 +23,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from asteroid_catalog.taxonomy import (          # noqa: E402
     TAXONOMY_COMPOSITION, PGM_ENRICHMENT_BY_TYPE, pgm_enrichment_for_type,
 )
+from asteroid_catalog.mineralogy import (        # noqa: E402
+    GROUP_FIELDS, PHASE_GROUP, phase_fractions,
+)
 
 FIELDS = ["spectral_type", "group", "composition", "minerals",
           "density_est_gcm3", "metal_fraction", "silicate_fraction",
@@ -51,24 +54,45 @@ def taxonomy_rows():
                total, pgm_enrichment_for_type(name), e.get("notes", "")]
 
 
-FILES = ("taxonomy_composition.csv", "pgm_enrichment.csv")
+def phase_rows():
+    """One row per (class, phase): the body fraction, and its share of the group.
+
+    The share is recomputed from the fraction, so the file shows both the
+    number a consumer uses and the number the table was typed as.
+    """
+    for name, e in TAXONOMY_COMPOSITION.items():
+        fracs = phase_fractions(name)
+        if not fracs:
+            continue
+        for phase, frac in fracs.items():
+            group = PHASE_GROUP[phase]
+            coarse = e.get(GROUP_FIELDS[group]) if group in GROUP_FIELDS else None
+            share = "" if not coarse else round(frac / coarse, 6)
+            yield [name, phase, group, round(frac, 6), share]
+
+
+FILES = ("taxonomy_composition.csv", "pgm_enrichment.csv", "mineral_phases.csv")
 
 
 def export(ref_dir):
-    """Write both files into `ref_dir`; return their paths, in FILES order."""
+    """Write every file into `ref_dir`; return their paths, in FILES order."""
     os.makedirs(ref_dir, exist_ok=True)
     a = write(os.path.join(ref_dir, FILES[0]), FIELDS, taxonomy_rows())
     b = write(os.path.join(ref_dir, FILES[1]), ["spectral_type", "pgm_enrichment"],
               sorted(PGM_ENRICHMENT_BY_TYPE.items()))
-    return a, b
+    c = write(os.path.join(ref_dir, FILES[2]),
+              ["spectral_type", "phase", "group", "fraction_of_body",
+               "share_of_group"], phase_rows())
+    return a, b, c
 
 
 def main():
     here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    a, b = export(os.path.join(here, "reference"))
+    a, b, c = export(os.path.join(here, "reference"))
     print("  %s  (%d classes)" % (os.path.basename(a), len(TAXONOMY_COMPOSITION)))
     print("  %s  (%d explicit, everything else 1.0 by fallback)"
           % (os.path.basename(b), len(PGM_ENRICHMENT_BY_TYPE)))
+    print("  %s  (one row per class and phase)" % os.path.basename(c))
     return 0
 
 
