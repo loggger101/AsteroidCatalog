@@ -80,7 +80,7 @@ build, frozen. Releases are never overwritten or rebuilt under the same tag.
 | `asteroid_catalog.csv.gz` | the catalog exactly as the build wrote it (CRLF), gzipped deterministically |
 | `asteroid_catalog.parquet` | the same rows, typed: designations are strings, flag columns nullable booleans |
 | `rejected_entries.csv` | every row validation dropped, and why |
-| `taxonomy.json` | `TAXONOMY_COMPOSITION` and `PGM_ENRICHMENT_BY_TYPE` as this build used them, so the `comp_*` columns can be re-derived without installing the package, and `DENSITY_LIMITS_GCM3`, which decided the measured masses and densities it accepted, and (from 1.5.0) `DENSITY_EVIDENCE`, the measured bodies each class density answers to, and (from 1.6.0) `METEORITE_ANALOGUE_GCM3`, the meteorite density none may exceed |
+| `taxonomy.json` | `TAXONOMY_COMPOSITION` and `PGM_ENRICHMENT_BY_TYPE` as this build used them, so the `comp_*` columns can be re-derived without installing the package, and `DENSITY_LIMITS_GCM3`, which decided the measured masses and densities it accepted, and (from 1.5.0) `DENSITY_EVIDENCE`, the measured bodies each class density answers to, and (from 1.6.0) `METEORITE_ANALOGUE_GCM3`, the meteorite density none may exceed, and (from 1.7.0) `PHASE_GROUP`, `PHASE_SHARES` and `ACCESSORY_PHASES`, which `comp_phases` is derived from |
 | `manifest.json` | release tag, `catalog_date`, `pipeline_version`, package version and commit, row count, bodies per source, and a sha256 for every asset and for the CSV inside the gzip |
 
 Download by tag, so you always get the same file:
@@ -410,6 +410,49 @@ Granvik 2021; Farnocchia et al. 2024; SsODNet), and the table is set
 accordingly. `tests/test_traps.py` asserts it, because "restoring" 0.80/5.30 is
 a tempting and wrong edit.
 
+### Mineral phases: what the four fractions are made of (since 1.7.0)
+
+The coarse fractions say how much of a body is metal or silicate; the
+`minerals` list names what is there without saying how much. Since data
+contract 1.7.0 every row also carries **`comp_phases`**, a JSON object of mass
+fractions by mineral, read off the same `comp_class` row as every other
+`comp_*` column:
+
+```python
+import json
+json.loads(row["comp_phases"])
+# S-type: {'nickel-iron': 0.06, 'olivine': 0.435, 'orthopyroxene': 0.18,
+#          'pyroxene': 0.045, 'plagioclase': 0.09, 'carbon': 0.01,
+#          'troilite': 0.055, 'chromite': 0.005}
+```
+
+It is **detail, not a second composition**, and it moves no existing column:
+
+- **Within a group the table holds shares** (`mineralogy.PHASE_SHARES`), so
+  the olivine, pyroxene and plagioclase of an S-type add back to its 0.75
+  silicate exactly, and revising a coarse fraction moves its phases with it.
+- **Accessory phases** (troilite, magnetite, chromite, ilmenite, spinel,
+  carbonates) belong to none of the four groups. They are absolute fractions
+  (`mineralogy.ACCESSORY_PHASES`) carved out of the residual, and never exceed
+  it, so the residual a consumer floors at bulk silicate gets smaller, not
+  larger.
+- **Ices divide too:** the outer primitive classes (D, Z, P, T) carry the
+  cometary H₂O : CO₂ : NH₃ mix (Rubin et al. 2019, 67P), where the hydrated
+  C-complex's "ice" is bound water and stays water.
+- **Metal carries its phosphide:** iron-meteorite and enstatite-chondrite
+  classes put 1.5–3% of their metal in schreibersite, (Fe,Ni)₃P.
+- **X and Xc are derived**, as the mass-weighted mixture of P, M and E, like
+  every other field of those rows.
+
+The splits follow each class's meteorite analogue: ordinary chondrites (Dunn
+et al. 2010), CI and CM chondrites (King et al. 2015; Howard et al. 2015),
+enstatite chondrites and aubrites, iron meteorites, HEDs, CV/CO, and Tagish
+Lake for the D-types; `mineralogy.py` names each. A, R, O and T, and the
+leans of the S sub-classes toward their neighbours, have no source and say
+so. `Unknown` has no phases (the column is empty).
+`tests/test_mineralogy.py` holds the sums, the residual bound and the X
+mixture, and proves the checks can fail.
+
 ### The precious-metal layer is optional and labelled
 
 `PGM_ENRICHMENT_BY_TYPE` scales the platinum-group fraction of a metal phase by
@@ -432,9 +475,11 @@ package that assumes you care about precious metals. If you do not, ignore the
 
 ## Reference tables, without Python
 
-[`reference/taxonomy_composition.csv`](reference/taxonomy_composition.csv) and
-[`reference/pgm_enrichment.csv`](reference/pgm_enrichment.csv) are renderings of
-the tables in `asteroid_catalog/taxonomy.py`, browsable on GitHub.
+[`reference/taxonomy_composition.csv`](reference/taxonomy_composition.csv),
+[`reference/pgm_enrichment.csv`](reference/pgm_enrichment.csv) and
+[`reference/mineral_phases.csv`](reference/mineral_phases.csv) (since 1.7.0)
+are renderings of the tables in `asteroid_catalog/taxonomy.py` and
+`asteroid_catalog/mineralogy.py`, browsable on GitHub.
 
 The rendering is checked rather than trusted: `tests/test_reference_export.py`
 regenerates them and holds them byte for byte against what is committed, so a

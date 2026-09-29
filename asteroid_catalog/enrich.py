@@ -19,6 +19,7 @@ from .physics import (
     albedo_from_h_and_diameter, bulk_density_gcm3, density_limits,
     diameter_from_mass_km, sphere_volume_m3,
 )
+from .mineralogy import phases_json
 from .taxonomy import (
     TAXONOMY_COMPOSITION, _BLANK_CLASSES, _bus_demeo_case, _by_distinct,
     composition_key, pgm_enrichment_for_type, split_x_by_albedo,
@@ -242,6 +243,13 @@ def _add_composition(df: pd.DataFrame) -> pd.Series:
         # several of these fields are floats-with-`None`, and `.apply()` would
         # have handed back float64/NaN rather than object/None.
         df[f"comp_{field}"] = pd.Series(vals[codes], index=df.index).infer_objects()
+
+    # ── 3a. Mineral phases (data contract 1.7.0) ─────────────────────────────
+    # How much of each mineral the class holds, as compact JSON, read off the
+    # same row as every other `comp_*` column.  mineralogy.py is the table;
+    # the four coarse fractions above are unchanged and the phases of each
+    # group add back to them.  Missing (None) for Unknown.
+    df["comp_phases"] = _by_distinct(comp_key, phases_json)
 
     # ── 3b. PGM enrichment factor (v1.0.4) ────────────────────────────────────
     # Per-spectral-type multiplier applied to platinum-group-metal yields
