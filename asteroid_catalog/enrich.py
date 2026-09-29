@@ -19,7 +19,7 @@ from .physics import (
     albedo_from_h_and_diameter, bulk_density_gcm3, density_limits,
     diameter_from_mass_km, sphere_volume_m3,
 )
-from .mineralogy import phases_json
+from .mineralogy import phases_detailed_json, phases_json
 from .taxonomy import (
     TAXONOMY_COMPOSITION, _BLANK_CLASSES, _bus_demeo_case, _by_distinct,
     composition_key, pgm_enrichment_for_type, split_x_by_albedo,
@@ -250,6 +250,11 @@ def _add_composition(df: pd.DataFrame) -> pd.Series:
     # the four coarse fractions above are unchanged and the phases of each
     # group add back to them.  Missing (None) for Unknown.
     df["comp_phases"] = _by_distinct(comp_key, phases_json)
+    # 1.8.0: the same, with the alloy and the sulfides resolved into the
+    # minerals they are, and the phosphates and CAI oxides named.  A new
+    # column rather than a new `comp_phases`, so nothing a 1.7.0 reader
+    # reads moves.
+    df["comp_phases_detailed"] = _by_distinct(comp_key, phases_detailed_json)
 
     # ── 3b. PGM enrichment factor (v1.0.4) ────────────────────────────────────
     # Per-spectral-type multiplier applied to platinum-group-metal yields
