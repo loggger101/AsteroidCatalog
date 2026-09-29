@@ -407,14 +407,30 @@ del _row_name
 #                         which needs the most CAI of any spectrum (Sunshine et
 #                         al. 2008), carries the most.
 #
+#   enstatite / HED       E, Xe, V: the metal is KAMACITE alone.  Enstatite
+#                         chondrite and aubrite metal is low-Ni kamacite (Keil
+#                         1968; Keil 2010), and eucrite metal is nearly
+#                         Ni-free (Mittlefehldt 2015), which kamacite's ~6.5%
+#                         still overstates.
+#
 # WHAT HAS NO SOURCE: every sulfide split as a number (the sources name the
 # species, not a ratio this table could quote); the K alloy split; the CAI
-# oxide fractions; and "kamacite" for every class with no known Ni-rich metal
-# (the C complex, A, R, O, T, V, D, Z, P), which overstates a eucrite's nearly
-# Ni-free metal.  The composition of each alloy belongs to whoever prices it;
-# this table says only how much of each a class holds.
+# oxide fractions; and the metal of every class not named above -- the C
+# complex, P, D, Z, T, A, R, O and L.
+#
+# 🚨  NO SOURCE MEANS NO CHANGE, AND 1.8.0 GOT THAT WRONG.  It gave those
+# classes pure kamacite, at ~6.5 wt% Ni, where the coarse column's
+# "nickel-iron" had always meant an iron meteorite's ~9%: a consumer valuing
+# nickel then read them 6-12% poorer for a choice nothing supports.  Since
+# 1.8.1 they take `_ALLOY_OCTAHEDRITE`, kamacite and taenite in an
+# octahedrite's proportions, which IS the alloy the coarse column assumed.
+# A refinement may only move a number where a source moves it.
+#
+# The composition of each alloy belongs to whoever prices it; this table says
+# only how much of each a class holds.
 
-_ALLOY_KAMACITE = {"kamacite": 1.0}
+_ALLOY_KAMACITE    = {"kamacite": 1.0}
+_ALLOY_OCTAHEDRITE = {"kamacite": 0.89, "taenite": 0.11}     # ~9 wt% Ni: no change
 _ALLOY_OC       = {"kamacite": 0.55, "taenite": 0.38, "tetrataenite": 0.07}
 _ALLOY_IRON     = {"kamacite": 0.88, "taenite": 0.11, "cohenite": 0.01}
 _ALLOY_CV       = {"taenite": 0.60, "kamacite": 0.40}
@@ -439,14 +455,14 @@ def _detail(alloy, sulfide=None):
 
 PHASE_DETAIL: Dict[str, Dict[str, Dict[str, float]]] = {
     # ── C complex ───────────────────────────────────────────────────────────
-    "B":   _detail(_ALLOY_KAMACITE, _SULFIDE_CI),
-    "C":   _detail(_ALLOY_KAMACITE, _SULFIDE_CI),
-    "Cb":  _detail(_ALLOY_KAMACITE, _SULFIDE_CI),
-    "F":   _detail(_ALLOY_KAMACITE, _SULFIDE_CI),
-    "Cg":  _detail(_ALLOY_KAMACITE, _SULFIDE_CM),
-    "Ch":  _detail(_ALLOY_KAMACITE, _SULFIDE_CM),
-    "G":   _detail(_ALLOY_KAMACITE, _SULFIDE_CM),
-    "Cgh": _detail(_ALLOY_KAMACITE, _SULFIDE_NI),
+    "B":   _detail(_ALLOY_OCTAHEDRITE, _SULFIDE_CI),
+    "C":   _detail(_ALLOY_OCTAHEDRITE, _SULFIDE_CI),
+    "Cb":  _detail(_ALLOY_OCTAHEDRITE, _SULFIDE_CI),
+    "F":   _detail(_ALLOY_OCTAHEDRITE, _SULFIDE_CI),
+    "Cg":  _detail(_ALLOY_OCTAHEDRITE, _SULFIDE_CM),
+    "Ch":  _detail(_ALLOY_OCTAHEDRITE, _SULFIDE_CM),
+    "G":   _detail(_ALLOY_OCTAHEDRITE, _SULFIDE_CM),
+    "Cgh": _detail(_ALLOY_OCTAHEDRITE, _SULFIDE_NI),
     # ── S complex and Q: ordinary chondrite, whose sulfide IS troilite ──────
     "S":   _detail(_ALLOY_OC), "Sq": _detail(_ALLOY_OC), "Q":  _detail(_ALLOY_OC),
     "Sa":  _detail(_ALLOY_OC), "Sr": _detail(_ALLOY_OC), "Sv": _detail(_ALLOY_OC),
@@ -456,17 +472,17 @@ PHASE_DETAIL: Dict[str, Dict[str, Dict[str, float]]] = {
     "Xk":  _detail(_ALLOY_IRON),
     "Xe":  _detail(_ALLOY_KAMACITE, _SULFIDE_EH),
     "E":   _detail(_ALLOY_KAMACITE, _SULFIDE_AUBRITE),
-    "P":   _detail(_ALLOY_KAMACITE, _SULFIDE_CM),
+    "P":   _detail(_ALLOY_OCTAHEDRITE, _SULFIDE_CM),
     # ── primitive outer bodies ──────────────────────────────────────────────
-    "D":   _detail(_ALLOY_KAMACITE, _SULFIDE_CM),
-    "Z":   _detail(_ALLOY_KAMACITE, _SULFIDE_CM),
-    "T":   _detail(_ALLOY_KAMACITE),
+    "D":   _detail(_ALLOY_OCTAHEDRITE, _SULFIDE_CM),
+    "Z":   _detail(_ALLOY_OCTAHEDRITE, _SULFIDE_CM),
+    "T":   _detail(_ALLOY_OCTAHEDRITE),
     # ── the rest ────────────────────────────────────────────────────────────
-    "A":   _detail(_ALLOY_KAMACITE),
-    "R":   _detail(_ALLOY_KAMACITE),
-    "O":   _detail(_ALLOY_KAMACITE),
+    "A":   _detail(_ALLOY_OCTAHEDRITE),
+    "R":   _detail(_ALLOY_OCTAHEDRITE),
+    "O":   _detail(_ALLOY_OCTAHEDRITE),
     "K":   _detail(_ALLOY_CV, _SULFIDE_NI),
-    "L":   _detail(_ALLOY_KAMACITE),
+    "L":   _detail(_ALLOY_OCTAHEDRITE),
     "V":   _detail(_ALLOY_KAMACITE),
 }
 

@@ -14,6 +14,29 @@ moving it is not evidence that a number changed.
 
 ---
 
+## 0.10.1 - 2026-09-29 — data contract **1.8.1**
+
+**No source means no change: the unsourced classes' metal is put back.** 1.8.0
+gave every class whose metal has no meteorite analogue (the C complex, P, D,
+Z, T, A, R, O and L) pure kamacite, at ~6.5 wt% Ni, where the coarse column's
+"nickel-iron" had always meant an iron meteorite's ~9%. A consumer valuing
+nickel then read those classes **6 to 12% poorer at a terrestrial market**
+(measured by economicspace on its valuation functions, O-type the worst) for
+a choice nothing supports. They now take `_ALLOY_OCTAHEDRITE`, kamacite 0.89
+and taenite 0.11, which is that alloy.
+
+Pure kamacite stays where a source says so: E and Xe (enstatite-meteorite
+metal is low-Ni kamacite, Keil 1968 and 2010) and V (eucrite metal is nearly
+Ni-free, Mittlefehldt 2015). The ordinary chondrites, M/Xk and K are
+unchanged. `comp_phases` is unchanged, as in 1.8.0.
+
+`tests/test_mineralogy.py` now holds every unsourced class's metal to 9 ± 0.2
+wt% Ni at the nominal alloy compositions, and was proved by planting A back
+at pure kamacite. `data-2026-09-29b`, the one 1.8.0 release, stays published
+and is superseded.
+
+---
+
 ## 0.10.0 - 2026-09-29 — data contract **1.8.0**
 
 **The alloy and the sulfides are resolved into the minerals they are.**
