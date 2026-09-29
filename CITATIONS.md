@@ -293,6 +293,40 @@ otherwise; volumes and pages are Crossref's.
   precious metals*, JGR 99(E10), 21129 — LL-chondrite metal 1.2–5.3% carrying
   50–220 ppm precious metals: the PGM caveat.
 
+**Mineral phases (`comp_phases`, 1.7.0; `comp_phases_detailed`, 1.8.0)**
+
+Cited here as `asteroid_catalog/mineralogy.py` cites them, which is where each
+number is tied to the source behind it. ⚠️ **Not re-read from the papers for
+this section**, unlike the entries above: volumes and pages are as the module
+gives them, and the module lists what has no source at all.
+
+- Dunn, T. L., Cressey, G., McSween, H. Y., and McCoy, T. J. (2010), MAPS 45,
+  123 — XRD modal abundances of L and LL chondrites: the S-complex silicate
+  split, troilite and chromite.
+- King, A. J., Schofield, P. F., Howard, K. T., and Russell, S. S. (2015), GCA
+  165, 148 — Orgueil and Ivuna by XRD: the CI phases, and pyrrhotite with
+  lesser pentlandite as their sulfide.
+- Howard, K. T., Alexander, C. M. O'D., Schrader, D. L., and Dyl, K. A.
+  (2015), GCA 149, 206 — the CM phases.
+- Alexander, C. M. O'D., et al. (2007), GCA 71, 4380 — insoluble vs soluble
+  organic carbon.
+- Mittlefehldt, D. W. (2015), Chemie der Erde 75, 155 — the HED phases.
+- Sunshine, J. M., et al. (2008), Science 320, 514 — L-types' CAI content.
+- Rubin, M., et al. (2019), MNRAS 489, 594 — 67P's bulk volatiles.
+- Hiroi, T., et al. (2001), Science 293, 2234 — Tagish Lake as the D-type
+  analogue.
+- Jones, R. H., McCubbin, F. M., Dreeland, L., Guan, Y., Burger, P. V., and
+  Shearer, C. K. (2014), GCA 132, 120 — merrillite and chlorapatite in LL
+  chondrites: the 1.8.0 phosphates.
+- Keil, K. (1968), JGR 73, 6945 — the enstatite-chondrite sulfides
+  (niningerite, oldhamite, daubreelite): Xe's 1.8.0 split.
+- Keil, K. (2010), Chemie der Erde 70, 295 — aubrites, and their oldhamite:
+  E's 1.8.0 split.
+- Jarosewich (1990), above — the metal fractions behind the 1.8.0 alloy
+  split: metal falls from H to LL while bulk Ni barely moves, so the metal of
+  an LL-leaning S-type is Ni-rich, taenite and tetrataenite rather than
+  kamacite.
+
 **Rotation and the outer Solar System**
 
 - Pravec, P., and Harris, A. W. (2000), *Fast and slow rotation of asteroids*,

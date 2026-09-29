@@ -14,7 +14,8 @@ into the assets for one release:
     rejected_entries.csv        the rejection log, as written
     taxonomy.json               TAXONOMY_COMPOSITION and PGM_ENRICHMENT_BY_TYPE
                                 as this build used them, and (1.7.0) the
-                                mineral-phase tables behind `comp_phases`, so a
+                                mineral-phase tables behind `comp_phases`
+                                and (1.8.0) `comp_phases_detailed`, so a
                                 consumer can re-derive the comp_* columns
                                 without installing the package
     manifest.json               what the release is: tag, build date, data
@@ -53,7 +54,8 @@ from .physics import (
     rotation_is_impossible, smallest_diameter_km,
 )
 from .query import read_catalog  # noqa: F401  (re-exported: tools and tests read it here)
-from .mineralogy import ACCESSORY_PHASES, PHASE_GROUP, PHASE_SHARES
+from .mineralogy import (ACCESSORY_PHASES, DETAIL_ACCESSORIES, PHASE_DETAIL,
+                         PHASE_GROUP, PHASE_SHARES)
 from .taxonomy import (DENSITY_EVIDENCE, METEORITE_ANALOGUE_GCM3, PGM_ENRICHMENT_BY_TYPE,
                        TAXONOMY_COMPOSITION)
 
@@ -278,6 +280,9 @@ def write_taxonomy(path: str) -> None:
                    "PHASE_GROUP": PHASE_GROUP,
                    "PHASE_SHARES": PHASE_SHARES,
                    "ACCESSORY_PHASES": ACCESSORY_PHASES,
+                   # 1.8.0: what `comp_phases_detailed` refines it by
+                   "PHASE_DETAIL": PHASE_DETAIL,
+                   "DETAIL_ACCESSORIES": DETAIL_ACCESSORIES,
                    "DENSITY_LIMITS_GCM3": {k: list(v) for k, v in
                                            DENSITY_LIMITS_GCM3.items()},
                    "DENSITY_EVIDENCE": DENSITY_EVIDENCE,

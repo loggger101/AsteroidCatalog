@@ -82,7 +82,7 @@ build, frozen. Releases are never overwritten or rebuilt under the same tag.
 | `asteroid_catalog.csv.gz` | the catalog exactly as the build wrote it (CRLF), gzipped deterministically |
 | `asteroid_catalog.parquet` | the same rows, typed: designations are strings, flag columns nullable booleans |
 | `rejected_entries.csv` | every row validation dropped, and why |
-| `taxonomy.json` | `TAXONOMY_COMPOSITION` and `PGM_ENRICHMENT_BY_TYPE` as this build used them, so the `comp_*` columns can be re-derived without installing the package, and `DENSITY_LIMITS_GCM3`, which decided the measured masses and densities it accepted, and (from 1.5.0) `DENSITY_EVIDENCE`, the measured bodies each class density answers to, and (from 1.6.0) `METEORITE_ANALOGUE_GCM3`, the meteorite density none may exceed, and (from 1.7.0) `PHASE_GROUP`, `PHASE_SHARES` and `ACCESSORY_PHASES`, which `comp_phases` is derived from |
+| `taxonomy.json` | `TAXONOMY_COMPOSITION` and `PGM_ENRICHMENT_BY_TYPE` as this build used them, so the `comp_*` columns can be re-derived without installing the package, and `DENSITY_LIMITS_GCM3`, which decided the measured masses and densities it accepted, and (from 1.5.0) `DENSITY_EVIDENCE`, the measured bodies each class density answers to, and (from 1.6.0) `METEORITE_ANALOGUE_GCM3`, the meteorite density none may exceed, and (from 1.7.0) `PHASE_GROUP`, `PHASE_SHARES` and `ACCESSORY_PHASES`, which `comp_phases` is derived from, and (from 1.8.0) `PHASE_DETAIL` and `DETAIL_ACCESSORIES`, which refine it into `comp_phases_detailed` |
 | `manifest.json` | release tag, `catalog_date`, `pipeline_version`, package version and commit, row count, bodies per source, and a sha256 for every asset and for the CSV inside the gzip |
 
 Download by tag, so you always get the same file:
@@ -455,6 +455,37 @@ so. `Unknown` has no phases (the column is empty).
 `tests/test_mineralogy.py` holds the sums, the residual bound and the X
 mixture, and proves the checks can fail.
 
+### Detailed phases: the alloy and the sulfides resolved (since 1.8.0)
+
+`comp_phases` names two families as if each were one mineral: "nickel-iron"
+and "troilite". Since data contract 1.8.0 every row also carries
+**`comp_phases_detailed`**, the same JSON with both resolved, and
+`comp_phases` is unchanged:
+
+```python
+json.loads(row["comp_phases_detailed"])
+# S-type: {'kamacite': 0.033, 'taenite': 0.0228, 'tetrataenite': 0.0042,
+#          'olivine': 0.435, ..., 'troilite': 0.055, 'chromite': 0.005,
+#          'merrillite': 0.004, 'chlorapatite': 0.002}
+```
+
+- **The metal** is kamacite (~6.5 wt% Ni), taenite (~30%) and, in slowly
+  cooled chondrites, tetrataenite (~50%); irons add cohenite, (Fe,Ni)₃C.
+  Which class holds which mix is the point: ordinary-chondrite metal is
+  Ni-rich because the iron oxidised into the silicate and the nickel stayed
+  (Jarosewich 1990), so it is mostly taenite, where an M-type's is an
+  octahedrite's kamacite.
+- **The sulfides**: pyrrhotite and pentlandite in the hydrated and primitive
+  classes; troilite with niningerite, oldhamite and daubreelite in the
+  enstatite classes; troilite where it is troilite.
+- **New accessories**: merrillite and chlorapatite in the S complex and Q,
+  perovskite and hibonite in K and L.
+
+It is a **refinement**: `mineralogy.PHASE_DETAIL` divides a `comp_phases`
+entry into shares, so every entry adds back from its detailed phases, and
+`mineralogy.DETAIL_ACCESSORIES` adds the new accessories inside the residual.
+The module names the source of each split and the ones that have none.
+
 ### The precious-metal layer is optional and labelled
 
 `PGM_ENRICHMENT_BY_TYPE` scales the platinum-group fraction of a metal phase by
@@ -479,7 +510,8 @@ package that assumes you care about precious metals. If you do not, ignore the
 
 [`reference/taxonomy_composition.csv`](reference/taxonomy_composition.csv),
 [`reference/pgm_enrichment.csv`](reference/pgm_enrichment.csv) and
-[`reference/mineral_phases.csv`](reference/mineral_phases.csv) (since 1.7.0)
+[`reference/mineral_phases.csv`](reference/mineral_phases.csv) (since 1.7.0) and
+[`reference/mineral_phases_detailed.csv`](reference/mineral_phases_detailed.csv) (since 1.8.0)
 are renderings of the tables in `asteroid_catalog/taxonomy.py` and
 `asteroid_catalog/mineralogy.py`, browsable on GitHub.
 
