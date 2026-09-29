@@ -35,6 +35,14 @@ wt% Ni at the nominal alloy compositions, and was proved by planting A back
 at pure kamacite. `data-2026-09-29b`, the one 1.8.0 release, stays published
 and is superseded.
 
+**Published as [`data-2026-09-29c`](https://github.com/loggger101/AsteroidCatalog/releases/tag/data-2026-09-29c)**,
+built from `9143185`: 1,568,882 bodies, `tools/audit_catalog.py` clean with
+all five reference bodies `measured`, `tools/albedo_tables.py` finds no table
+stale, and `tools/density_evidence.py` fails no row and recounts the X split as
+committed. Against `data-2026-09-29b`, **exactly one column moved,
+`comp_phases_detailed`, on the 1,048,389 bodies of the unsourced classes and
+the X mixtures**; not one other value differs, to the last bit.
+
 ---
 
 ## 0.10.0 - 2026-09-29 — data contract **1.8.0**
@@ -81,6 +89,24 @@ entry it refines. `tests/test_mineralogy.py` holds the add-back of every
 entry (1e-15), the group sums, the residual bound, the X mixture, that
 nickel-iron is gone, that S-type metal is Ni-richer than M-type, and plants a
 wrong split to prove the check fails.
+
+**Published as [`data-2026-09-29b`](https://github.com/loggger101/AsteroidCatalog/releases/tag/data-2026-09-29b)**
+(the `b` because `data-2026-09-29` was taken that morning), and superseded the
+same day by `data-2026-09-29c`; see 0.10.1. Built from `d30a34f`: 1,568,882
+bodies, audit clean. Against `data-2026-09-29`: one new column,
+`comp_phases_detailed`, missing only on the 4 Unknown-class bodies, and **no
+`comp_*` column moved on any of the 1,568,748 bodies the two share**; 134
+bodies JPL added, none gone, 82 orbit refits and 9 H revisions.
+
+⚠️  **74,414 diameters and 124,109 masses differ in the LAST BIT between the
+two builds**, median 2.2e-16 relative; only the 9 H-revised bodies move by
+more than 1e-12. Both builds ran on GitHub's hosted runners with the same
+Python 3.12.14, numpy 2.5.3, pandas 3.0.6 and pyarrow 25.0.1, eleven hours
+apart, and `data-2026-09-29c`, built three hours after `-29b`, differs from it
+in nothing but the column 0.10.1 changed. The likeliest cause is the runner's
+CPU, since numpy picks its SIMD float kernels per CPU and the hosted runners
+are not one CPU; that is an inference, not a measurement. It is not data, and
+it is why two releases are compared by value with a tolerance, never by hash.
 
 ---
 
