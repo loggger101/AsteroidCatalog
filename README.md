@@ -14,15 +14,17 @@ that names its build date, data contract and checksums. Pin a tag and you have
 the same rows every time. See [Published releases](#published-releases).
 
 The current release is
-[`data-2026-09-27`](https://github.com/loggger101/AsteroidCatalog/releases/tag/data-2026-09-27):
-1,568,641 bodies, data contract 1.6.0, built by asteroid_catalog 0.8.0. It
-splits the X complex by albedo (a dark X-type is composed as a P, a moderate
-one as an M, a bright one as an E; the new `comp_class` column says which),
-holds every class density to a second route, and corrects the two that fail
-it, P 1.80 → 1.20 and Q 3.00 → 2.70 (see [CHANGELOG.md](CHANGELOG.md)). That
-moved the density and mass of 17,237 bodies, 0.06% of the catalog's mass.
-`data-2026-09-26b` (contract 1.5.0) stays published with the old values, as
-does `data-2026-09-26` (1.4.1). `data-2026-09-25` (contract 1.4.0) was the
+[`data-2026-09-29`](https://github.com/loggger101/AsteroidCatalog/releases/tag/data-2026-09-29):
+1,568,748 bodies, data contract 1.7.0, built by asteroid_catalog 0.9.0. It
+adds one column, `comp_phases`: the minerals each class's four coarse
+fractions are made of, and the sulfides, oxides and carbonates in what the
+four leave (see [Mineral phases](#mineral-phases-what-the-four-fractions-are-made-of-since-170)).
+No existing column moved. `data-2026-09-27` (contract 1.6.0) split the X
+complex by albedo (a dark X-type is composed as a P, a moderate one as an M, a
+bright one as an E; the `comp_class` column says which), held every class
+density to a second route, and corrected the two that fail it, P 1.80 → 1.20
+and Q 3.00 → 2.70; it stays published, as do `data-2026-09-26b` (contract
+1.5.0) and `data-2026-09-26` (1.4.1). `data-2026-09-25` (contract 1.4.0) was the
 first release built under the physical limits in
 [section 5](#5-nothing-physically-impossible-is-published).
 `data-2026-09-23` (contract 1.3.0) stays published and unchanged, and carries
@@ -31,7 +33,7 @@ the impossible values that section lists.
 To build your own from the live sources:
 
 ```bash
-pip install git+https://github.com/loggger101/AsteroidCatalog@v0.8.0
+pip install git+https://github.com/loggger101/AsteroidCatalog@v0.9.0
 asteroid-catalog build --out ./data
 ```
 
