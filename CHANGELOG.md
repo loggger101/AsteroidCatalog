@@ -14,6 +14,48 @@ moving it is not evidence that a number changed.
 
 ---
 
+## 0.9.0 - 2026-09-29 — data contract **1.7.0**
+
+**Every row now says which minerals its composition is made of, and how much
+of each.** The four coarse fractions let a consumer sell "silicate" but not
+the olivine and plagioclase in it, "metal" but not the phosphide in it, and
+nothing at all of the troilite, magnetite or carbonate sitting in the residual
+the four leave. The `minerals` list named those phases without quantities.
+
+**New column `comp_phases`**: a JSON object of mass fractions by mineral, read
+off the same `comp_class` row as every other `comp_*` column, missing for
+Unknown. The tables are in the new `asteroid_catalog/mineralogy.py`, exported
+from the package, written into each release's `taxonomy.json`, and rendered as
+`reference/mineral_phases.csv`.
+
+**No existing column moves.** Within each coarse group the table holds SHARES,
+so the phases add back to the coarse fraction exactly; the accessory phases
+(troilite, magnetite, chromite, ilmenite, spinel, carbonates) are absolute
+fractions carved out of the residual and never exceed it. X and Xc are derived
+as the P/M/E mixture, as their other fields are. Twenty phases in all;
+`PHASE_GROUP` is the vocabulary, and a row naming anything else fails the
+suite.
+
+| analogue | classes | source |
+|---|---|---|
+| ordinary chondrite (L/LL) | S, Sq, Q; Sa, Sr, Sv, Sk, Sl lean toward their neighbour | Dunn et al. 2010, XRD modal abundances |
+| CI chondrite | B, C, Cb, F | King et al. 2015 (Orgueil, Ivuna) |
+| CM chondrite | Cg, Ch, G | Howard et al. 2015 |
+| IOM vs soluble organics | the C complex's carbon, 0.70 / 0.30 | Alexander et al. 2007 |
+| enstatite chondrite / aubrite | Xe / E | EH and aubrite modes |
+| iron / mesosiderite | M, Xk: 1.5% of the metal as schreibersite | bulk P of the common iron groups |
+| HED | V: chromite and ilmenite ~1% each | Mittlefehldt 2015 |
+| CV/CO | K, L: spinel as the CAI oxide | Sunshine et al. 2008 for L |
+| comet ices | D, Z, P, T: H₂O 0.892 / CO₂ 0.102 / NH₃ 0.006 by mass | Rubin et al. 2019 (67P, ROSINA) |
+| Tagish Lake | D, Z, P accessories | Hiroi et al. 2001 |
+
+A, R and O, T's split, and the S sub-class leans have no source, and the
+module says so. `tests/test_mineralogy.py` holds the group sums (to 1e-12),
+the residual bound, the X mixture, the JSON round trip and byte order, and
+plants a wrong share to prove the sum check fails.
+
+---
+
 ## 0.8.0 - 2026-09-27 — data contract **1.6.0**
 
 **The X complex is split by albedo, and every class density now answers to a
