@@ -8,10 +8,9 @@ this package cross-matched, validated and tagged it.
 marked. If you publish anything derived from a catalog built with this package,
 those citations travel with it.
 
-⚠️ **Cite the build, not just the package.** JPL adds bodies daily, so a
-catalog built today is a different table from one built last week. Every row
-carries `catalog_date` and `pipeline_version` for exactly this reason. Quote
-them.
+⚠️ **Cite the build, not just the package**: the release tag, or for a build
+of your own the `catalog_date` and `pipeline_version` every row carries. JPL
+adds bodies daily, so two builds are two different tables.
 
 ---
 
@@ -111,10 +110,8 @@ with no publication behind them, and the module says so.
 - Tholen classes are also accepted and mapped, for the bodies where that is
   the only classification available.
 
-⚠️ **The fractions are estimates, and they do not sum to 1.** Every real class
-sums to strictly less than one; the residual is the part the literature does
-not resolve. Do not normalise it away — floor it at a bulk-silicate value, or
-carry it as unknown.
+⚠️ **The fractions do not sum to 1, and must not be normalised**; see
+[README > Composition](README.md#composition).
 
 ### Diameter from absolute magnitude
 
@@ -142,22 +139,13 @@ produced this way is tagged in `diameter_source` and flagged in
 
 ### PGM enrichment by spectral type
 
-`PGM_ENRICHMENT_BY_TYPE` is a **valuation layer, not an observation**, and it
-is the one part of this package that assumes you care about precious metals. It
-scales the platinum-group fraction of a metal phase by parent-body
-differentiation history: core fragments enriched, basaltic crust depleted,
-primitive bodies at a chondritic baseline of 1.0.
-
-The baseline is set to a mean iron-meteorite PGM concentration of ~37 ppm
-total PGM + Au in the metal phase. ⚠️ Neither that figure nor any per-type
-factor traces to a publication, and the premise that chondritic metal sits at
-the same baseline is contradicted: LL-chondrite metal carries 50–220 ppm
-precious metals, while iron meteorites range up to several hundred ppm
-(Kargel 1994, section 3). The chondritic classes at 1.0 therefore understate
-their metal's PGM, which is the conservative direction.
-
-If you are not costing precious metals, ignore the `comp_pgm_enrichment`
-column entirely. Nothing else in the package depends on it.
+`PGM_ENRICHMENT_BY_TYPE` is a **valuation layer, not an observation**; what it
+does is in [README > Composition](README.md#the-precious-metal-layer-is-optional-and-labelled).
+⚠️ Neither its baseline (~37 ppm total PGM + Au in the metal, a mean
+iron-meteorite figure) nor any per-type factor traces to a publication, and
+the one source that bears on it contradicts the chondritic 1.0: LL-chondrite
+metal carries 50–220 ppm precious metals, while iron meteorites range up to
+several hundred ppm (Kargel 1994, section 3).
 
 ---
 
@@ -346,13 +334,5 @@ gives them, and the module lists what has no source at all.
 ## 4. Provenance
 
 Extracted from Module 1 of
-[economicspace](https://github.com/loggger101/economicspace), an
-asteroid-mining profitability pipeline, at `pipeline_version` 1.2.0
-(commit `1ce0dba`). The tables and the derivation chain were built there over
-fourteen releases; they are split out because nothing in their schema knows
-what a mine is.
-
-Nothing was re-typed: the package was built by slicing source line ranges, and
-the extraction was verified in-process against the original module — reference
-data leaf by leaf at raw IEEE bit patterns, and every pure function over a
-stride sample of a real 1.55-million-row catalog.
+[economicspace](https://github.com/loggger101/economicspace); see
+[README > Provenance](README.md#provenance).
