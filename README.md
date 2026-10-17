@@ -15,26 +15,14 @@ the same rows every time. See [Published releases](#published-releases).
 
 The current release is
 [`data-2026-09-29c`](https://github.com/loggger101/AsteroidCatalog/releases/tag/data-2026-09-29c):
-1,568,882 bodies, data contract 1.8.1, built by asteroid_catalog 0.10.1. It
-adds one column, `comp_phases_detailed`: `comp_phases` with the metal resolved
-into kamacite, taenite, tetrataenite and cohenite and the sulfide into its
-species, and the phosphates and CAI oxides named (see
+1,568,882 bodies, data contract 1.8.1, built by asteroid_catalog 0.10.1. Its
+newest column is `comp_phases_detailed` (see
 [Detailed phases](#detailed-phases-the-alloy-and-the-sulfides-resolved-since-180)).
-No `comp_*` column moved. `data-2026-09-29b` (contract 1.8.0) is the same
-build with the metal of the unsourced classes set to pure kamacite, which
-1.8.1 corrects; it stays published and is superseded. `data-2026-09-29`
-(contract 1.7.0) added `comp_phases`, the minerals each class's four coarse
-fractions are made of (see [Mineral phases](#mineral-phases-what-the-four-fractions-are-made-of-since-170)),
-and stays published. `data-2026-09-27` (contract 1.6.0) split the X
-complex by albedo (a dark X-type is composed as a P, a moderate one as an M, a
-bright one as an E; the `comp_class` column says which), held every class
-density to a second route, and corrected the two that fail it, P 1.80 → 1.20
-and Q 3.00 → 2.70; it stays published, as do `data-2026-09-26b` (contract
-1.5.0) and `data-2026-09-26` (1.4.1). `data-2026-09-25` (contract 1.4.0) was the
-first release built under the physical limits in
-[section 5](#5-nothing-physically-impossible-is-published).
-`data-2026-09-23` (contract 1.3.0) stays published and unchanged, and carries
-the impossible values that section lists.
+Every earlier release stays published, and [CHANGELOG.md](CHANGELOG.md) says
+what each one changed. `data-2026-09-23` (contract 1.3.0) is the last built
+before the physical limits in
+[section 5](#5-nothing-physically-impossible-is-published), and carries the
+impossible values that section lists.
 
 To build your own from the live sources:
 
@@ -88,7 +76,7 @@ build, frozen. Releases are never overwritten or rebuilt under the same tag.
 | `asteroid_catalog.csv.gz` | the catalog exactly as the build wrote it (CRLF), gzipped deterministically |
 | `asteroid_catalog.parquet` | the same rows, typed: designations are strings, flag columns nullable booleans |
 | `rejected_entries.csv` | every row validation dropped, and why |
-| `taxonomy.json` | `TAXONOMY_COMPOSITION` and `PGM_ENRICHMENT_BY_TYPE` as this build used them, so the `comp_*` columns can be re-derived without installing the package, and `DENSITY_LIMITS_GCM3`, which decided the measured masses and densities it accepted, and (from 1.5.0) `DENSITY_EVIDENCE`, the measured bodies each class density answers to, and (from 1.6.0) `METEORITE_ANALOGUE_GCM3`, the meteorite density none may exceed, and (from 1.7.0) `PHASE_GROUP`, `PHASE_SHARES` and `ACCESSORY_PHASES`, which `comp_phases` is derived from, and (from 1.8.0) `PHASE_DETAIL` and `DETAIL_ACCESSORIES`, which refine it into `comp_phases_detailed` |
+| `taxonomy.json` | the tables this build read, so its `comp_*` columns can be re-derived without installing the package: `TAXONOMY_COMPOSITION`, `PGM_ENRICHMENT_BY_TYPE`, `DENSITY_LIMITS_GCM3` (which measured masses and densities it accepted), `DENSITY_EVIDENCE` (from 1.5.0), `METEORITE_ANALOGUE_GCM3` (1.6.0), `PHASE_GROUP`, `PHASE_SHARES` and `ACCESSORY_PHASES` (1.7.0), and `PHASE_DETAIL` and `DETAIL_ACCESSORIES` (1.8.0) |
 | `manifest.json` | release tag, `catalog_date`, `pipeline_version`, package version and commit, row count, bodies per source, and a sha256 for every asset and for the CSV inside the gzip |
 
 Download by tag, so you always get the same file:
@@ -187,10 +175,9 @@ An unreachable survey is tolerated rather than fatal, because a build that
 dies whenever one of four hosts has a bad hour would be useless. But that means
 **a source can fail and the run still looks fine**.
 
-MP3C is the proof. It was documented as "regularly unreachable" for releases.
-It was reachable the whole time, at a TAP address the fetcher never asked:
-every URL the fetcher tried answered 404. A tolerated failure hides a wrong
-address exactly as well as it hides an outage.
+A tolerated failure hides a wrong address exactly as well as it hides an
+outage: MP3C was once logged as unreachable for several releases while the
+fetcher was asking an address that answered 404.
 
 What is *not* tolerated is a source that fetched rows and matched none of them.
 That is always a bug in the fetcher, never an empty upstream table, and it
@@ -201,10 +188,10 @@ ALERT  NEOWISE matched ZERO backbone designations. Every one of its
        183,408 rows entered as a new body with no orbital elements...
 ```
 
-That exact failure — a float-typed merge key stringifying to `"3.0"` and
-joining nothing — cost the upstream project four releases of a source
-contributing precisely zero while its fetch summary read 183,408. **Read the
-per-source match counts, not the fetch counts.**
+That exact failure (a float-typed merge key stringifying to `"3.0"` and
+joining nothing) once left a source contributing zero rows while its fetch
+summary read 183,408. **Read the per-source match counts, not the fetch
+counts.**
 
 ### 4. One body is one row, and agreement is not independence
 
@@ -368,13 +355,13 @@ carry it as unknown; normalising it away invents composition.
 
 | what | value | backed by |
 |---|---|---|
-| carbon, hydrated C-complex (B, C, Cb, Cg, Cgh, Ch, F, G) | 0.04 | CI chondrites 3.5–3.9 wt% (Pearson et al. 2006) and 3.48 (Lodders 2010); Bennu 4.5–4.7 (Lauretta et al. 2024, and again Glavin et al. 2025) and Ryugu ~4.0–4.6 (Lauretta et al. 2024; Yokoyama et al. 2023). It was 0.20–0.30. |
-| metal, S-complex and Q | 0.06 | the mean of LL (3.56 wt%) and L (8.33 wt%) chondrite metal (Jarosewich 1990), the analogues the rows name; it was 0.15–0.20, H-chondrite metal or more |
-| metal, V | 0.01 | eucrites carry trace metal only; it was 0.05 |
+| carbon, hydrated C-complex (B, C, Cb, Cg, Cgh, Ch, F, G) | 0.04 | CI chondrites 3.5–3.9 wt% (Pearson et al. 2006) and 3.48 (Lodders 2010); Bennu 4.5–4.7 (Lauretta et al. 2024, and again Glavin et al. 2025) and Ryugu ~4.0–4.6 (Lauretta et al. 2024; Yokoyama et al. 2023). |
+| metal, S-complex and Q | 0.06 | the mean of LL (3.56 wt%) and L (8.33 wt%) chondrite metal (Jarosewich 1990), the analogues the rows name |
+| metal, V | 0.01 | eucrites carry trace metal only |
 | Xe and Xk | swapped | most Tholen M-types are Xk (13 of 24, Fornasier et al. 2010), Xe's 0.49 µm band is the E-types', and Carry (2012) pairs Xe with EH enstatite chondrites; the metal-rich row sat under Xe |
 | X and Xc | split by albedo | P below p_V 0.10, M to 0.30, E above, the convention for Tholen's classes (Fornasier et al. 2011); see below. Since 1.6.0 |
-| density, P | 1.20 | the P-types with a published density, 1.16 ± 0.26 (87 Sylvia, Hanuš et al. 2017; 617 Patroclus, Carry 2012; 223 Rosa, Kretlow 2022), and Kretlow's "~1.3 typical"; SsODNet's five Mahlke P-types known to 30% run 0.86–1.51. It was 1.80 (1.6.0). |
-| density, Q | 2.70 | S's value, the same ordinary-chondrite body unweathered; the nine Q-type NEAs with Yarkovsky densities have a median of 1.47, the densest 2.79 (Dziadura et al. 2023). It was 3.00 (1.6.0). |
+| density, P | 1.20 | the P-types with a published density, 1.16 ± 0.26 (87 Sylvia, Hanuš et al. 2017; 617 Patroclus, Carry 2012; 223 Rosa, Kretlow 2022), and Kretlow's "~1.3 typical"; SsODNet's five Mahlke P-types known to 30% run 0.86–1.51. Since 1.6.0. |
+| density, Q | 2.70 | S's value, the same ordinary-chondrite body unweathered; the nine Q-type NEAs with Yarkovsky densities have a median of 1.47, the densest 2.79 (Dziadura et al. 2023). Since 1.6.0. |
 
 Every class density answers to three routes, each run by a test or a tool:
 
@@ -533,7 +520,7 @@ answers in the repo.
 ## CLI
 
 ```bash
-asteroid-catalog build --out ./data          # everything, ~1.55 M bodies
+asteroid-catalog build --out ./data          # everything, ~1.57 M bodies
 asteroid-catalog build --jpl-limit 5000 --no-ssodnet   # a fast sample
 asteroid-catalog package ./data --out ./dist --tag data-2026-09-25   # gate + release assets
 asteroid-catalog lookup Bennu --catalog ./data/asteroid_catalog.csv
@@ -553,7 +540,7 @@ output directory, no cache directory. Progress output is opt-in via
 `set_verbose(True)` or the CLI, and `tests/test_library_hygiene.py` checks all
 of it in a clean subprocess.
 
-The exception is deliberate: thirteen messages print regardless, because they report
+The exception is deliberate: a few messages print regardless, because they report
 a defect rather than a condition. A diagnostic that has gone quiet reads
 exactly like a clean result.
 
@@ -571,8 +558,6 @@ No network and no catalog required. The suite is mostly **the documented traps,
 executed** — the designation regex that yields `"2024"` for `"2024 BX1"`, the
 float-typed merge key, `str.contains` against regex metacharacters, an int64
 designation column, and the NaN handling in the distinct-value optimisation.
-Every one of those was a rule written in prose first, and cost a release before
-anything ran it.
 
 `tests/test_physics.py` does the same for the physical limits: every case in it
 is a row of the `data-2026-09-23` release that was impossible or unrealistic
@@ -589,7 +574,8 @@ densities against its measurements.
 
 Extracted from Module 1 of
 [economicspace](https://github.com/loggger101/economicspace), an
-asteroid-mining profitability pipeline, at `pipeline_version` 1.2.0. The
+asteroid-mining profitability pipeline, at `pipeline_version` 1.2.0
+(commit `1ce0dba`). The
 derivation chain was built there over fourteen releases; it is split out
 because nothing in its schema knows what a mine is, and a merged asteroid
 catalog with honest provenance is useful to anyone doing population statistics,
