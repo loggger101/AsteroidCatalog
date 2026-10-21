@@ -142,10 +142,12 @@ produced this way is tagged in `diameter_source` and flagged in
 `PGM_ENRICHMENT_BY_TYPE` is a **valuation layer, not an observation**; what it
 does is in [README > Composition](README.md#the-precious-metal-layer-is-optional-and-labelled).
 ⚠️ Neither its baseline (~37 ppm total PGM + Au in the metal, a mean
-iron-meteorite figure) nor any per-type factor traces to a publication, and
-the one source that bears on it contradicts the chondritic 1.0: LL-chondrite
-metal carries 50–220 ppm precious metals, while iron meteorites range up to
-several hundred ppm (Kargel 1994, section 3).
+iron-meteorite figure) nor the differentiated classes' factors trace to a
+publication. Since 1.9.0 the S complex, Q, K and L are computed: CI bulk PGM
++ Au (Lodders 2010, Table 2) over each class's metal fraction, over the
+baseline. Kargel (1994, section 3) is the second route: LL-chondrite metal
+carries 50–220 ppm precious metals (the S complex computes to 57), while iron
+meteorites range up to several hundred ppm.
 
 ---
 
@@ -201,6 +203,14 @@ otherwise; volumes and pages are Crossref's.
   asteroid in our sample", 1.39 ± 0.08 (the P density); and in its Table 6,
   433 Eros 2.67 ± 0.10 from NEAR (Veverka et al. 2000), the S macroporosity
   check. (General_Research files it as `adam_2017`.)
+- Yeomans, D. K., et al. (2000), *Radio science results during the
+  NEAR-Shoemaker spacecraft rendezvous with Eros*, Science 289, 2085 —
+  Eros's mass, 6.687e15 kg, and its volume, 2503 ± 25 km³: since 1.9.0 the
+  catalog's Eros diameter, the 16.846 km sphere of that volume
+  (`merge.SHAPE_MODEL_VOLUMES`), so its density is 2.67. The volume as JPL
+  SBDB quotes it from this paper (diameter 16.84 ± 0.06, "sphere having the
+  measured volume", density 2.67 ± 0.03), and the mass as SsODNet's ssoCard
+  cites it; the paper itself not re-read here. General_Research rc-174.
 - Kretlow, M. (2022), *An astrometric mass estimate for asteroid (223) Rosa*,
   A&A 668, A141 — Rosa 1.2 ± 0.5 g/cm³, and ~1.3 as the typical P-type
   density: the P density.
@@ -264,8 +274,11 @@ otherwise; volumes and pages are Crossref's.
 - Lodders, K. (2010), *Solar system abundances of the elements*, Astrophys.
   Space Sci. Proc., 379–417 (arXiv:1010.2746) — Table 2, CI chondrites: C
   34,800 ± 3,500 ppm (3.48 wt%), the carbon fraction; Ru 0.686, Rh 0.139,
-  Pd 0.558, Os 0.493, Ir 0.469, Pt 0.947 ppm, 3.29 ppm in all, the PGM
-  caveat's second route.
+  Pd 0.558, Os 0.493, Ir 0.469, Pt 0.947 ppm, 3.29 ppm in all, and Au
+  0.146: 3.438 ppm PGM+Au, from which 1.9.0 computes the S-complex, Q, K and
+  L PGM factors. Lodders, K., and Palme, H. (2009), 72nd Meteoritical Society
+  meeting abstract, Table 1, gives the same seven values; both re-read from
+  the PDFs.
 - Yokoyama, T., et al. (2023), *Samples returned from the asteroid Ryugu are
   similar to Ivuna-type carbonaceous meteorites*, Science 379, eabn7850 —
   Ryugu total C 4.63 ± 0.23 wt%. Read by General_Research (R73) from the
@@ -302,7 +315,12 @@ gives them, and the module lists what has no source at all.
 - Sunshine, J. M., et al. (2008), Science 320, 514 — L-types' CAI content.
 - Rubin, M., et al. (2019), MNRAS 489, 594 — 67P's bulk volatiles.
 - Hiroi, T., et al. (2001), Science 293, 2234 — Tagish Lake as the D-type
-  analogue.
+  analogue, and so which accessories D, Z and P carry. Not their amounts:
+  Hiroi gives only Tagish Lake's carbon (4–5 wt%) and defers the composition
+  to Brown, P. G., et al. (2000), Science 290, 320, which is qualitative
+  (magnetite far more abundant than in most CMs). The magnetite ~5, sulfide
+  ~3 and carbonate ~3 wt% have no source; the module lists them so. Both
+  papers read by General_Research (R155, R160; rc-085), not re-read here.
 - Jones, R. H., McCubbin, F. M., Dreeland, L., Guan, Y., Burger, P. V., and
   Shearer, C. K. (2014), GCA 132, 120 — merrillite and chlorapatite in LL
   chondrites: the 1.8.0 phosphates.

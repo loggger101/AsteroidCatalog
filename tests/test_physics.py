@@ -167,6 +167,48 @@ def test_a_mass_is_published_beside_its_own_diameter():
         == pytest.approx(3.06, abs=0.01)
 
 
+_EROS_JPL = {"designation": ["433"], "semi_major_axis_au": [1.458],
+             "absolute_magnitude_h": [10.38], "diameter_km": [16.84],
+             "albedo": [0.25], "spectral_type": ["S"]}
+_EROS_SSOD = {"designation": ["433"], "diameter_km": [17.6], "diameter_sigma_km": [1.2],
+              "estimated_mass_kg": [6.687e15], "estimated_mass_sigma_kg": [3e12]}
+
+
+def test_a_shape_model_volume_outranks_the_paired_diameter():
+    """Eros (rc-174): NEAR's mass over SsODNet's 17.6 km is 2.34 g/cm3; over
+    the sphere of NEAR's 2503 km3, 2.67, which JPL SBDB quotes too."""
+    row = _build(_EROS_JPL, _EROS_SSOD).loc["433"]
+    assert row["diameter_km"] == pytest.approx(16.846, abs=0.001)
+    assert row["diameter_provider"] == "shape model"
+    assert row["diameter_sigma_km"] == pytest.approx(0.056, abs=0.001)
+    assert row["diameter_source"] == "measured"
+    assert row["density_gcm3"] == pytest.approx(2.67, abs=0.01)
+    assert row["estimated_mass_kg"] == 6.687e15, "the mass is untouched"
+    # what the catalogs say is still reported as they say it
+    assert row["diameter_spread"] == pytest.approx(17.6 / 16.84 - 1)
+
+
+def test_without_the_shape_model_eros_is_the_convention_artifact(monkeypatch):
+    """The planted defect: drop the entry and 2.34 comes back."""
+    from asteroid_catalog import merge
+    monkeypatch.delitem(merge.SHAPE_MODEL_VOLUMES, "433")
+    row = _build(_EROS_JPL, _EROS_SSOD).loc["433"]
+    assert row["diameter_km"] == 17.6
+    assert row["density_gcm3"] == pytest.approx(2.34, abs=0.01)
+
+
+def test_shape_model_diameters_are_volume_equivalent():
+    """Second route for each entry: (6V/pi)^(1/3) against JPL SBDB's figure,
+    within JPL's own sigma (Eros: 16.846 against 16.84 +/- 0.06)."""
+    from asteroid_catalog import merge
+    jpl_km = {"433": (16.84, 0.06)}
+    assert set(merge.SHAPE_MODEL_VOLUMES) == set(jpl_km)
+    for des, entry in merge.SHAPE_MODEL_VOLUMES.items():
+        d, sigma = jpl_km[des]
+        assert merge._volume_equivalent_km(entry["volume_km3"]) \
+            == pytest.approx(d, abs=sigma), des
+
+
 def test_a_mass_without_a_determination_is_refused():
     """153 Hilda: 3.04e18 +/- 7.04e19 kg."""
     jpl = {"designation": ["153"], "semi_major_axis_au": [3.97],

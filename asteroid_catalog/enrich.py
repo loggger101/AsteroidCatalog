@@ -259,8 +259,9 @@ def _add_composition(df: pd.DataFrame) -> pd.Series:
     # ── 3b. PGM enrichment factor (v1.0.4) ────────────────────────────────────
     # Per-spectral-type multiplier applied to platinum-group-metal yields
     # in Module 2's "nickel-iron" mineral.  Differentiated bodies (M-type
-    # cores) have ~2× chondritic PGM in their metal phase; basaltic-crust
-    # fragments (V-type) ~0.2×.  See PGM_ENRICHMENT_BY_TYPE for the table.
+    # cores) ~2× the iron-meteorite baseline; basaltic-crust fragments
+    # (V-type) ~0.2×; chondritic metal 1.2-1.9× (1.9.0).  See
+    # PGM_ENRICHMENT_BY_TYPE for the table.
     df["comp_pgm_enrichment"] = _by_distinct(comp_key, pgm_enrichment_for_type)
     n_enriched  = int((df["comp_pgm_enrichment"] > 1.0).sum())
     n_depleted  = int((df["comp_pgm_enrichment"] < 1.0).sum())

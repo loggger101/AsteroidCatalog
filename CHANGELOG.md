@@ -14,6 +14,84 @@ moving it is not evidence that a number changed.
 
 ---
 
+## 0.11.0 - unreleased — data contract **1.9.0**
+
+**Five of General_Research's revision candidates, applied.** Each was
+re-checked here before it moved anything. Four of them move numbers.
+
+- **rc-174: Eros's density is NEAR's, 2.67, not 2.34.** A mass is published
+  beside its own source's diameter (1.4.0), and for Eros that source,
+  ssoBFT, pairs NEAR's mass with a 17.6 km diameter it attributes to Thomas
+  et al. 2000. That diameter is not the sphere of NEAR's volume, so the
+  catalog's density was 12% low for the one asteroid with both a spacecraft
+  mass and a spacecraft shape. New in `merge.py`: `SHAPE_MODEL_VOLUMES`, a
+  cited table of shape-model volumes whose bodies take the diameter of the
+  equal-volume sphere, provider `shape model`. Eros's 2503 ± 25 km³
+  (Yeomans et al. 2000) makes 16.846 ± 0.056 km and 2.67 g/cm³; JPL SBDB
+  gives 16.84 ± 0.06 and 2.67 ± 0.03, the second route. Only Eros is listed.
+  Against JPL's densities the release has Ceres, Ryugu, Ida, Itokawa,
+  Lutetia, Mathilde and Didymos within JPL's uncertainty, and Vesta (−1.4%)
+  and Bennu (+0.9%) just outside it, which are candidates for the table.
+  `tests/test_physics.py` holds Eros at 2.67 and gets 2.34 back with the
+  entry removed.
+- **rc-140: the chondritic classes' PGM factor is computed, not 1.0.**
+  `PGM_ENRICHMENT_BY_TYPE` called its ~37 ppm baseline "chondritic", and its
+  own warning said that was wrong: PGMs are siderophile, so a chondrite's
+  little metal holds nearly all of its bulk PGM. The S complex, Q, K and L are
+  now CI bulk PGM + Au over the class's metal fraction, over the baseline:
+  3.438 ppm (Lodders 2010 Table 2; Lodders & Palme 2009 Table 1 gives the same
+  seven values; both re-read from the PDFs) makes **S complex and Q 1.55**
+  (57 ppm in 0.06 metal), **K 1.16** (43 ppm in 0.08) and **L 1.86** (69 ppm
+  in 0.05). Second route: Kargel's (1994) LL-chondrite metal, 50–220 ppm,
+  holds the S figure. The candidate proposed 1.48 / 1.11 / 1.78 on the six
+  PGMs alone (3.29 ppm); Au is added because the baseline and the metals the
+  factor multiplies both include it. First-order, as the header says: CI is
+  not an ordinary chondrite or a CV. The C complex stays at 1.0, its metal
+  being near zero and disputed (rc-076).
+- **rc-172: K's alloy goes back to the octahedrite nickel-iron meant.** 1.8.0
+  gave K taenite 0.60 / kamacite 0.40, ~20.6 wt% Ni at the nominal alloys,
+  with no source for the ratio (the module said so). The 1.8.1 rule, no
+  source means no change, now covers K too: kamacite 0.89, taenite 0.11.
+  `tests/test_mineralogy.py` holds K to 9 ± 0.2 wt% Ni with the rest, and
+  fails with the old split planted back. The sulfide ratios and the CAI oxide
+  fractions remain unsourced and unchanged; the candidate's other half, to
+  cite King et al. 2015 and Howard et al. 2010/2011 for them, waits on those
+  papers being read.
+- **rc-173: E's fallback albedo is re-anchored, 0.5828 (n=32) to 0.5964
+  (n=37).** `derive.py` documented the drift since data-2026-09-26 without
+  resolving it; on data-2026-09-29c `tools/albedo_tables.py` and a separate
+  recount both give 37 measured E-types at median 0.5964, and E was the only
+  table entry more than 0.005 off.
+- **rc-085: the D, Z and P accessory amounts are listed as unsourced.**
+  Hiroi et al. 2001 stays as the source for Tagish Lake as the D-type
+  analogue, and so for which accessories those classes carry. It gives no
+  modal abundances, and Brown et al. 2000, to which it defers, is
+  qualitative, so magnetite ~5, sulfide ~3 and carbonate ~3 wt% join
+  `mineralogy.py`'s WHAT HAS NO SOURCE. No value moves.
+
+**Predicted against `data-2026-09-29c`** (by applying this code's tables to
+that release's `comp_class`):
+
+- `comp_pgm_enrichment` moves on **514,719 bodies**, from 1.0: 506,172 to
+  1.55 (S 502,995, Q 1,961, Sq 861, Sv 119, Sa 104, Sl 59, Sr 41, Sk 32),
+  5,953 L to 1.86 and 2,594 K to 1.16.
+- `comp_phases_detailed` moves on the **2,594 K bodies** only: kamacite
+  0.032 to 0.0712, taenite 0.048 to 0.0088 of the body.
+- **One body** sizes off E's fallback, 745311: `albedo_assumed_for_diameter`
+  0.5828 to 0.5964, `diameter_km` 0.088057 to 0.087047 (−1.147%, D ∝ p⁻¹ᐟ²)
+  and `estimated_mass_kg` 1.144e9 to 1.105e9 (−3.401%).
+- **Eros**: `diameter_km` 17.6 to 16.846, `diameter_sigma_km` 1.2 to 0.056,
+  `diameter_provider` SsODNet to `shape model`, `density_gcm3` 2.3426 to
+  2.6716; mass and the diameter spread unchanged. In
+  `tools/density_evidence.py` the S row's weighted mean goes 2.34 to 2.67
+  and its median 2.59 to 2.67 (Eros carries the weight of its tiny sigma),
+  against the class estimate of 2.70; no row fails either way.
+- Nothing else, apart from what the live sources change between builds.
+
+Not yet published; the release is to be checked against these predictions.
+
+---
+
 ## 0.10.1 - 2026-09-29 — data contract **1.8.1**
 
 **No source means no change: the unsourced classes' metal is put back.** 1.8.0
