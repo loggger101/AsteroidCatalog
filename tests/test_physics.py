@@ -198,15 +198,36 @@ def test_without_the_shape_model_eros_is_the_convention_artifact(monkeypatch):
 
 
 def test_shape_model_diameters_are_volume_equivalent():
-    """Second route for each entry: (6V/pi)^(1/3) against JPL SBDB's figure,
-    within JPL's own sigma (Eros: 16.846 against 16.84 +/- 0.06)."""
+    """Second route for each entry: the mission's mass over the sphere must
+    give the density JPL SBDB quotes, within JPL's sigma.  (Not JPL's
+    diameter: Bennu's 0.48444 km is twice an average radius.)"""
     from asteroid_catalog import merge
-    jpl_km = {"433": (16.84, 0.06)}
-    assert set(merge.SHAPE_MODEL_VOLUMES) == set(jpl_km)
+    mass_kg = {"433": 6.687e15, "4": 2.59028e20, "101955": 7.3304e10}
+    jpl_rho = {"433": (2.67, 0.03), "4": (3.460, 0.005), "101955": (1.194, 0.003)}
+    assert set(merge.SHAPE_MODEL_VOLUMES) == set(jpl_rho)
     for des, entry in merge.SHAPE_MODEL_VOLUMES.items():
-        d, sigma = jpl_km[des]
-        assert merge._volume_equivalent_km(entry["volume_km3"]) \
-            == pytest.approx(d, abs=sigma), des
+        d = merge._volume_equivalent_km(entry["volume_km3"])
+        rho = bulk_density_gcm3(mass_kg[des], d)
+        want, sigma = jpl_rho[des]
+        assert rho == pytest.approx(want, abs=sigma), des
+
+
+def test_vesta_and_bennu_take_their_mission_volumes():
+    """Vesta: SsODNet's 525.4 km mean diameter gave 3.41; Dawn's volume gives
+    3.458.  Bennu: SsODNet's 0.488 km gave 1.205; OLA's volume gives 1.195."""
+    jpl = {"designation": ["4", "101955"], "semi_major_axis_au": [2.36, 1.13],
+           "absolute_magnitude_h": [3.25, 20.21], "diameter_km": [522.77, 0.48444],
+           "albedo": [0.42, 0.044], "spectral_type": ["V", "B"]}
+    ssod = {"designation": ["4", "101955"], "diameter_km": [525.4, 0.488],
+            "diameter_sigma_km": [0.2, 0.019],
+            "estimated_mass_kg": [2.59e20, 7.3304e10],
+            "estimated_mass_sigma_kg": [1e15, 5.3e6]}
+    out = _build(jpl, ssod)
+    assert out.loc["4", "diameter_km"] == pytest.approx(522.99, abs=0.01)
+    assert out.loc["4", "density_gcm3"] == pytest.approx(3.458, abs=0.002)
+    assert out.loc["101955", "diameter_km"] == pytest.approx(0.48934, abs=1e-5)
+    assert out.loc["101955", "density_gcm3"] == pytest.approx(1.195, abs=0.002)
+    assert (out["diameter_provider"] == "shape model").all()
 
 
 def test_a_mass_without_a_determination_is_refused():

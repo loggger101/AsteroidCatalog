@@ -119,8 +119,8 @@ X,olivine,silicate,0.029313,0.06662
 X,enstatite,silicate,0.246331,0.559843
 X,plagioclase,silicate,0.058117,0.132085
 X,silicates,silicate,0.106239,0.241453
-X,carbon,carbon,0.035993,0.449914
-X,organics,carbon,0.044007,0.550086
+X,carbon,carbon,0.012343,0.617132
+X,organics,carbon,0.007657,0.382868
 X,water,ice,0.0446,0.892
 X,carbon dioxide,ice,0.0051,0.102
 X,ammonia,ice,0.0003,0.006
@@ -133,8 +133,8 @@ Xc,olivine,silicate,0.02891,0.061512
 Xc,enstatite,silicate,0.289469,0.615891
 Xc,plagioclase,silicate,0.056746,0.120735
 Xc,silicates,silicate,0.094875,0.201862
-Xc,carbon,carbon,0.036617,0.457709
-Xc,organics,carbon,0.043383,0.542291
+Xc,carbon,carbon,0.012793,0.639662
+Xc,organics,carbon,0.007207,0.360338
 Xc,water,ice,0.03568,0.892
 Xc,carbon dioxide,ice,0.00408,0.102
 Xc,ammonia,ice,0.00024,0.006
@@ -162,8 +162,8 @@ A,troilite,accessory,0.01,
 A,chromite,accessory,0.01,
 D,nickel-iron,metal,0.01,1.0
 D,silicates,silicate,0.25,1.0
-D,carbon,carbon,0.12,0.4
-D,organics,carbon,0.18,0.6
+D,carbon,carbon,0.016,0.4
+D,organics,carbon,0.024,0.6
 D,water,ice,0.223,0.892
 D,carbon dioxide,ice,0.0255,0.102
 D,ammonia,ice,0.0015,0.006
@@ -172,8 +172,8 @@ D,magnetite,accessory,0.05,
 D,carbonates,accessory,0.03,
 Z,nickel-iron,metal,0.01,1.0
 Z,silicates,silicate,0.25,1.0
-Z,carbon,carbon,0.12,0.4
-Z,organics,carbon,0.18,0.6
+Z,carbon,carbon,0.016,0.4
+Z,organics,carbon,0.024,0.6
 Z,water,ice,0.223,0.892
 Z,carbon dioxide,ice,0.0255,0.102
 Z,ammonia,ice,0.0015,0.006
@@ -219,8 +219,8 @@ R,troilite,accessory,0.01,
 R,chromite,accessory,0.005,
 T,nickel-iron,metal,0.05,1.0
 T,silicates,silicate,0.4,1.0
-T,carbon,carbon,0.1,0.4
-T,organics,carbon,0.15,0.6
+T,carbon,carbon,0.016,0.4
+T,organics,carbon,0.024,0.6
 T,water,ice,0.0892,0.892
 T,carbon dioxide,ice,0.0102,0.102
 T,ammonia,ice,0.0006,0.006
@@ -250,8 +250,8 @@ E,carbon,carbon,0.01,1.0
 E,troilite,accessory,0.01,
 P,nickel-iron,metal,0.02,1.0
 P,silicates,silicate,0.35,1.0
-P,carbon,carbon,0.1,0.4
-P,organics,carbon,0.15,0.6
+P,carbon,carbon,0.016,0.4
+P,organics,carbon,0.024,0.6
 P,water,ice,0.1338,0.892
 P,carbon dioxide,ice,0.0153,0.102
 P,ammonia,ice,0.0009,0.006

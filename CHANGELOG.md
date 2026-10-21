@@ -14,6 +14,63 @@ moving it is not evidence that a number changed.
 
 ---
 
+## 0.12.0 - unreleased — data contract **1.10.0**
+
+**The owner's calls on four more General_Research candidates, and two more
+spacecraft volumes.** Two of the four move numbers.
+
+- **rc-075: D, Z, T and P carry Tagish Lake's carbon, 0.04, not a comet's
+  0.25–0.30.** `mineralogy.py` already read these classes' accessories from
+  Tagish Lake, the proposed D-type analogue; its carbon is 4.11 ± 0.12 and
+  4.13 ± 0.12 wt%, and Tarda's, the other C2-ungrouped, 3.65–3.78 (Glavin et
+  al. 2025, Extended Data Table 1, re-read from the page), and Hiroi et al.
+  2001 say "4 to 5 wt.%". 0.04 is the hydrated C complex's value since 1.5.0.
+  The comet end-member (67P dust ~45 wt% organic-like matter) is what these
+  rows no longer follow. T has no meteorite of its own and takes the D-types'
+  reading. X and Xc, the mass-weighted mixture of P, M and E, follow P: 0.08
+  to 0.02. The organics/IOM split of that carbon (0.60 / 0.40) has no source
+  and is unchanged, now listed so.
+- **rc-013, declined: D and P ice stay at 0.25 and 0.15.** 67P's 28–52 wt%
+  bulk water is a comet's interior; JWST's spectra of the Lucy Trojans (Wong
+  et al. 2024) show no surface water ice and model it depleted to ~10 m, so
+  the ice within a miner's reach is near zero. The header says why, and that
+  the same paper suggests the P-like Trojans hold more subsurface ice than
+  the D-like ones, the reverse of these rows; nothing measures either.
+- **rc-076, value kept: the C row's 0.01 metal is a ceiling.** Under the
+  repo's own pairing (C with CM), Howard et al. 2011 do not contradict it;
+  only the CI samples (Ryugu, Orgueil, Ivuna), with no metal grains, argue
+  for ~0. The C row's notes now say 0.01 is an upper bound.
+- **Vesta and Bennu take their mission volumes** (`merge.SHAPE_MODEL_VOLUMES`,
+  as Eros since 1.9.0). Both read from the papers here, both CC BY:
+  - Vesta, (7.49 ± 0.01) × 10⁷ km³ from Dawn's SPC shape (Park et al. 2025,
+    p. 830): 522.99 ± 0.23 km and 3.458 g/cm³; JPL SBDB quotes 522.77 ± 0.1
+    and 3.460 ± 0.005 from the same paper. SsODNet's 525.4 km is Russell et
+    al. 2012's mean diameter, which gave 3.41.
+  - Bennu, 0.061354 ± 0.00006 km³ from the OLA shape (Daly et al. 2020,
+    Table 1): 0.48934 km and 1.195 g/cm³, against Daly's 1194 ± 3. JPL's
+    0.48444 km is twice Daly's average radius, not the equal-volume sphere,
+    so the test checks density, not JPL's diameter.
+  `tests/test_physics.py` and `tests/test_traps.py` hold all of it, and were
+  shown to fail with Vesta's entry removed and D's carbon put back.
+
+**Predicted against `data-2026-10-21`** (this code's tables applied to that
+release's `comp_class`; the volumes to its masses):
+
+- `comp_carbon_fraction`, `comp_phases` and `comp_phases_detailed` move on
+  **40,394 bodies**: D 28,352, X 6,899, P 5,051, T 51, Z 35 and Xc 6. No other
+  `comp_*` number moves; `comp_pgm_enrichment` on none.
+- `comp_notes` (text) moves on **1,031,420 bodies**: the 997,931 C bodies
+  (rc-076's sentence) and the D, P, T and Z bodies above.
+- **Vesta**: `diameter_km` 525.4 to 522.991 (−0.458%), `diameter_sigma_km`
+  0.2 to 0.233, provider `shape model`, `density_gcm3` 3.4106 to 3.4579
+  (+1.39%). **Bennu**: 0.488 to 0.489345 (+0.276%), sigma 0.019 to 0.00016,
+  density 1.2047 to 1.1948 (−0.82%). Masses unchanged. In
+  `tools/density_evidence.py` the V row's weighted mean goes 3.41 to 3.46 and
+  B's 1.21 to 1.20; no row fails.
+- Nothing else, apart from what the live sources change between builds.
+
+---
+
 ## 0.11.0 - 2026-10-21 — data contract **1.9.0**
 
 **Five of General_Research's revision candidates, applied.** Each was

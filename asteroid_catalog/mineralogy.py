@@ -93,6 +93,8 @@ accessory figures of the body, all rounded):
 
 WHAT HAS NO SOURCE: every split for A, R, O and T; the silicate split of the
 X-complex members beyond "enstatite dominates"; the Sa/Sr/Sv/Sk/Sl leans;
+the D, Z, T, P carbon split (organics 0.60 / carbon 0.40, left as it was when
+1.10.0 cut their carbon to Tagish Lake's 0.04);
 the D, Z, P accessory amounts (magnetite ~5, sulfide ~3, carbonate ~3 wt%:
 the species are Tagish Lake's, the numbers are not, and the modal study,
 Zolensky et al. 2002, MAPS 37, 737, is not read); and which accessory the

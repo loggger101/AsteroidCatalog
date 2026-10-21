@@ -211,6 +211,16 @@ otherwise; volumes and pages are Crossref's.
   SBDB quotes it from this paper (diameter 16.84 ± 0.06, "sphere having the
   measured volume", density 2.67 ± 0.03), and the mass as SsODNet's ssoCard
   cites it; the paper itself not re-read here. General_Research rc-174.
+- Park, R. S., et al. (2025), *A small core in Vesta inferred from Dawn's
+  observations*, Nat. Astron. 9, 824 (CC BY) — p. 830: Vesta's volume (7.49
+  ± 0.01) × 10⁷ km³ from the SPC shape, mass 2.59028 × 10²⁰ kg, bulk density
+  3.458 ± 0.005 g/cm³. Since 1.10.0 the catalog's Vesta diameter, 522.99 km.
+  Read here; JPL SBDB quotes the same paper (522.77 km, 3.460).
+- Daly, M. G., et al. (2020), *Hemispherical differences in the shape and
+  topography of asteroid (101955) Bennu*, Sci. Adv. 6, eabd3649 (CC BY) —
+  Table 1: OLA shape volume 0.061354 ± 0.00006 km³, bulk density 1194 ± 3
+  kg/m³, average radius 242.22 m (which JPL SBDB doubles into its 0.48444
+  km). Since 1.10.0 the catalog's Bennu diameter, 0.48934 km. Read here.
 - Kretlow, M. (2022), *An astrometric mass estimate for asteroid (223) Rosa*,
   A&A 668, A141 — Rosa 1.2 ± 0.5 g/cm³, and ~1.3 as the typical P-type
   density: the P density.
@@ -270,7 +280,16 @@ otherwise; volumes and pages are Crossref's.
   C-complex carbon fraction.
 - Glavin, D. P., et al. (2025), *Abundant ammonia and nitrogen-rich soluble
   organic matter in samples from asteroid (101955) Bennu*, Nat. Astron. 9,
-  199 — Bennu's total C re-measured on their own extracts, 4.5–4.7 wt%.
+  199 — Bennu's total C re-measured on their own extracts, 4.5–4.7 wt%; and
+  in Extended Data Table 1, Tagish Lake 4.11 ± 0.12 and 4.13 ± 0.12 wt% C and
+  Tarda 3.65–3.78, the D, Z, T, P carbon fraction since 1.10.0 (re-read from
+  the page; General_Research rc-075).
+- Wong, I., et al. (2024), *JWST near-infrared spectroscopy of the Lucy
+  Jupiter Trojan flyby targets: evidence for OH absorption, aliphatic
+  organics, and CO2*, PSJ 5, 87 (arXiv:2311.11531) — no
+  surface water ice, modelled ice depleted to ~10 m depth: why 1.10.0 keeps
+  D and P ice rather than a comet's 0.3–0.4 (General_Research rc-013). Read
+  by General_Research (arXiv copy), not re-read here.
 - Lodders, K. (2010), *Solar system abundances of the elements*, Astrophys.
   Space Sci. Proc., 379–417 (arXiv:1010.2746) — Table 2, CI chondrites: C
   34,800 ± 3,500 ppm (3.48 wt%), the carbon fraction; Ru 0.686, Rh 0.139,

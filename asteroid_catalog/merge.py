@@ -212,15 +212,29 @@ _HELD_BACK = set(MEASURED_FIELDS) | {m["sigma"] for m in MEASURED_FIELDS.values(
 #   433 Eros   2503 +/- 25 km3 (Yeomans et al. 2000, Science 289, 2085), so
 #              16.846 +/- 0.056 km; JPL SBDB gives 16.84 +/- 0.06 as "sphere
 #              having the measured volume", and 2.67 +/- 0.03 g/cm3.
-# Only Eros is listed.  Against JPL SBDB's densities, data-2026-09-29c has
-# Eros at -12.3% (JPL +/- 1%); Ceres, Ryugu, Ida, Itokawa, Lutetia, Mathilde
-# and Didymos within JPL's own uncertainty; and two just outside it, Vesta
-# -1.4% (SsODNet's 525.4 km mean diameter, JPL's 522.77) and Bennu +0.9%
-# (0.488 km, JPL's 0.48444).  Those two are candidates.  Add a body only
-# with its volume's citation and a second route.
+#   4 Vesta    (7.49 +/- 0.01) x 10^7 km3 from Dawn's SPC shape (Park et al.
+#              2025, Nat. Astron. 9, 824, p. 830, CC BY, read), so 522.99 +/-
+#              0.23 km; with its mass, 3.458 +/- 0.005 g/cm3.  JPL SBDB gives
+#              522.77 +/- 0.1 km and 3.460 +/- 0.005 from the same paper.
+#              SsODNet's 525.4 km is Russell et al. 2012's mean diameter.
+#   101955     0.061354 +/- 0.00006 km3 from OSIRIS-REx's OLA shape (Daly et
+#   Bennu      al. 2020, Sci. Adv. 6, eabd3649, Table 1, CC BY, read), so
+#              0.48934 km; Daly's bulk density 1194 +/- 3 kg/m3, and the
+#              catalog's mass over this volume gives 1195.  JPL SBDB's
+#              0.48444 km is twice Daly's AVERAGE radius (242.22 m), not the
+#              equal-volume sphere; the earlier SPC model, 0.0615 +/- 0.0001
+#              km3, agrees with the volume.
+# Against JPL SBDB's densities, data-2026-09-29c had Eros at -12.3% (JPL
+# +/- 1%), Vesta -1.4% and Bennu +0.9% (both outside JPL's sigma), and
+# Ceres, Ryugu, Ida, Itokawa, Lutetia, Mathilde and Didymos within it.  Add a
+# body only with its volume's citation and a second route.
 SHAPE_MODEL_VOLUMES: Dict[str, dict] = {
     "433": {"volume_km3": 2503.0, "volume_sigma_km3": 25.0,
             "source": "Yeomans et al. 2000, Science 289, 2085 (NEAR)"},
+    "4": {"volume_km3": 7.49e7, "volume_sigma_km3": 0.01e7,
+          "source": "Park et al. 2025, Nat. Astron. 9, 824 (Dawn)"},
+    "101955": {"volume_km3": 0.061354, "volume_sigma_km3": 0.00006,
+               "source": "Daly et al. 2020, Sci. Adv. 6, eabd3649 (OSIRIS-REx)"},
 }
 SHAPE_MODEL_PROVIDER = "shape model"
 
