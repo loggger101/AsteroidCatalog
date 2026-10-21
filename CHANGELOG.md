@@ -14,7 +14,7 @@ moving it is not evidence that a number changed.
 
 ---
 
-## 0.12.0 - unreleased — data contract **1.10.0**
+## 0.12.0 - 2026-10-21 — data contract **1.10.0**
 
 **The owner's calls on four more General_Research candidates, and two more
 spacecraft volumes.** Two of the four move numbers.
@@ -68,6 +68,24 @@ release's `comp_class`; the volumes to its masses):
   `tools/density_evidence.py` the V row's weighted mean goes 3.41 to 3.46 and
   B's 1.21 to 1.20; no row fails.
 - Nothing else, apart from what the live sources change between builds.
+
+**Published as [`data-2026-10-21b`](https://github.com/loggger101/AsteroidCatalog/releases/tag/data-2026-10-21b)**,
+built from `6915077` (the `b` because 1.9.0 already holds `data-2026-10-21`):
+1,575,889 bodies, `tools/audit_catalog.py` with nothing impossible, the
+parquet's and `taxonomy.json`'s sha256 as the manifest says,
+`tools/albedo_tables.py` finds no table stale, and `tools/density_evidence.py`
+fails no row. Against `data-2026-10-21`, compared by value at 1e-12 relative,
+**exactly what the above predicts**:
+
+- `comp_carbon_fraction`, `comp_phases` and `comp_phases_detailed` moved on
+  the 40,394 bodies, in the predicted classes and counts, and on no other;
+  every row equals the tables. `comp_pgm_enrichment` moved on none.
+- `comp_notes` moved on the 1,031,420 bodies: C 997,931, D, P, T and Z.
+- Vesta and Bennu moved to the predicted values, to the digit (522.991 km,
+  3.4579; 0.489345 km, 1.1948, both `shape model`), and in
+  `tools/density_evidence.py` only the V and B rows moved, as predicted.
+- Nothing else: the same day's sources gave the same 1,575,889 bodies, and no
+  other column moved on any of them.
 
 ---
 
