@@ -222,6 +222,14 @@ def test_hydrated_c_types_carry_the_carbon_their_meteorites_do(cls):
     assert 0.02 <= ac.TAXONOMY_COMPOSITION[cls]["carbon_fraction"] <= 0.06
 
 
+@pytest.mark.parametrize("cls", ["D", "Z", "T", "P"])
+def test_primitive_types_carry_tagish_lakes_carbon(cls):
+    """1.10.0 (rc-075): Tagish Lake 4.11 and 4.13 wt% C, Tarda 3.65-3.78
+    (Glavin et al. 2025, ED Table 1).  The 0.25-0.30 these rows carried was
+    a comet's, six to seven times the meteorite their accessories follow."""
+    assert 0.03 <= ac.TAXONOMY_COMPOSITION[cls]["carbon_fraction"] <= 0.05
+
+
 @pytest.mark.parametrize("cls", ["S", "Sa", "Sk", "Sl", "Sq", "Sr", "Sv", "Q"])
 def test_ordinary_chondrite_classes_carry_ll_to_l_metal(cls):
     """LL 3.56 and L 8.33 wt% Fe-Ni-Co (Jarosewich 1990).  0.15 was H-chondrite

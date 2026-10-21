@@ -299,8 +299,10 @@ Since 1.4.0, source by source and before precedence picks a value:
 - **A spacecraft shape model's volume outranks both** (1.9.0). ssoBFT pairs
   NEAR's Eros mass with a 17.6 km diameter that is not the sphere of NEAR's
   volume, which gave 2.34 g/cm³; the 16.846 km sphere of NEAR's 2503 km³
-  (Yeomans et al. 2000) gives 2.67, as JPL SBDB quotes. Eros is the only body
-  listed (`merge.SHAPE_MODEL_VOLUMES`, provider `shape model`).
+  (Yeomans et al. 2000) gives 2.67, as JPL SBDB quotes. Since 1.10.0 Vesta
+  (Dawn's 7.49 × 10⁷ km³, Park et al. 2025: 522.99 km, 3.458) and Bennu
+  (OSIRIS-REx's 0.061354 km³, Daly et al. 2020: 0.48934 km, 1.195) are
+  listed too (`merge.SHAPE_MODEL_VOLUMES`, provider `shape model`).
 - **When every mass contradicts the diameter,** the quantity fewer sources
   report goes: De Sitter's lone MP3C mass, or a TNO binary's lone MP3C
   diameter, which is then re-derived.
@@ -361,6 +363,7 @@ carry it as unknown; normalising it away invents composition.
 | what | value | backed by |
 |---|---|---|
 | carbon, hydrated C-complex (B, C, Cb, Cg, Cgh, Ch, F, G) | 0.04 | CI chondrites 3.5–3.9 wt% (Pearson et al. 2006) and 3.48 (Lodders 2010); Bennu 4.5–4.7 (Lauretta et al. 2024, and again Glavin et al. 2025) and Ryugu ~4.0–4.6 (Lauretta et al. 2024; Yokoyama et al. 2023). |
+| carbon, D, Z, T, P | 0.04 | Tagish Lake, the D-type analogue, 4.11 and 4.13 wt%, and Tarda 3.65–3.78 (Glavin et al. 2025, Extended Data Table 1); Hiroi et al. 2001's "4 to 5 wt.%". 0.25–0.30 until 1.10.0 was a comet's. T takes the D-types' reading; X and Xc follow P through their mixture (0.02). |
 | metal, S-complex and Q | 0.06 | the mean of LL (3.56 wt%) and L (8.33 wt%) chondrite metal (Jarosewich 1990), the analogues the rows name |
 | metal, V | 0.01 | eucrites carry trace metal only |
 | Xe and Xk | swapped | most Tholen M-types are Xk (13 of 24, Fornasier et al. 2010), Xe's 0.49 µm band is the E-types', and Carry (2012) pairs Xe with EH enstatite chondrites; the metal-rich row sat under Xe |

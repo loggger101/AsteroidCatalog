@@ -49,7 +49,22 @@ import pandas as pd
 #                                 Science 379, eabn7850) Ryugu 4.63 +/- 0.23
 #                                 wt% (read in General_Research R73, not
 #                                 re-read here).
-#   metal, S-complex and Q        0.06, the mean of LL (3.56 wt%) and L (8.33)
+#   carbon, D Z T P               0.04 (1.10.0; was 0.25-0.30).  Tagish Lake,
+#                                 the D-type analogue mineralogy.py already
+#                                 reads their accessories from, carries 4.11
+#                                 +/- 0.12 and 4.13 +/- 0.12 wt% C (Glavin et
+#                                 al. 2025, Nat. Astron. 9, 199, Extended
+#                                 Data Table 1, re-read from the page); Tarda,
+#                                 the other C2-ungrouped in that table,
+#                                 3.65-3.78; Hiroi et al. (2001) "carbon rich
+#                                 (4 to 5 wt.%)".  0.25-0.30 was a comet's:
+#                                 67P's dust is ~45 wt% organic-like matter
+#                                 (Rubin et al. 2019), the end-member these
+#                                 rows no longer follow (General_Research
+#                                 rc-075).  T has no meteorite of its own and
+#                                 takes the D-types' reading.  X and Xc follow
+#                                 P through their mixture, 0.08 -> 0.02.
+#   metal, S-complex and Q       0.06, the mean of LL (3.56 wt%) and L (8.33)
 #                                 chondrite Fe-Ni-Co metal (Jarosewich 1990,
 #                                 Meteoritics 25, 323), the analogues these
 #                                 rows name; Kargel (1994, JGR 99, 21129)
@@ -75,11 +90,20 @@ import pandas as pd
 #                                 asteroid can exceed.  tools/density_evidence.py
 #                                 holds it to a built catalog's own masses.
 #
-# WHAT HAS NO SOURCE: the silicate fractions, carbon for D, Z, T, P, K and the
-# X-complex, and every ice fraction.  No meteorite constrains ice at all:
+# WHAT HAS NO SOURCE: the silicate fractions, carbon for K and the X-complex
+# members, and every ice fraction.  No meteorite constrains ice at all:
 # CI/CM chondrites and the Bennu and Ryugu samples hold their water in
 # hydrated minerals, not as ice, so an inner-belt C-type's ice_fraction is a
 # guess about its interior, not a reading of its analogue.
+#
+# D 0.25 and P 0.15 ice stay, as dehydrated outer-belt analogues, and 1.10.0
+# declines the cometary 0.3-0.4 (General_Research rc-013): 67P's bulk water,
+# 28-52 wt%, is a comet's interior, and JWST's spectra of the Lucy Trojans
+# (Wong et al. 2024) find no surface water ice and model it depleted to ~10 m
+# depth, so the ice within a miner's reach is near zero.  The same paper
+# suggests the less-red, P-like Trojans hold more subsurface ice than the
+# red, D-like ones, the reverse of these rows' order; nothing here measures
+# either, which is why neither moves.
 
 TAXONOMY_COMPOSITION: Dict[str, dict] = {
 
@@ -109,7 +133,10 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "ice_fraction":      0.15,
         "notes": "Most common asteroid type; CI/CM chondrite analogs.  v1.5.0: "
                  "carbon 0.25 -> 0.04: CI chondrites carry 3.5-3.9 wt% C, the "
-                 "Bennu sample 4.5-4.7 and Ryugu ~4.0.",
+                 "Bennu sample 4.5-4.7 and Ryugu ~4.0.  Metal 0.01 is a "
+                 "ceiling, not a measurement: CI samples (Ryugu, Orgueil, "
+                 "Ivuna) hold no metal grains, and CM metal is under the 1 "
+                 "vol% Howard et al. (2011) list phases to.",
     },
     "Cb": {
         "group": "C-complex",
@@ -262,7 +289,7 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "density_est_gcm3":  2.29,
         "metal_fraction":    0.33,
         "silicate_fraction": 0.44,
-        "carbon_fraction":   0.08,
+        "carbon_fraction":   0.02,         # 0.08 until 1.10.0 cut P's
         "ice_fraction":      0.05,
         "notes": "Requires albedo to distinguish M, E, or P sub-type.  v1.6.0: "
                  "a body with a measured albedo now takes P, M or E by "
@@ -280,7 +307,7 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "density_est_gcm3":  2.37,
         "metal_fraction":    0.32,
         "silicate_fraction": 0.47,
-        "carbon_fraction":   0.08,
+        "carbon_fraction":   0.02,         # 0.08 until 1.10.0 cut P's
         "ice_fraction":      0.04,
         "notes": "v1.5.0 raised the density 2.50 -> 3.30 on Carry (2012)'s two "
                  "Xc-types, 4.86 +/- 0.81.  v1.6.0: a body with a measured "
@@ -343,9 +370,11 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "density_est_gcm3":  1.20,
         "metal_fraction":    0.01,
         "silicate_fraction": 0.25,
-        "carbon_fraction":   0.30,
+        "carbon_fraction":   0.04,
         "ice_fraction":      0.25,
-        "notes": "Featureless red spectrum; Trojan/outer-belt analog",
+        "notes": "Featureless red spectrum; Trojan/outer-belt analog.  "
+                 "v1.10.0: carbon 0.30 -> 0.04, Tagish Lake's 4.1 wt% (Glavin "
+                 "et al. 2025); 0.30 was a comet's.",
     },
     "Z": {
         "group": "D-type",
@@ -354,11 +383,12 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "density_est_gcm3":  1.20,
         "metal_fraction":    0.01,
         "silicate_fraction": 0.25,
-        "carbon_fraction":   0.30,
+        "carbon_fraction":   0.04,
         "ice_fraction":      0.25,
         "notes": "Mahlke et al. (2022) Z: redder than D, D-like; composition "
                  "taken as D.  v1.4.0: until then Z fell to Unknown, and 32 "
-                 "bodies (Trojans such as 1172 Aneas, 118 km) carried no mass.",
+                 "bodies (Trojans such as 1172 Aneas, 118 km) carried no mass.  "
+                 "v1.10.0: carbon 0.30 -> 0.04, as D.",
     },
     "K": {
         "group": "K-type",
@@ -428,9 +458,11 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "density_est_gcm3":  1.80,
         "metal_fraction":    0.05,
         "silicate_fraction": 0.40,
-        "carbon_fraction":   0.25,
+        "carbon_fraction":   0.04,
         "ice_fraction":      0.10,
-        "notes": "Featureless red; possibly primitive body",
+        "notes": "Featureless red; possibly primitive body.  v1.10.0: carbon "
+                 "0.25 -> 0.04, the D-types' Tagish Lake reading; T has no "
+                 "meteorite analogue of its own.",
     },
     "V": {
         "group": "V-type",
@@ -491,9 +523,10 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "density_est_gcm3":  1.20,
         "metal_fraction":    0.02,
         "silicate_fraction": 0.35,
-        "carbon_fraction":   0.25,
+        "carbon_fraction":   0.04,
         "ice_fraction":      0.15,
         "notes": "Tholen P-type ≈ Bus-DeMeo Xc / D; outer-belt primitive.  "
+                 "v1.10.0: carbon 0.25 -> 0.04, as D (Tagish Lake).  "
                  "v1.6.0: density 1.80 -> 1.20.  The P-types measured are "
                  "light: 87 Sylvia 1.39 +/- 0.08 (Hanus et al. 2017), 617 "
                  "Patroclus 0.88 +/- 0.17 (Carry 2012), 223 Rosa 1.2 +/- 0.5 "

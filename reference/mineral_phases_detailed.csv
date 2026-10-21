@@ -161,8 +161,8 @@ X,olivine,silicate,olivine,0.029313
 X,enstatite,silicate,enstatite,0.246331
 X,plagioclase,silicate,plagioclase,0.058117
 X,silicates,silicate,silicates,0.106239
-X,carbon,carbon,carbon,0.035993
-X,organics,carbon,organics,0.044007
+X,carbon,carbon,carbon,0.012343
+X,organics,carbon,organics,0.007657
 X,water,ice,water,0.0446
 X,carbon dioxide,ice,carbon dioxide,0.0051
 X,ammonia,ice,ammonia,0.0003
@@ -181,8 +181,8 @@ Xc,olivine,silicate,olivine,0.02891
 Xc,enstatite,silicate,enstatite,0.289469
 Xc,plagioclase,silicate,plagioclase,0.056746
 Xc,silicates,silicate,silicates,0.094875
-Xc,carbon,carbon,carbon,0.036617
-Xc,organics,carbon,organics,0.043383
+Xc,carbon,carbon,carbon,0.012793
+Xc,organics,carbon,organics,0.007207
 Xc,water,ice,water,0.03568
 Xc,carbon dioxide,ice,carbon dioxide,0.00408
 Xc,ammonia,ice,ammonia,0.00024
@@ -221,8 +221,8 @@ A,chromite,accessory,chromite,0.01
 D,kamacite,metal,nickel-iron,0.0089
 D,taenite,metal,nickel-iron,0.0011
 D,silicates,silicate,silicates,0.25
-D,carbon,carbon,carbon,0.12
-D,organics,carbon,organics,0.18
+D,carbon,carbon,carbon,0.016
+D,organics,carbon,organics,0.024
 D,water,ice,water,0.223
 D,carbon dioxide,ice,carbon dioxide,0.0255
 D,ammonia,ice,ammonia,0.0015
@@ -233,8 +233,8 @@ D,carbonates,accessory,carbonates,0.03
 Z,kamacite,metal,nickel-iron,0.0089
 Z,taenite,metal,nickel-iron,0.0011
 Z,silicates,silicate,silicates,0.25
-Z,carbon,carbon,carbon,0.12
-Z,organics,carbon,organics,0.18
+Z,carbon,carbon,carbon,0.016
+Z,organics,carbon,organics,0.024
 Z,water,ice,water,0.223
 Z,carbon dioxide,ice,carbon dioxide,0.0255
 Z,ammonia,ice,ammonia,0.0015
@@ -295,8 +295,8 @@ R,chromite,accessory,chromite,0.005
 T,kamacite,metal,nickel-iron,0.0445
 T,taenite,metal,nickel-iron,0.0055
 T,silicates,silicate,silicates,0.4
-T,carbon,carbon,carbon,0.1
-T,organics,carbon,organics,0.15
+T,carbon,carbon,carbon,0.016
+T,organics,carbon,organics,0.024
 T,water,ice,water,0.0892
 T,carbon dioxide,ice,carbon dioxide,0.0102
 T,ammonia,ice,ammonia,0.0006
@@ -331,8 +331,8 @@ E,daubreelite,accessory,troilite,0.001
 P,kamacite,metal,nickel-iron,0.0178
 P,taenite,metal,nickel-iron,0.0022
 P,silicates,silicate,silicates,0.35
-P,carbon,carbon,carbon,0.1
-P,organics,carbon,organics,0.15
+P,carbon,carbon,carbon,0.016
+P,organics,carbon,organics,0.024
 P,water,ice,water,0.1338
 P,carbon dioxide,ice,carbon dioxide,0.0153
 P,ammonia,ice,ammonia,0.0009
