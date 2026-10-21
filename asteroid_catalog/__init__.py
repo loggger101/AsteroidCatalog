@@ -77,7 +77,7 @@ the mining-specific layer is one clearly-labelled column.
 
 # Set before the submodules load, so any of them can import it at the top.
 # The one place the package version is written; pyproject.toml reads it here.
-__version__ = "0.10.1"
+__version__ = "0.11.0"
 
 from ._log import say, warn, set_verbose, is_verbose
 

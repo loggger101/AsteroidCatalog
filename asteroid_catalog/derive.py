@@ -83,8 +83,10 @@ from .taxonomy import _BLANK_CLASSES, _bus_demeo_case
 #
 # RE-RUNNABLE, NOT ASSERTED: `tools/albedo_tables.py <catalog>` recomputes this
 # table and the three below from a built catalog and exits non-zero on drift.
-# On data-2026-09-26 it reproduces 46 of 47 classes to 0.005 (E has grown to
-# n=37, median 0.596) and every orbital bin to 0.001.
+# On data-2026-09-29c it reproduces every class to 0.005 and every orbital bin
+# to 0.001.  E alone had drifted past 0.005 (n=32, 0.5828 on data-2026-09-23;
+# n=37, 0.5964 since data-2026-09-26) and was re-anchored to the later sample
+# in 1.9.0 (General_Research rc-173); the other entries stay on 09-23.
 ALBEDO_BY_SPECTRAL_TYPE: Dict[str, float] = {
     "A":    0.2620,   # n=709
     "Ad":   0.1820,   # n=113
@@ -103,7 +105,7 @@ ALBEDO_BY_SPECTRAL_TYPE: Dict[str, float] = {
     "D":    0.0820,   # n=2,127
     "Dl":   0.1775,   # n=58
     "Ds":   0.1265,   # n=278
-    "E":    0.5828,   # n=32
+    "E":    0.5964,   # n=37, data-2026-09-29c (1.9.0)
     "K":    0.1840,   # n=1,046
     "Kl":   0.1190,   # n=434
     "L":    0.2030,   # n=1,781
@@ -137,7 +139,8 @@ ALBEDO_BY_SPECTRAL_TYPE: Dict[str, float] = {
 
 # E-types were the known casualty of the 1.1.0 table (four measured, so absent,
 # so sized off their orbital bin at a quarter of an enstatite surface's
-# albedo).  The 1.4.0 sample has 32, median 0.583.
+# albedo).  The 1.4.0 sample had 32, median 0.583; data-2026-09-29c has 37,
+# median 0.596, which 1.9.0 adopts.
 
 # Median measured geometric albedo by semi-major axis.  THIS is the branch
 # that sizes most of the catalog: 1,310,985 bodies of the 2026-09-23 release

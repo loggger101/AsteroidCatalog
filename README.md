@@ -296,6 +296,11 @@ Since 1.4.0, source by source and before precedence picks a value:
   is a real measurement. ssoBFT's diameters for massive bodies come from
   occultations and adaptive optics (Eunomia 271 km, where JPL has a radiometric
   232 km); pairing its mass with JPL's diameter put Eunomia at 4.9 g/cm³.
+- **A spacecraft shape model's volume outranks both** (1.9.0). ssoBFT pairs
+  NEAR's Eros mass with a 17.6 km diameter that is not the sphere of NEAR's
+  volume, which gave 2.34 g/cm³; the 16.846 km sphere of NEAR's 2503 km³
+  (Yeomans et al. 2000) gives 2.67, as JPL SBDB quotes. Eros is the only body
+  listed (`merge.SHAPE_MODEL_VOLUMES`, provider `shape model`).
 - **When every mass contradicts the diameter,** the quantity fewer sources
   report goes: De Sitter's lone MP3C mass, or a TNO binary's lone MP3C
   diameter, which is then re-derived.
@@ -442,9 +447,9 @@ It is **detail, not a second composition**, and it moves no existing column:
 The splits follow each class's meteorite analogue: ordinary chondrites (Dunn
 et al. 2010), CI and CM chondrites (King et al. 2015; Howard et al. 2015),
 enstatite chondrites and aubrites, iron meteorites, HEDs, CV/CO, and Tagish
-Lake for the D-types; `mineralogy.py` names each. A, R, O and T, and the
-leans of the S sub-classes toward their neighbours, have no source and say
-so. `Unknown` has no phases (the column is empty).
+Lake for the D-types; `mineralogy.py` names each. A, R, O and T, the
+leans of the S sub-classes toward their neighbours, and the amounts of the
+D-types' Tagish Lake accessories have no source and say so. `Unknown` has no phases (the column is empty).
 `tests/test_mineralogy.py` holds the sums, the residual bound and the X
 mixture, and proves the checks can fail.
 
@@ -465,7 +470,7 @@ json.loads(row["comp_phases_detailed"])
 - **The metal** is kamacite (~6.5 wt% Ni), taenite (~30%) and, in slowly
   cooled chondrites, tetrataenite (~50%); irons add cohenite, (Fe,Ni)₃C. A
   class whose metal has no source keeps the ~9% octahedrite alloy
-  "nickel-iron" always meant (since 1.8.1).
+  "nickel-iron" always meant (since 1.8.1; K too since 1.9.0).
   Which class holds which mix is the point: ordinary-chondrite metal is
   Ni-rich because the iron oxidised into the silicate and the nickel stayed
   (Jarosewich 1990), so it is mostly taenite, where an M-type's is an
@@ -485,15 +490,16 @@ The module names the source of each split and the ones that have none.
 
 `PGM_ENRICHMENT_BY_TYPE` scales the platinum-group fraction of a metal phase by
 parent-body differentiation history — core fragments enriched, basaltic crust
-depleted, primitive bodies at a chondritic 1.0.
+depleted — against a ~37 ppm PGM + Au baseline, a mean iron-meteorite figure.
 
-⚠️ **No factor, and not the ~37 ppm baseline, traces to a publication, and the
-chondritic 1.0 is wrong in a known direction.** PGMs are siderophile, so an
-undifferentiated body's little metal holds nearly all of them: LL-chondrite
-metal carries 50–220 ppm (Kargel 1994), 1.4–6× the baseline. The ordinary-
-chondrite classes at 1.0 therefore understate their metal's PGM, and more so
-since 1.5.0 cut their metal fraction. That is the conservative direction, and
-it is left there rather than replaced by another guess.
+⚠️ **Neither the baseline nor the differentiated classes' factors trace to a
+publication.** The undifferentiated, metal-bearing classes are computed (1.9.0):
+PGMs are siderophile, so their little metal holds nearly all of the bulk's.
+CI bulk PGM + Au, 3.438 ppm (Lodders 2010), divided by the metal fraction
+gives 57 ppm for the S complex and Q (1.55×), 43 for K (1.16×) and 69 for L
+(1.86×); LL-chondrite metal's 50–220 ppm (Kargel 1994) holds the S figure.
+CI is not an ordinary chondrite or a CV, so these are first-order. The C
+complex, whose metal is near zero, stays at 1.0.
 
 It is a **valuation layer, not an observation**, and it is the one part of this
 package that assumes you care about precious metals. If you do not, ignore the

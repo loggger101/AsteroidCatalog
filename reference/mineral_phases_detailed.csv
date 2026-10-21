@@ -242,8 +242,8 @@ Z,pyrrhotite,accessory,troilite,0.0195
 Z,pentlandite,accessory,troilite,0.0105
 Z,magnetite,accessory,magnetite,0.05
 Z,carbonates,accessory,carbonates,0.03
-K,kamacite,metal,nickel-iron,0.032
-K,taenite,metal,nickel-iron,0.048
+K,kamacite,metal,nickel-iron,0.0712
+K,taenite,metal,nickel-iron,0.0088
 K,olivine,silicate,olivine,0.54
 K,pyroxene,silicate,pyroxene,0.144
 K,plagioclase,silicate,plagioclase,0.036

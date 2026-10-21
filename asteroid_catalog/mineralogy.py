@@ -83,12 +83,20 @@ accessory figures of the body, all rounded):
                          that is water 0.892, carbon dioxide 0.102, ammonia
                          0.006.
   D, Z, P accessories    Tagish Lake, the proposed D-type analogue (Hiroi et al.
-                         2001, Science 293, 2234): magnetite ~5, sulfide ~3,
-                         carbonate ~3 wt%.
+                         2001, Science 293, 2234), whose accessories are
+                         magnetite, sulfide and Ca-Fe-Mg carbonate.  The
+                         AMOUNTS are not from it: Hiroi gives only "carbon
+                         rich (4 to 5 wt.%)" and defers the composition to
+                         Brown et al. (2000, Science 290, 320), which says
+                         magnetite is far more abundant than in most CMs and
+                         replaces the sulfides, but gives no modal wt%.
 
 WHAT HAS NO SOURCE: every split for A, R, O and T; the silicate split of the
-X-complex members beyond "enstatite dominates"; the Sa/Sr/Sv/Sk/Sl leans; and
-which accessory the residual goes to in a class whose analogue is uncertain.
+X-complex members beyond "enstatite dominates"; the Sa/Sr/Sv/Sk/Sl leans;
+the D, Z, P accessory amounts (magnetite ~5, sulfide ~3, carbonate ~3 wt%:
+the species are Tagish Lake's, the numbers are not, and the modal study,
+Zolensky et al. 2002, MAPS 37, 737, is not read); and which accessory the
+residual goes to in a class whose analogue is uncertain.
 Those are the row's own `minerals` list turned into numbers, and are here so
 that a consumer is never left to invent them per row.
 
@@ -173,7 +181,7 @@ _ICE_COMET = {"water": 0.892, "carbon dioxide": 0.102, "ammonia": 0.006}
 _ACC_OC = {"troilite": 0.055, "chromite": 0.005}
 _ACC_CI = {"magnetite": 0.07, "troilite": 0.05, "carbonates": 0.03}
 _ACC_CM = {"troilite": 0.03, "magnetite": 0.02, "carbonates": 0.01}
-_ACC_TL = {"magnetite": 0.05, "troilite": 0.03, "carbonates": 0.03}   # Tagish Lake
+_ACC_TL = {"magnetite": 0.05, "troilite": 0.03, "carbonates": 0.03}   # Tagish Lake's phases; amounts unsourced
 
 
 def _row(metal, silicate, carbon, ice=None):
@@ -414,9 +422,17 @@ del _row_name
 #                         still overstates.
 #
 # WHAT HAS NO SOURCE: every sulfide split as a number (the sources name the
-# species, not a ratio this table could quote); the K alloy split; the CAI
-# oxide fractions; and the metal of every class not named above -- the C
-# complex, P, D, Z, T, A, R, O and L.
+# species, not a ratio this table could quote); the CAI oxide fractions; and
+# the metal of every class not named above -- the C complex, P, D, Z, T, A,
+# R, O, K and L.
+#
+# K joined that list in 1.9.0 (General_Research rc-172).  1.8.0 gave it
+# taenite 0.60 / kamacite 0.40 as an oxidised CV's metal, with no source for
+# the ratio: at the nominal 6.5 / 30 wt% that is ~20.6 wt% Ni, 2.3x what
+# "nickel-iron" meant, and the neutral taenite share, (9.0 - 6.5) / (30 - 6.5)
+# = 0.106, is a sixth of it.  Howard et al. (2010, GCA 74, 5084; abstract,
+# as General_Research read it) give CV3 metal ABUNDANCE (2-2.2 vol% reduced,
+# 0.2-1.1 oxidised), not its Ni.
 #
 # 🚨  NO SOURCE MEANS NO CHANGE, AND 1.8.0 GOT THAT WRONG.  It gave those
 # classes pure kamacite, at ~6.5 wt% Ni, where the coarse column's
@@ -433,7 +449,6 @@ _ALLOY_KAMACITE    = {"kamacite": 1.0}
 _ALLOY_OCTAHEDRITE = {"kamacite": 0.89, "taenite": 0.11}     # ~9 wt% Ni: no change
 _ALLOY_OC       = {"kamacite": 0.55, "taenite": 0.38, "tetrataenite": 0.07}
 _ALLOY_IRON     = {"kamacite": 0.88, "taenite": 0.11, "cohenite": 0.01}
-_ALLOY_CV       = {"taenite": 0.60, "kamacite": 0.40}
 
 _SULFIDE_CI = {"pyrrhotite": 0.70, "pentlandite": 0.30}
 _SULFIDE_CM = {"pyrrhotite": 0.65, "pentlandite": 0.35}      # also Tagish Lake
@@ -481,7 +496,7 @@ PHASE_DETAIL: Dict[str, Dict[str, Dict[str, float]]] = {
     "A":   _detail(_ALLOY_OCTAHEDRITE),
     "R":   _detail(_ALLOY_OCTAHEDRITE),
     "O":   _detail(_ALLOY_OCTAHEDRITE),
-    "K":   _detail(_ALLOY_CV, _SULFIDE_NI),
+    "K":   _detail(_ALLOY_OCTAHEDRITE, _SULFIDE_NI),
     "L":   _detail(_ALLOY_OCTAHEDRITE),
     "V":   _detail(_ALLOY_KAMACITE),
 }

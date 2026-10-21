@@ -580,8 +580,9 @@ DENSITY_EVIDENCE: Dict[str, dict] = {
     # Eros twice: Carry divides NEAR's mass by a sphere of the 16.2 km mean
     # diameter; NEAR's shape volume (16.84 km volume-equivalent) gives 2.67
     # (Veverka et al. 2000, as Hanus et al. 2017 Table 6 has it).  One mass,
-    # and (16.84/16.2)**3 = 1.12 between them.  data-2026-09-26b has 2.34,
-    # on SsODNet's 17.6 km.
+    # and (16.84/16.2)**3 = 1.12 between them.  data-2026-09-26b to -29c had
+    # 2.34, on SsODNet's 17.6 km; since 1.9.0 the catalog takes NEAR's
+    # volume (merge.SHAPE_MODEL_VOLUMES) and publishes 2.67.
     "S":  {"carry2012": (2.72, 0.54, 11),
            "bodies": [("433 Eros", 3.00, 0.08), ("433 Eros", 2.67, 0.10),
                       ("243 Ida", 2.35, 0.29), ("25143 Itokawa", 1.91, 0.21)],
@@ -741,8 +742,10 @@ METEORITE_ANALOGUE_GCM3: Dict[str, tuple] = {
 # ─────────────────────────────────────────────────────────────────────────────
 # Multiplier applied to the platinum-group-metal (PGM) yields in Module 2's
 # "nickel-iron" mineral when valuing an asteroid of this spectral type.
-# Baseline 1.0× is calibrated to chondritic / mean-iron-meteorite PGM
-# concentration (~37 ppm total PGM+Au in nickel-iron alloy).
+# Baseline 1.0× is the consumer's ~37 ppm total PGM+Au in nickel-iron alloy,
+# a mean-iron-meteorite figure.  It is NOT chondritic metal, which is richer;
+# since 1.9.0 the metal-bearing chondritic classes are computed against it
+# (below the table).
 #
 # Why per-type variation matters:
 #   • Differentiated parent bodies (M-type / Xe / E asteroids, fragments
@@ -754,14 +757,15 @@ METEORITE_ANALOGUE_GCM3: Dict[str, tuple] = {
 #     grains are PGM-DEPLETED.
 #   • Mantle fragments (A, R, O) sit between, partially depleted.
 #   • Primitive bodies (C-complex, ordinary chondrites) never differentiated,
-#     so PGMs remained uniformly distributed in metal grains → baseline.
+#     so nearly all their PGMs sit in their metal grains, and the less metal
+#     there is the richer it is: above the baseline, by the arithmetic below.
 #
 # These factors only multiply the RARE-METAL portion (Pt, Pd, Ru, Ir, Os,
 # Rh, Au) of the nickel-iron yield in Module 4; base metals (Fe, Ni, Co)
 # are unaffected.  Conservative midpoints; the literature variance is huge.
 #
-# ⚠️  NONE OF THESE NUMBERS HAS A SOURCE, AND ONE PREMISE ABOVE IS WRONG.
-# Neither the ~37 ppm baseline nor any factor traces to a publication.  What
+# ⚠️  NONE OF THE TABLE'S OWN NUMBERS HAS A SOURCE.  Neither the ~37 ppm
+# baseline nor any factor in the dict literal traces to a publication.  What
 # the literature does say (Kargel 1994, JGR 99, 21129): precious metals in
 # iron meteorites vary "up to several hundred ppm", and the Fe-Ni metal of LL
 # chondrites carries 50-220 ppm.  Other compilations agree on the spread:
@@ -769,25 +773,31 @@ METEORITE_ANALOGUE_GCM3: Dict[str, tuple] = {
 # and six irons measured by AMS 16-270 ppm.  So:
 #
 #   * "chondritic" and "mean iron meteorite" are NOT the same baseline, as
-#     the paragraph above says they are.  PGMs are siderophile: in an
+#     this header said until 1.9.0.  PGMs are siderophile: in an
 #     undifferentiated body nearly all of them sit in its metal, and the less
 #     metal there is the richer it is.  LL metal is 1.4-6x the 37 ppm
 #     baseline, not 1x.
-#   * so the ordinary-chondrite classes (S, Sq, Q) at 1.0 UNDERSTATE their
-#     metal's PGM, and more so since 1.5.0 cut their metal fraction to 0.06:
-#     a consumer multiplying metal x ppm x factor now credits an S-type with
-#     less than half the PGM it did.  That is the conservative direction, and
-#     it is left there deliberately rather than replaced by another guess.
+#   * so the ordinary-chondrite classes (S, Sq, Q) at 1.0 UNDERSTATED their
+#     metal's PGM, and more so after 1.5.0 cut their metal fraction to 0.06.
 #
-# A calibrated table would start from bulk chondritic PGM (conserved through
-# differentiation) divided by each class's metal fraction.  Done for S, that
-# arithmetic agrees with Kargel: CI chondrites carry 3.29 ppm PGM in bulk
-# (Ru 0.686, Rh 0.139, Pd 0.558, Os 0.493, Ir 0.469, Pt 0.947; Lodders 2010
-# Table 2), which in S's 0.06 metal is 55 ppm if the metal holds all of it,
-# 1.5x the baseline and inside LL metal's 50-220 ppm.  (CI is the
-# undifferentiated composition, not an S-type's analogue; an ordinary
-# chondrite would need its own bulk PGM.)  Until a table is built that way,
-# cost nothing that depends on these factors being right.
+# 1.9.0 COMPUTES THEM (General_Research rc-140) as bulk chondritic PGM+Au,
+# conserved into the metal, divided by each class's metal fraction and by the
+# baseline.  CI chondrites carry 3.438 ppm in bulk (Ru 0.686, Rh 0.139, Pd
+# 0.558, Os 0.493, Ir 0.469, Pt 0.947, Au 0.146; Lodders 2010 Table 2, and
+# the same seven in Lodders & Palme 2009 Table 1, both re-read from the PDF).
+# Au is in because the baseline and the metals the factor multiplies both
+# include it; the PGMs alone are 3.29 ppm.  So:
+#
+#     S complex, Q   metal 0.06   57.3 ppm   1.55x
+#     K              metal 0.08   43.0 ppm   1.16x
+#     L              metal 0.05   68.8 ppm   1.86x
+#
+# Second route: Kargel's LL metal, 50-220 ppm, holds the S-complex 57 ppm.
+# First-order on two counts, both stated: CI is the undifferentiated
+# composition, not an ordinary chondrite's or a CV's (each would need its own
+# bulk PGM), and the metal is assumed to hold all of it.  The C complex is
+# left at 1.0: its metal fraction is near zero and disputed (rc-076), so the
+# division would turn an upper bound into a large factor.
 
 PGM_ENRICHMENT_BY_TYPE: Dict[str, float] = {
     # ── Differentiated core fragments, PGMs concentrated by metal-segregation ──
@@ -809,9 +819,20 @@ PGM_ENRICHMENT_BY_TYPE: Dict[str, float] = {
     # ── Basaltic crust, PGMs largely extracted into core during differentiation ──
     "V":  0.2,   # Vesta family / HED meteorite analog
 
-    # ── Everything else: baseline 1.0× (chondritic / primitive: get via .get default) ──
-    # C, Cb, Cg, Cgh, Ch, B, S, Sa, Sk, Sl, Sq, Sr, Sv, Q, K, L, D, T, P, F, G, Unknown
+    # ── S complex, Q, K, L: computed below (1.9.0) ──
+
+    # ── Everything else: baseline 1.0× (get via .get default) ──
+    # C, Cb, Cg, Cgh, Ch, B, D, T, P, F, G, Unknown
 }
+
+# Bulk CI PGM+Au, ppm (Lodders 2010, Table 2): Ru Rh Pd Os Ir Pt Au.
+_CI_BULK_PGM_AU_PPM = 0.686 + 0.139 + 0.558 + 0.493 + 0.469 + 0.947 + 0.146
+_PGM_BASELINE_PPM = 37.0
+for _cls in ("S", "Sa", "Sk", "Sl", "Sq", "Sr", "Sv", "Q", "K", "L"):
+    PGM_ENRICHMENT_BY_TYPE[_cls] = round(
+        _CI_BULK_PGM_AU_PPM / TAXONOMY_COMPOSITION[_cls]["metal_fraction"]
+        / _PGM_BASELINE_PPM, 2)
+del _cls
 
 
 def _by_distinct(col: "pd.Series", fn):

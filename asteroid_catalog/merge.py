@@ -196,6 +196,56 @@ MEASURED_FIELDS: Dict[str, dict] = {
 }
 _HELD_BACK = set(MEASURED_FIELDS) | {m["sigma"] for m in MEASURED_FIELDS.values() if m["sigma"]}
 
+# A SPACECRAFT SHAPE MODEL'S VOLUME OUTRANKS EVERY CATALOG'S DIAMETER  (1.9.0).
+# Pairing a mass with its own source's diameter (above) assumes that diameter
+# is the one the mass was divided by.  For 433 Eros it is not: ssoBFT carries
+# NEAR's mass (Yeomans et al. 2000) beside a 17.6 km diameter it attributes to
+# Thomas et al. 2000, which is no volume-equivalent sphere, so the catalog
+# published 2.34 g/cm3 where NEAR's own volume gives 2.67 (General_Research
+# rc-174).  A body listed here takes the diameter of the sphere with its
+# shape model's measured volume, D = (6 V / pi)^(1/3); its density then
+# follows from mass / volume as every row's does (enrich.py).  The
+# `diameter_n_sources`, `_spread` and `_sources_agree` columns still describe
+# what the catalogs say.
+#
+# Each entry carries its volume and source, and a second route that agrees:
+#   433 Eros   2503 +/- 25 km3 (Yeomans et al. 2000, Science 289, 2085), so
+#              16.846 +/- 0.056 km; JPL SBDB gives 16.84 +/- 0.06 as "sphere
+#              having the measured volume", and 2.67 +/- 0.03 g/cm3.
+# Only Eros is listed.  Against JPL SBDB's densities, data-2026-09-29c has
+# Eros at -12.3% (JPL +/- 1%); Ceres, Ryugu, Ida, Itokawa, Lutetia, Mathilde
+# and Didymos within JPL's own uncertainty; and two just outside it, Vesta
+# -1.4% (SsODNet's 525.4 km mean diameter, JPL's 522.77) and Bennu +0.9%
+# (0.488 km, JPL's 0.48444).  Those two are candidates.  Add a body only
+# with its volume's citation and a second route.
+SHAPE_MODEL_VOLUMES: Dict[str, dict] = {
+    "433": {"volume_km3": 2503.0, "volume_sigma_km3": 25.0,
+            "source": "Yeomans et al. 2000, Science 289, 2085 (NEAR)"},
+}
+SHAPE_MODEL_PROVIDER = "shape model"
+
+
+def _volume_equivalent_km(volume_km3: float) -> float:
+    """Diameter of the sphere holding `volume_km3`."""
+    return (6.0 * volume_km3 / np.pi) ** (1.0 / 3.0)
+
+
+def _apply_shape_models(merged: pd.DataFrame) -> pd.DataFrame:
+    """Give each body in SHAPE_MODEL_VOLUMES its volume-equivalent diameter."""
+    hit = merged["designation"].isin(list(SHAPE_MODEL_VOLUMES))
+    for i in merged.index[hit]:
+        entry = SHAPE_MODEL_VOLUMES[merged.at[i, "designation"]]
+        d = _volume_equivalent_km(entry["volume_km3"])
+        merged.at[i, "diameter_km"] = d
+        if "diameter_sigma_km" in merged.columns:
+            # dD/D = dV/(3V)
+            merged.at[i, "diameter_sigma_km"] = d * entry["volume_sigma_km3"] / (3.0 * entry["volume_km3"])
+        merged.at[i, "diameter_provider"] = SHAPE_MODEL_PROVIDER
+    if hit.any():
+        say(f"        diameter: {int(hit.sum()):,} taken from a spacecraft shape "
+            f"model's volume ({merged.loc[hit, 'designation'].tolist()})")
+    return merged
+
 
 def _matrix(merged: pd.DataFrame, cols: List[str]) -> np.ndarray:
     """The named columns as one float matrix, NaN where a column is absent."""
@@ -526,8 +576,9 @@ def merge_sources(
         if col in _HELD_BACK:
             merged.rename(columns={col: f"_{col}__{backbone_name}"}, inplace=True)
     merged = _resolve_measured(merged, order)
+    merged = _apply_shape_models(merged)
 
-    present = [f"_present__{s}" for s in order]
+    present =[f"_present__{s}" for s in order]
     flags = merged[present].eq(True)
     merged["n_sources"] = flags.sum(axis=1).astype("int64")
     merged["sources"] = _names(flags.to_numpy(), order, index=merged.index)

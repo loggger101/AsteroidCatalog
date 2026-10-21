@@ -259,6 +259,20 @@ def test_pgm_direction_matches_differentiation_history():
     assert ac.pgm_enrichment_for_type("C") == 1.0    # never differentiated
 
 
+@pytest.mark.parametrize("cls,want", [("S", 1.55), ("Sq", 1.55), ("Q", 1.55),
+                                      ("K", 1.16), ("L", 1.86)])
+def test_chondritic_metal_pgm_is_bulk_over_metal(cls, want):
+    """1.9.0 (rc-140): CI bulk PGM+Au 3.438 ppm (Lodders 2010) held in the
+    class's metal, against the 37 ppm baseline.  Pinned by value, so a metal
+    fraction revised later shows up here as a moved factor."""
+    assert ac.pgm_enrichment_for_type(cls) == want
+
+
+def test_s_complex_metal_pgm_sits_in_kargels_ll_range():
+    """The second route: LL-chondrite metal carries 50-220 ppm (Kargel 1994)."""
+    assert 50 <= 37.0 * ac.pgm_enrichment_for_type("S") <= 220
+
+
 # ---------------------------------------------------------------------------
 # 4. _by_distinct
 # ---------------------------------------------------------------------------

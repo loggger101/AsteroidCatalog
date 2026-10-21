@@ -278,8 +278,7 @@ def test_enrich_writes_comp_phases_detailed_beside_comp_phases():
 # meteorite's; see mineralogy.py.  Every other class keeps the bulk alloy.
 SOURCED_METAL = {"S", "Sq", "Q", "Sa", "Sr", "Sv", "Sk", "Sl",   # OC, Jarosewich 1990
                  "M", "Xk",                                       # octahedrite + cohenite
-                 "K",                                             # oxidised CV
-                 "E", "Xe", "V"}                                  # Keil 1968/2010, Mittlefehldt 2015
+                 "E", "Xe", "V"}                                # Keil 1968/2010, Mittlefehldt 2015
 
 
 @pytest.mark.parametrize("cls", [c for c in CLASSES
