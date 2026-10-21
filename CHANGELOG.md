@@ -14,7 +14,7 @@ moving it is not evidence that a number changed.
 
 ---
 
-## 0.11.0 - unreleased — data contract **1.9.0**
+## 0.11.0 - 2026-10-21 — data contract **1.9.0**
 
 **Five of General_Research's revision candidates, applied.** Each was
 re-checked here before it moved anything. Four of them move numbers.
@@ -88,7 +88,27 @@ that release's `comp_class`):
   against the class estimate of 2.70; no row fails either way.
 - Nothing else, apart from what the live sources change between builds.
 
-Not yet published; the release is to be checked against these predictions.
+**Published as [`data-2026-10-21`](https://github.com/loggger101/AsteroidCatalog/releases/tag/data-2026-10-21)**,
+built from `9d971b5`: 1,575,889 bodies, `tools/audit_catalog.py` with nothing
+impossible and all five reference bodies `measured` (Eros at 16.846 km,
+`shape model`, 2.672 g/cm³), the parquet's and `taxonomy.json`'s sha256 as
+the manifest says, `tools/albedo_tables.py` finds no table stale (E committed
+0.5964, catalog 0.5964, n=37), and `tools/density_evidence.py` fails no row
+(S: weighted mean 2.67, median 2.67, against 2.70). Against
+`data-2026-09-29c`, compared by value at 1e-12 relative, **exactly what the
+above predicts**:
+
+- `comp_pgm_enrichment` moved on 514,719 bodies whose class did not, in the
+  predicted classes and counts, and on no other; every row equals the table.
+- `comp_phases_detailed` moved on the 2,594 K bodies whose class did not,
+  and on no other; `comp_phases` on none.
+- 745311 and Eros moved to the predicted values, to the digit.
+- Everything else is the live sources: 7,007 bodies JPL added and none gone,
+  ~1,000 orbit refits, and 141 other diameter and mass changes, every one
+  beside a moved H, albedo, class or orbit (141 H revisions; 2059
+  Baboquivari among them, now sized off JPL's own 2.12 km and 0.15). One of
+  them, 2026 SJ7, was reclassified C to S by its source, which is the 1
+  extra row in each of the two `comp_*` counts above.
 
 ---
 

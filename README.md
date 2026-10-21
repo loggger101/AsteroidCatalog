@@ -14,8 +14,8 @@ that names its build date, data contract and checksums. Pin a tag and you have
 the same rows every time. See [Published releases](#published-releases).
 
 The current release is
-[`data-2026-09-29c`](https://github.com/loggger101/AsteroidCatalog/releases/tag/data-2026-09-29c):
-1,568,882 bodies, data contract 1.8.1, built by asteroid_catalog 0.10.1. Its
+[`data-2026-10-21`](https://github.com/loggger101/AsteroidCatalog/releases/tag/data-2026-10-21):
+1,575,889 bodies, data contract 1.9.0, built by asteroid_catalog 0.11.0. Its
 newest column is `comp_phases_detailed` (see
 [Detailed phases](#detailed-phases-the-alloy-and-the-sulfides-resolved-since-180)).
 Every earlier release stays published, and [CHANGELOG.md](CHANGELOG.md) says
@@ -27,7 +27,7 @@ impossible values that section lists.
 To build your own from the live sources:
 
 ```bash
-pip install git+https://github.com/loggger101/AsteroidCatalog@v0.10.1
+pip install git+https://github.com/loggger101/AsteroidCatalog@v0.11.0
 asteroid-catalog build --out ./data
 ```
 
