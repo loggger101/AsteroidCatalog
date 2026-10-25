@@ -116,6 +116,7 @@ def test_package_writes_what_the_manifest_says(tmp_path):
     assert raw == (build / "asteroid_catalog.csv").read_bytes()
     assert hashlib.sha256(raw).hexdigest() == m["catalog_csv"]["sha256"]
 
+    assert m["release_tag"] == "data-2026-09-23"
     assert m["rows"] == 6 and m["rejected_rows"] == 1
     assert m["measured_diameters"] == 2
     assert m["pipeline_version"] == CONFIG.pipeline_version
@@ -129,6 +130,8 @@ def test_the_taxonomy_ships_exactly(tmp_path):
     shipped = json.loads((tmp_path / "dist" / TAXONOMY_JSON).read_text(encoding="utf-8"))
     assert shipped["TAXONOMY_COMPOSITION"] == ac.TAXONOMY_COMPOSITION
     assert shipped["PGM_ENRICHMENT_BY_TYPE"] == ac.PGM_ENRICHMENT_BY_TYPE
+    from asteroid_catalog import mineralogy as mi
+    assert shipped["PHASE_GROUP"] == mi.PHASE_GROUP
     from asteroid_catalog.physics import DENSITY_LIMITS_GCM3
     assert {k: tuple(v) for k, v in shipped["DENSITY_LIMITS_GCM3"].items()} \
         == DENSITY_LIMITS_GCM3
