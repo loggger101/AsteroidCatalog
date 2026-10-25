@@ -260,6 +260,17 @@ def test_pgm_falls_back_by_first_character_then_to_one():
     assert ac.pgm_enrichment_for_type("") == 1.0
 
 
+def test_pgm_table_holds_positive_multipliers():
+    """Every row is a factor on chondritic PGM content, so it is above zero.
+
+    A zero or negative row would price that class's metal as worthless or
+    worse, and the fallback test above cannot see it: it reads one row.
+    """
+    bad = {k: v for k, v in ac.PGM_ENRICHMENT_BY_TYPE.items()
+           if not (isinstance(v, (int, float)) and v > 0)}
+    assert not bad
+
+
 def test_pgm_direction_matches_differentiation_history():
     """Core fragments are enriched, basaltic crust is depleted."""
     assert ac.pgm_enrichment_for_type("M") > 1.0     # core fragment
