@@ -563,6 +563,12 @@ pytest -q
 ruff check          # unused imports and undefined names; CI runs it too
 ```
 
+The tree lives in a synced folder, so `.githooks/` carries
+[samebytes](https://github.com/loggger101/samebytes)' hook that repairs git's
+stat cache after a checkout or merge; opt in once with
+`git config core.hooksPath .githooks`. CI's `hooks` job holds the copies to
+the samebytes release they came from.
+
 No network and no catalog required. The suite is mostly **the documented traps,
 executed** — the designation regex that yields `"2024"` for `"2024 BX1"`, the
 float-typed merge key, `str.contains` against regex metacharacters, an int64
