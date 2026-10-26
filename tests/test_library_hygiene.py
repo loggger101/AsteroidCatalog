@@ -12,12 +12,15 @@ about a side effect is exactly the kind nothing else here would catch: the
 package works perfectly either way.
 """
 
-import ast
 import os
 import subprocess
 import sys
 
 from _support import REPO, repo_env
+from samebytes import source
+
+# The output-directory override must not leak in from the developer's shell.
+_CLEAN = {"ASTEROID_CATALOG_OUTPUT_DIR": None}
 
 
 def _run(code, cwd):
@@ -32,25 +35,20 @@ def _run(code, cwd):
                           env=repo_env(ASTEROID_CATALOG_OUTPUT_DIR=None))
 
 
-def test_import_prints_nothing(tmp_path):
-    out = _run("import asteroid_catalog", tmp_path)
-    assert out.returncode == 0, out.stderr
-    assert out.stdout == "", "import wrote to stdout:\n%s" % out.stdout
-    assert out.stderr == "", "import wrote to stderr:\n%s" % out.stderr
+def test_import_prints_nothing():
+    """`samebytes.source.quiet_import`: exit 0, nothing on stdout or stderr."""
+    assert source.quiet_import(REPO, "import asteroid_catalog", env=_CLEAN) == ([], 1)
 
 
-def test_import_creates_no_directory(tmp_path):
+def test_import_creates_no_directory():
     """The original made the output dir AND the download cache dir at import.
 
     Either is a library with a side effect; the cache one is worse, because it
     lands in the system temp directory of a machine that only wanted a
     constant.
     """
-    before = set(os.listdir(tmp_path))
-    out = _run("import asteroid_catalog as ac; ac.CONFIG.output_dir", tmp_path)
-    assert out.returncode == 0, out.stderr
-    assert set(os.listdir(tmp_path)) == before, \
-        "import created %s" % (set(os.listdir(tmp_path)) - before)
+    assert source.quiet_import(REPO, "import asteroid_catalog as ac; ac.CONFIG.output_dir",
+                               env=_CLEAN) == ([], 1)
 
 
 def test_verbose_restores_the_original_output(tmp_path):
@@ -87,23 +85,8 @@ def test_printed_output_is_ascii():
     prose and data, not output, so only the arguments of a `say`/`print`/`warn`
     call are checked.
     """
-    bad = []
     pkg = os.path.join(REPO, "asteroid_catalog")
-    for fname in sorted(os.listdir(pkg)):
-        if not fname.endswith(".py"):
-            continue
-        path = os.path.join(pkg, fname)
-        with open(path, encoding="utf-8") as fh:
-            src = fh.read()
-        for node in ast.walk(ast.parse(src)):
-            if not (isinstance(node, ast.Call)
-                    and isinstance(node.func, ast.Name)
-                    and node.func.id in ("say", "print", "warn")):
-                continue
-            for sub in ast.walk(node):
-                if isinstance(sub, ast.Constant) and isinstance(sub.value, str):
-                    nonascii = [ch for ch in sub.value if ord(ch) > 127]
-                    if nonascii:
-                        bad.append("%s:%d %r" % (fname, sub.lineno,
-                                                 "".join(sorted(set(nonascii)))))
+    files = [os.path.join(pkg, f) for f in sorted(os.listdir(pkg)) if f.endswith(".py")]
+    bad, n = source.printed_non_ascii(REPO, files, callers=("say", "print", "warn"))
+    assert n > 0
     assert not bad, "non-ASCII in printed strings:\n  " + "\n  ".join(bad)
