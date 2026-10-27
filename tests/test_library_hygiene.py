@@ -17,7 +17,7 @@ import subprocess
 import sys
 
 from _support import REPO, repo_env
-from samebytes import source
+from samebytes import docs, source
 
 # The output-directory override must not leak in from the developer's shell.
 _CLEAN = {"ASTEROID_CATALOG_OUTPUT_DIR": None}
@@ -90,3 +90,36 @@ def test_printed_output_is_ascii():
     bad, n = source.printed_non_ascii(REPO, files, callers=("say", "print", "warn"))
     assert n > 0
     assert not bad, "non-ASCII in printed strings:\n  " + "\n  ".join(bad)
+
+
+# The two below are not about import side effects; they are the other house
+# rules the family shares through samebytes.
+
+def test_every_config_field_has_help():
+    """Every `CatalogConfig` field carries a help comment.
+
+    Read by samebytes' `source.field_docs`, the rule economicspace's dashboard
+    shows a config's comments by: the block directly above a field, to the
+    first blank line, banner or bare rule, plus a trailing comment.  A block
+    explains only the field directly below it, which is how the two output
+    filenames under `output_dir`'s block had none until this test.
+    """
+    import dataclasses
+
+    from asteroid_catalog.config import CatalogConfig
+    fields = [f.name for f in dataclasses.fields(CatalogConfig)]
+    bad, n = source.missing_help(REPO, "asteroid_catalog/config.py", "CatalogConfig",
+                                 fields=fields)
+    assert bad == [] and n == len(fields), "; ".join(bad)
+
+
+def test_git_pins_agree():
+    """Every `github.com/loggger101/<repo>@<ref>` names one ref per repository.
+
+    samebytes is pinned in pyproject's test extra and in CI's hooks job; the
+    hooks job sat on v0.1.0 while the test extra moved to v0.3.0.  CHANGELOG
+    is left out: an old pin there is history.
+    """
+    files = ["pyproject.toml", ".github/workflows/tests.yml", "README.md", "CITATIONS.md"]
+    bad, n = docs.pins(REPO, files, "loggger101")
+    assert bad == [] and n >= 3, "; ".join(bad)

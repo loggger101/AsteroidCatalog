@@ -187,8 +187,8 @@ class CatalogConfig:
     # when the config is made rather than when the package was imported, so
     # a notebook that sets either after `import asteroid_catalog` is heard.
     output_dir:        str = field(default_factory=_default_output_dir)
-    catalog_filename:  str = "asteroid_catalog.csv"
-    rejected_filename: str = "rejected_entries.csv"
+    catalog_filename:  str = "asteroid_catalog.csv"   # the catalog, written into output_dir
+    rejected_filename: str = "rejected_entries.csv"   # validation rejections: one row per reason, a count and examples
 
     # ─── BULK-DOWNLOAD CACHE  (SsODNet parquet & similar) ────────────────────
     # SsODNet's ssoBFT is ~850 MB.  We cache it once per `cache_max_age_days`
