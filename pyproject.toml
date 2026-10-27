@@ -37,8 +37,10 @@ dependencies = [
 
 [project.optional-dependencies]
 # samebytes is the house-rule checks tests/test_library_hygiene.py calls
-# (`samebytes.source`); test-only, so the package itself depends on nothing new.
-test = ["pytest>=7.0", "samebytes @ git+https://github.com/loggger101/samebytes@v0.3.0"]
+# (`samebytes.source`, `samebytes.docs`: the config's help and the git pins
+# among them); test-only, so the package itself depends on nothing new.  CI's
+# hooks job pins it again; that test file holds the two together.
+test = ["pytest>=7.0", "samebytes @ git+https://github.com/loggger101/samebytes@v0.5.0"]
 
 [project.urls]
 Homepage = "https://github.com/loggger101/AsteroidCatalog"
