@@ -96,7 +96,10 @@ _JPL_FIELDS = [
     "rms",             # RMS residual of that fit, arcsec
     "moid",            # Earth minimum orbit intersection distance (AU)
     "class",           # orbit class code: MBA, APO, AMO, ATE, TNO, ...
-    "soln_date",       # when the orbit solution was last updated
+    # soln_date, when the orbit solution was last updated.  The query API
+    # answers it but `?info=field` does not list it (2026-10-29); it is in
+    # tools/sbdb_fields.py's UNLISTED_BUT_ACCEPTED, which re-asks for it.
+    "soln_date",
     # per, the sidereal orbital period IN DAYS.  It was labelled years here, and
     # written to `orbital_period_yr`, for every release until 1.3.0: Ceres
     # read 1679.85.  Converted to years below.  (`per_y` is the years form,
