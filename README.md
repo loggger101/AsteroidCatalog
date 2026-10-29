@@ -584,6 +584,16 @@ the checks no limit can decide, and `tools/albedo_tables.py` and
 `tools/density_evidence.py` re-derive the albedo tables and re-check the class
 densities against its measurements.
 
+`python tools/sbdb_fields.py` asks SBDB for its field list (`?info=field`, one
+call) and sorts it against `_JPL_FIELDS`: fields requested, fields declined
+with a reason, fields nobody has reviewed, and requested fields SBDB no longer
+lists. It exits 1 only on the last kind, since a dropped field fails the full
+request and, if the safe fallback asks for it too, skips JPL altogether. On
+2026-10-29 it listed 79 fields: `soln_date` is requested and unlisted but
+still answers, and 31 are unreviewed, among them the nine `sigma_*` element
+uncertainties, `first_obs` and `last_obs`, and `t_jup`. Requesting any of them
+is a data-contract change.
+
 ---
 
 ## Provenance
