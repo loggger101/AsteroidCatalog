@@ -20,6 +20,15 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         python: ["3.9", "3.13"]
+        # ubuntu-latest moved to 26.04 on 2026-10-29, and setup-python has no
+        # 3.9 build for it, so the job failed before a test ran.  The floor is
+        # still tested on Linux, on the last Ubuntu that carries it.
+        exclude:
+          - os: ubuntu-latest
+            python: "3.9"
+        include:
+          - os: ubuntu-24.04
+            python: "3.9"
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
