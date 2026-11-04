@@ -289,6 +289,10 @@ def fetch_jpl_sbdb(config: CatalogConfig) -> pd.DataFrame:
 
             df = df.rename(columns=_JPL_RENAME)
             coerce_numeric(df, _JPL_NUMERIC)
+            # SBDB's epochs are TDB; said here because SsODNet's may not be.
+            if "element_epoch_jd" in df.columns:
+                df["element_epoch_timescale"] = (
+                    df["element_epoch_jd"].notna().map({True: "TDB", False: None}))
 
             # Boolean flags
             for flag in ("is_neo", "is_pha"):

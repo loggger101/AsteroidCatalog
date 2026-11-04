@@ -55,6 +55,10 @@ def deduplicate_catalog(
     Before 1.3.0 this KEPT the most complete row and dropped the rest, so a
     body listed twice lost whatever only the second listing knew.
 
+    A measured value's sigma and provenance, and an orbit's elements and
+    epoch, are one record, not gaps to fill: they all come from the row that
+    supplied the value (`_keep_records_together`).
+
     Used in three places:
       1. inside merge_sources, per source, BEFORE the join, defends against
          source-internal duplicates (e.g. two designations of one body that
@@ -87,6 +91,7 @@ def deduplicate_catalog(
         combined = (d.drop(columns="_completeness")
                      .groupby("_dedup_key", sort=False, dropna=True).first()
                      .reset_index())
+        _keep_records_together(d, combined)
         n_groups = len(combined)
         work = pd.concat([work[~dup], combined[work.columns]], ignore_index=True)
 
@@ -157,8 +162,9 @@ def deduplicate_catalog(
 #
 #   diameter_km         with the catalog's H it must imply an albedo some
 #                       surface could have (IMPLIED_ALBEDO_RANGE)
-#   albedo              1 or more is a fit at its ceiling, under 0.01 darker
-#                       than any whole body measured
+#   albedo              1 or more is a fit at its ceiling (a quality policy,
+#                       see physics.py), under 0.01 darker than any whole body
+#                       measured
 #   estimated_mass_kg   a sigma as large as the value is no determination; a
 #                       mass that puts the body outside its group's possible
 #                       bulk density, with the source's own diameter and with
@@ -195,6 +201,89 @@ MEASURED_FIELDS: Dict[str, dict] = {
                              "screen": "spin"},
 }
 _HELD_BACK = set(MEASURED_FIELDS) | {m["sigma"] for m in MEASURED_FIELDS.values() if m["sigma"]}
+
+# AN ORBIT IS ONE RECORD, NOT A ROW OF GAPS.  Elements mean nothing apart from
+# their epoch: a mean anomaly filled from SsODNet beside JPL's epoch 100 days
+# away puts a 1-AU body 98.6 degrees from where the orbit says it is.  So a
+# supplement never fills one element.  A row takes a source's whole orbit when
+# it has none, or when its own lacks part of `_ORBIT_COMPLETE` and the source's
+# has all of it; otherwise what the row's own orbit lacks stays missing.
+# `orbit_provider` says whose orbit a row carries.  `element_epoch_timescale`
+# is the source's own label, never a conversion: JPL's is TDB, and SsODNet's
+# is TT on the one ssoCard read (Ceres) and blank unless ssoBFT carries it.
+ORBIT_FIELDS = (
+    "semi_major_axis_au", "eccentricity", "perihelion_au", "aphelion_au",
+    "inclination_deg", "longitude_asc_node_deg", "arg_perihelion_deg",
+    "mean_anomaly_deg", "orbital_period_yr", "mean_motion_deg_day",
+    "element_epoch_jd", "element_epoch_timescale",
+)
+_ORBIT_COMPLETE = (
+    "semi_major_axis_au", "eccentricity", "inclination_deg",
+    "longitude_asc_node_deg", "arg_perihelion_deg", "mean_anomaly_deg",
+    "element_epoch_jd",
+)
+
+
+def _keep_records_together(d: pd.DataFrame, combined: pd.DataFrame) -> None:
+    """Rewrite `combined`'s dependent cells from the row their value came from.
+
+    `d` is the duplicate rows, best first, and `combined` their `first()`,
+    both keyed on `_dedup_key`; `first()` fills each column on its own, which
+    is right for complementary fields and wrong for these.  Written in place.
+
+    A sigma has no meaning without its value, so a group with no value has no
+    sigma.  With no semi-major axis to anchor on, an orbit is left as `first()`
+    made it; validation drops such a row.
+    """
+    bundles = []
+    for field, spec in MEASURED_FIELDS.items():
+        stem = spec["stem"]
+        bundles.append((field, [spec["sigma"]] if spec["sigma"] else [],
+                        [f"{stem}_{tail}" for tail in
+                         ("provider", "n_sources", "spread", "sources_agree",
+                          "screened_out")]))
+    bundles.append((ORBIT_FIELDS[0], [], list(ORBIT_FIELDS[1:]) + ["orbit_provider"]))
+
+    for lead, must_pair, may_pair in bundles:
+        if lead not in d.columns:
+            continue
+        chosen = (d[d[lead].notna()].drop_duplicates("_dedup_key")
+                  .set_index("_dedup_key"))
+        keyed = combined["_dedup_key"].isin(chosen.index)
+        for col in must_pair + may_pair:
+            if col not in d.columns:
+                continue
+            paired = chosen[col].reindex(combined["_dedup_key"]).set_axis(combined.index)
+            combined[col] = paired if col in must_pair else paired.where(keyed, combined[col])
+
+
+def _adopt_whole_orbits(merged: pd.DataFrame, src_name: str) -> None:
+    """Fill the row's orbit from `src_name`'s columns as one record, in place."""
+    theirs = {c: f"_{c}__{src_name}" for c in ORBIT_FIELDS if f"_{c}__{src_name}" in merged.columns}
+    if not theirs:
+        return
+    for c, src in theirs.items():
+        if c not in merged.columns:
+            merged[c] = pd.Series(np.nan, index=merged.index, dtype=merged[src].dtype)
+    ours = [c for c in ORBIT_FIELDS if c in merged.columns]
+
+    def complete(cols) -> pd.Series:
+        """True where every `_ORBIT_COMPLETE` element has a value in `cols`."""
+        if any(c not in cols for c in _ORBIT_COMPLETE):
+            return pd.Series(False, index=merged.index)
+        return merged[[cols[c] for c in _ORBIT_COMPLETE]].notna().all(axis=1)
+
+    has_theirs = merged[list(theirs.values())].notna().any(axis=1)
+    has_ours = merged[ours].notna().any(axis=1)
+    mine_complete = complete({c: c for c in ours})
+    take = has_theirs & (~has_ours | (~mine_complete & complete(theirs)))
+    for c in ours:
+        if c in theirs:
+            merged[c] = merged[c].where(~take, merged[theirs[c]])
+        else:
+            merged[c] = merged[c].mask(take)     # the old orbit's cell, not theirs
+    merged.loc[take, "orbit_provider"] = src_name
+    merged.drop(columns=list(theirs.values()), inplace=True)
 
 # A SPACECRAFT SHAPE MODEL'S VOLUME OUTRANKS EVERY CATALOG'S DIAMETER  (1.9.0).
 # Pairing a mass with its own source's diameter (above) assumes that diameter
@@ -297,7 +386,7 @@ def _say_screened(merged: pd.DataFrame, stem: str, V: np.ndarray,
         j = int(refused[i].argmax())
         ex.append(f"{merged['designation'].iat[i]} ({order[j]} {V[i, j]:.4g})")
     say(f"        {stem}: {int(refused.any(axis=1).sum()):,} bodies had a value refused "
-        f"as physically impossible ({per}); e.g. {', '.join(ex)}")
+        f"by the screens ({per}); e.g. {', '.join(ex)}")
 
 
 def _resolve_measured(merged: pd.DataFrame, order: List[str]) -> pd.DataFrame:
@@ -326,6 +415,14 @@ def _resolve_measured(merged: pd.DataFrame, order: List[str]) -> pd.DataFrame:
             continue
         V = _matrix(merged, vcols)
         S = _matrix(merged, scols) if scols else None
+        # An infinite reading is no measurement of anything; refused here, it
+        # cannot pick a provider, reach a screen or fill a derived column.
+        # Screened fields name the source in `<stem>_screened_out`.
+        nonfinite = np.isinf(V)
+        V[nonfinite] = np.nan
+        if nonfinite.any():
+            say(f"        {spec['stem']}: {int(nonfinite.sum()):,} non-finite source "
+                f"value(s) refused")
         if spec["kind"] == "ratio":
             V[~(V > 0)] = np.nan           # a non-positive size is no measurement
         if S is not None:
@@ -424,7 +521,7 @@ def _resolve_measured(merged: pd.DataFrame, order: List[str]) -> pd.DataFrame:
         agree[count < 2] = pd.NA
         merged[f"{stem}_sources_agree"] = agree
         if screen:
-            merged[f"{stem}_screened_out"] = _names(refused, order).to_numpy()
+            merged[f"{stem}_screened_out"] = _names(refused | nonfinite, order).to_numpy()
             _say_screened(merged, stem, V, refused, order)
 
         if field == "diameter_km":
@@ -515,6 +612,10 @@ def merge_sources(
     if "designation" not in merged.columns:
         warn(f"     FAIL  backbone {backbone_name} has no 'designation' column")
         return pd.DataFrame()
+    orbit_cols = [c for c in ORBIT_FIELDS if c in merged.columns]
+    merged["orbit_provider"] = pd.Series(
+        np.where(merged[orbit_cols].notna().any(axis=1), backbone_name, None)
+        if orbit_cols else None, index=merged.index, dtype="string")
     backbone_cols = list(merged.columns)
     merged[f"_present__{backbone_name}"] = True
     say(f"       Backbone: {backbone_name}  ({len(merged):,} rows)")
@@ -562,6 +663,7 @@ def merge_sources(
         n_rekeyed = int(rekeyed.isin(merged["designation"]).sum())
         merged = merged.merge(supp_renamed, on="designation", how="outer")
         new_rows = len(merged) - before_merge
+        _adopt_whole_orbits(merged, src_name)
 
         for col in fill_cols:
             src_col = f"_{col}__{src_name}"

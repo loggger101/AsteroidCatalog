@@ -46,7 +46,7 @@ import numpy as np
 import pandas as pd
 
 from . import __version__
-from ._frame import numeric
+from ._frame import flag, numeric
 from .config import CONFIG
 from .physics import (
     ALBEDO_CEILING, ALBEDO_FLOOR, DENSITY_LIMITS_ANY_GCM3, DENSITY_LIMITS_GCM3,
@@ -149,12 +149,13 @@ def source_counts(df: pd.DataFrame) -> Dict[str, int]:
 
 
 def physical_problems(df: pd.DataFrame) -> List[str]:
-    """Every physically impossible value in a catalog, counted, with examples.
+    """Every value the screens should have refused, counted, with examples.
 
     The pipeline screens these out (physics.py); this is the gate that proves
     it did, on the rows about to be published.  The limits are the loosest
-    ones, any class's, so a failure here is an impossible value and never a
-    judgement call.  A catalog without the columns is not judged on them.
+    ones, any class's, so a failure here is an impossible value, or for the
+    albedo ceiling a suspect fit (physics.py), and never a judgement call on
+    one row.  A catalog without the columns is not judged on them.
     """
     def num(col):
         return numeric(df, col)
@@ -168,6 +169,16 @@ def physical_problems(df: pd.DataFrame) -> List[str]:
 
     problems: List[str] = []
     mass, diam, rho = num("estimated_mass_kg"), num("diameter_km"), num("density_gcm3")
+    for col in ("diameter_km", "estimated_mass_kg", "density_gcm3", "semi_major_axis_au"):
+        report(np.isinf(num(col)), "%s is not finite" % col)
+    # Missing is an estimate nobody could make; NaN beside the mass and the
+    # diameter that make it up is a failed computation.
+    if "density_gcm3" in df.columns:
+        report(mass.notna() & diam.notna() & rho.isna(),
+               "a mass and a diameter with no density")
+    if "estimated_mass_sigma_kg" in df.columns and "mass_measured" in df.columns:
+        report(num("estimated_mass_sigma_kg").notna() & ~flag(df, "mass_measured"),
+               "a mass sigma beside a mass that was not measured")
     lo, hi = DENSITY_LIMITS_ANY_GCM3
     implied = pd.Series(bulk_density_gcm3(mass, diam), index=df.index)
     if "estimated_mass_kg" in df.columns and "diameter_km" in df.columns:
@@ -179,7 +190,8 @@ def physical_problems(df: pd.DataFrame) -> List[str]:
             report((implied / rho - 1).abs() > 1e-6,
                    "estimated_mass_kg is not density_gcm3 x volume")
     if "albedo" in df.columns:
-        report(num("albedo") >= ALBEDO_CEILING, "albedo of %g or more" % ALBEDO_CEILING)
+        report(num("albedo") >= ALBEDO_CEILING,
+               "albedo of %g or more (a suspect fit, physics.py)" % ALBEDO_CEILING)
         report(num("albedo") < ALBEDO_FLOOR, "albedo below %g" % ALBEDO_FLOOR)
     if "absolute_magnitude_h" in df.columns and "diameter_km" in df.columns:
         measured = (df["diameter_source"].eq("measured") if "diameter_source" in df.columns
@@ -352,7 +364,8 @@ def package_release(build_dir: str, out_dir: str, tag: str,
     n_rejected = 0
     if os.path.exists(rejected_path):
         shutil.copyfile(rejected_path, os.path.join(out_dir, REJECTED_CSV))
-        n_rejected = len(pd.read_csv(rejected_path, low_memory=False))
+        # The log has one row per REASON; the bodies dropped are its counts.
+        n_rejected = int(pd.read_csv(rejected_path, low_memory=False)["rejected_count"].sum())
 
     # `files` is exactly the downloadable assets.  The CSV inside the gzip is
     # not one, so its checksum is kept apart, for checking after decompressing.

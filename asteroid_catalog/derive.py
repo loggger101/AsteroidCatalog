@@ -266,9 +266,9 @@ def _albedo_for_derivation(df: pd.DataFrame) -> Tuple[pd.Series, pd.Series]:
     # ── 1. Measured ───────────────────────────────────────────────────────────
     if "albedo" in df.columns:
         measured = pd.to_numeric(df["albedo"], errors="coerce")
-        # An albedo outside (0, 1) is unphysical and shows up in real catalogs
-        # as a fit that did not converge.  Reject rather than propagate it into
-        # a square root.
+        # An albedo outside (0, 1) shows up in real catalogs as a fit that did
+        # not converge (physics.py: a quality policy at the top end, not a
+        # physical bound).  Reject rather than propagate it into a square root.
         measured = measured.where((measured > 0) & (measured < 1))
         albedo   = albedo.fillna(measured)
         label[measured.notna()] = "measured_albedo"
@@ -392,7 +392,7 @@ def derive_missing_diameters(
     )
 
     # Floor applies to DERIVED rows only.  A measured diameter below the floor
-    # is governed by `min_diameter_km` in validate_and_filter, which is a
+    # is governed by `min_diameter_km` in apply_final_gates, which is a
     # separate decision about what is worth cataloguing at all.
     if config.min_derived_diameter_km > 0:
         too_small = target & (derived < config.min_derived_diameter_km)

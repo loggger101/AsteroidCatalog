@@ -148,8 +148,9 @@ class CatalogConfig:
     # rows then join nothing, as before 1.3.0.
     use_mpc_identifications: bool = True
 
-    # ─── QUALITY GATES  (enforced in validate_and_filter) ────────────────────
-    # `min_diameter_km` drops anything below this size.  Default 0.001 km =
+    # ─── QUALITY GATES  (validate_and_filter, apply_final_gates) ────────────────────
+    # `min_diameter_km` drops anything whose FINAL diameter, after enrichment
+    # has reconciled it with a measured mass, is below this.  Default 0.001 km =
     # 1 metre (essentially "keep everything that has a positive diameter").
     # Bump to e.g. 1.0 to focus on >=1-km bodies.
     min_diameter_km: float = 0.001
@@ -214,7 +215,7 @@ class CatalogConfig:
     # and a bump does NOT mean a number changed, which is why nothing may read
     # a version as evidence that a result moved.  What each bump did, and what
     # was measured to say so, goes in CHANGELOG.md, not here.
-    pipeline_version: str = "1.10.0"
+    pipeline_version: str = "1.11.0"
 
 
 # The defaults.  Configure a build by passing a CatalogConfig of your own;
