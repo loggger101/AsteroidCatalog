@@ -46,7 +46,7 @@ ac.lookup_asteroid(df, "Bennu")
 | stage | what happens |
 |---|---|
 | **fetch** | JPL SBDB, SsODNet ssoBFT, NEOWISE V2.0 and MP3C, in that order |
-| **merge** | every row re-keyed onto JPL's designation for that body, duplicates combined; JPL is the backbone and wins on conflicts (SsODNet first for masses), the rest fill gaps, and every measured value records who supplied it and whether the sources agree. A source value that is physically impossible is refused before precedence applies |
+| **merge** | every row re-keyed onto JPL's designation for that body, duplicates combined; JPL is the backbone and wins on conflicts (SsODNet first for masses), the rest fill gaps, and every measured value records who supplied it and whether the sources agree. A source value that is physically impossible or a suspect fit is refused before precedence applies. An orbit is one record: a row takes a source's elements and epoch whole or not at all (`orbit_provider` says whose) |
 | **derive** | a diameter for the ~90% of bodies nobody measured one for, from absolute magnitude and an estimated albedo |
 | **validate** | quality gates, with every rejection logged and counted |
 | **enrich** | bulk density and four mass fractions per Bus-DeMeo class, plus an optional precious-metal layer; mass, diameter and density made to agree in every row |
@@ -75,7 +75,7 @@ build, frozen. Releases are never overwritten or rebuilt under the same tag.
 |---|---|
 | `asteroid_catalog.csv.gz` | the catalog exactly as the build wrote it (CRLF), gzipped deterministically |
 | `asteroid_catalog.parquet` | the same rows, typed: designations are strings, flag columns nullable booleans |
-| `rejected_entries.csv` | every row validation dropped, and why |
+| `rejected_entries.csv` | why validation dropped rows: one row per reason, with a count and examples |
 | `taxonomy.json` | the tables this build read, so its `comp_*` columns can be re-derived without installing the package: `TAXONOMY_COMPOSITION`, `PGM_ENRICHMENT_BY_TYPE`, `DENSITY_LIMITS_GCM3` (which measured masses and densities it accepted), `DENSITY_EVIDENCE` (from 1.5.0), `METEORITE_ANALOGUE_GCM3` (1.6.0), `PHASE_GROUP`, `PHASE_SHARES` and `ACCESSORY_PHASES` (1.7.0), and `PHASE_DETAIL` and `DETAIL_ACCESSORIES` (1.8.0) |
 | `manifest.json` | release tag, `catalog_date`, `pipeline_version`, package version and commit, row count, bodies per source, and a sha256 for every asset and for the CSV inside the gzip |
 
@@ -110,8 +110,10 @@ builds from the four live sources on a GitHub runner, then runs
 - is smaller than the previous release by more than 0.5% of rows, or 2% of any
   source's bodies (the `allow_shrink` input overrides this one gate only);
 - carries anything physically impossible: a mass and diameter implying a
-  bulk density outside 0.25–8 g/cm³, a mass that is not density × volume, an
-  albedo of 1 or more or below 0.01, a measured diameter that its H puts at an
+  bulk density outside 0.25–8 g/cm³, a mass that is not density × volume, a
+  diameter, mass, density or semi-major axis that is not finite, a mass sigma
+  beside a mass that was not measured, an albedo of 1 or more (a suspect fit,
+  see below) or below 0.01, a measured diameter that its H puts at an
   albedo no surface has, or a body 10 km or more across spinning faster than
   it could without flying apart. See [5](#5-nothing-physically-impossible-is-published).
 
@@ -230,7 +232,7 @@ Every quantity more than one source measures (`diameter_km`, `albedo`,
 | `<stem>_provider` | the source the value came from (JPL, then SsODNet, NEOWISE, MP3C; for mass, SsODNet first) |
 | `<stem>_n_sources` | how many sources report a value |
 | `<stem>_spread` | max/min − 1 across them (max − min in magnitudes for H) |
-| `<stem>_screened_out` | albedo, mass, rotation period (and diameter, see [5](#5-nothing-physically-impossible-is-published)): the sources whose value was refused as physically impossible; empty when none was. A refused value still counts in `n_sources` and `spread`, which describe what the sources say |
+| `<stem>_screened_out` | albedo, mass, rotation period (and diameter, see [5](#5-nothing-physically-impossible-is-published)): the sources whose value was refused by the screens or was not finite; empty when none was. A refused value still counts in `n_sources` and `spread`, which describe what the sources say |
 | `<stem>_sources_agree` | spread within tolerance (10% diameter, 25% albedo and mass, 0.3 mag H, 2% rotation); empty with one source |
 
 The value's sigma always comes from the same source as the value. Per body,
@@ -277,6 +279,12 @@ A value in a source is not evidence that the value is possible. The
 | six TNO binaries | a system mass beside the primary's diameter | 9–16 g/cm³, at albedos up to 1.8 |
 | Pluto, Makemake, Haumea, Sedna | typed V from albedo | basalt; a bright surface past Jupiter is ice |
 
+An albedo of 1 or more is refused as a quality policy, not as an impossibility:
+a geometric albedo can pass 1 (Enceladus measures 1.04 ± 0.15, Buratti &
+Veverka 1984), but in these catalogs it is what a fit at its ceiling looks like
+(`physics.ALBEDO_CEILING`). A size bound drawn from H alone holds only at that
+ceiling.
+
 Since 1.4.0, source by source and before precedence picks a value:
 
 - **A mass must give the body a possible bulk density,** 0.25 g/cm³ up to the
@@ -315,7 +323,7 @@ Since 1.4.0, source by source and before precedence picks a value:
   density ceiling, are refused for bodies 10 km or more across.
 
 After enrichment, **every row satisfies `estimated_mass_kg = density_gcm3 ×
-π/6 × diameter_km³`.** An H-derived diameter that a measured mass refutes is
+π/6 × diameter_km³ × 10¹²`** (g/cm³ and km to kg). An H-derived diameter that a measured mass refutes is
 re-derived from the mass at the class density (`diameter_source =
 "derived_mass"`). Beyond 5.5 AU, composition comes from `D` whatever class a source gave,
 because an asteroid class fitted to a TNO's colours says nothing about ice.
@@ -590,8 +598,9 @@ with a reason, fields nobody has reviewed, and requested fields SBDB no longer
 lists. It exits 1 only on the last kind, since a dropped field fails the full
 request and, if the safe fallback asks for it too, skips JPL altogether. On
 2026-10-29 it listed 79 fields: `soln_date` is requested and unlisted but
-still answers, and 31 are unreviewed, among them the nine `sigma_*` element
-uncertainties, `first_obs` and `last_obs`, and `t_jup`. Requesting any of them
+still answers, and 31 are unreviewed, among them eleven `sigma_*`
+uncertainties (the nine osculating-element sigmas, `sigma_q` and `sigma_ad`),
+`first_obs` and `last_obs`, and `t_jup`. Requesting any of them
 is a data-contract change.
 
 ---

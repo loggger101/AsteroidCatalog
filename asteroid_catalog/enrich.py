@@ -89,7 +89,7 @@ def _normalise_type(t):
     if pd.isna(t) or not isinstance(t, str):
         return pd.NA
     t = t.strip()
-    return _bus_demeo_case(t) if t else pd.NA
+    return _bus_demeo_case(t) if t not in _BLANK_CLASSES else pd.NA
 
 
 def _class_from_albedo(p: pd.Series) -> np.ndarray:
@@ -279,7 +279,7 @@ def _reconcile_density_and_mass(df: pd.DataFrame, limits_group=None) -> None:
     the class table), so `estimated_mass_kg` was not `density_gcm3` times the
     volume in 464 rows of the 2026-09-23 release.  Now, in every row,
 
-        estimated_mass_kg == density_gcm3 * pi/6 * diameter_km**3
+        estimated_mass_kg == density_gcm3 * pi/6 * diameter_km**3 * 1e12
 
     and whichever of the three was measured determines the others:
 
@@ -336,6 +336,9 @@ def _reconcile_density_and_mass(df: pd.DataFrame, limits_group=None) -> None:
     unfit = refuted & ~fits
     if unfit.any():
         mass_src = mass_src.mask(unfit)
+        # The sigma was the dropped measurement's, not the derived mass's.
+        if "estimated_mass_sigma_kg" in df.columns:
+            df.loc[unfit, "estimated_mass_sigma_kg"] = np.nan
         if "mass_screened_out" in df.columns and "mass_provider" in df.columns:
             prov = df["mass_provider"].astype("string")
             old = df["mass_screened_out"].astype("string")

@@ -27,6 +27,19 @@ import pandas as pd
 # match JPL's "2024 BX1" in the join AND would dedup-collapse every "2024 X*"
 # provisional designation onto a single row.  This helper distinguishes
 # numbered-with-name from provisional by checking what follows the digits.
+#
+# THE GRAMMAR IS TESTED FIRST, WHATEVER THE CASE.  "1999 Kw4" is 1999 KW4
+# (66391 Moshup) in another case, not 1999 Hirayama, and "3568 ASCII" is number
+# 3568, not a designation: a case test on the first two letters gets both
+# wrong.  A year of 1800-2099 with a valid half-month letter (no I) and second
+# letter (no I) and an optional cycle count is a provisional designation; a
+# four-digit number with P-L or T-1/2/3 is a survey designation.  Only what is
+# neither can be a number with a name, and an all-capital or lower-case name
+# must then be letters alone, at least three of them, so nothing unrecognised
+# is mapped onto a number.  "(N)" says it is a number outright.
+_PROVISIONAL_ANY_CASE = r"^((?:18|19|20)\d{2})\s+([A-HJ-Ya-hj-y][A-HJ-Za-hj-z]\d*)$"
+_SURVEY_ANY_CASE = r"^(\d{4})\s+([Pp]-[Ll]|[Tt]-[123])$"
+
 
 def _extract_canonical_designation(s: pd.Series) -> pd.Series:
     """
@@ -41,15 +54,18 @@ def _extract_canonical_designation(s: pd.Series) -> pd.Series:
     "(1) Ceres"                   "1"             (paren-wrapped number)
     "2024 BX1"                    "2024 BX1"      (PROVISIONAL; KEEP WHOLE)
     "1999 KW4"                    "1999 KW4"
+    "1999 Kw4"                    "1999 KW4"      (PROVISIONAL IN ANOTHER CASE)
+    "2040 p-l"                    "2040 P-L"      (survey, likewise)
+    "3568 ASCII", "3568 ascii"    "3568"          (name of letters alone)
+    "(3568) ASCII"                "3568"
     "Ceres"                       "Ceres"         (bare name, kept as-is)
     "" / NaN / "None"             pd.NA
 
-    Distinguishes numbered-with-name from provisional designations by the
-    character class that follows the leading digits: a Title-Case name
-    (capital + at least one lowercase) marks a numbered asteroid; ALL-CAPS
-    letters that may include digits mark a provisional designation.
+    Provisional and survey grammar is recognised first, in any case; what
+    follows the leading digits decides the rest (see the note above).
     """
     raw = s.astype(str).str.strip()
+    parenthesised = raw.str.extract(r"^\(\s*(\d+)\s*\)", expand=False)
 
     # Pre-clean: "(N) Name" → "N Name"
     cleaned = raw.str.replace(
@@ -64,6 +80,13 @@ def _extract_canonical_designation(s: pd.Series) -> pd.Series:
     # is stripped, so a genuine identifier is never truncated.
     cleaned = cleaned.str.replace(r"^(\d+)\.0+$", r"\1", regex=True)
 
+    # Pre-clean: a provisional or survey designation in any case, to JPL's.
+    for pattern in (_PROVISIONAL_ANY_CASE, _SURVEY_ANY_CASE):
+        cleaned = cleaned.str.replace(
+            pattern, lambda m: f"{m.group(1)} {m.group(2).upper()}", regex=True)
+    designation_shaped = (cleaned.str.match(_PROVISIONAL_ANY_CASE, na=False)
+                          | cleaned.str.match(_SURVEY_ANY_CASE, na=False))
+
     # Pre-clean: "1996 GQ0" → "1996 GQ".  NEOWISE writes a provisional
     # designation with no cycle count as a trailing ZERO, where JPL, the MPC and
     # every other source here write nothing.  "0" is never a real cycle count,
@@ -73,17 +96,15 @@ def _extract_canonical_designation(s: pd.Series) -> pd.Series:
     cleaned = cleaned.str.replace(r"^(\d{4} [A-Z]{2})0$", r"\1", regex=True)
 
     # Case A: numbered asteroid with a name, extract the leading number.
-    # The name part must start with a capital + lowercase letter, which is
-    # what distinguishes "1 Ceres" from a provisional like "2024 BX1".
     numbered_with_name = cleaned.str.extract(
-        r"^(\d+)\s+[A-Z][a-z]", expand=False
-    )
+        r"^(\d+)\s+(?:[A-Z][a-z]|[A-Za-z]{3,}$)", expand=False
+    ).where(~designation_shaped)
 
     # Case B: pure number (with possible leading zeros and trailing whitespace).
     pure_number = cleaned.str.extract(r"^(\d+)\s*$", expand=False)
 
-    # Combine: numbered_with_name wins, then pure_number, else keep cleaned.
-    result = numbered_with_name
+    # Combine: "(N)", then numbered_with_name, then pure_number, else cleaned.
+    result = parenthesised.where(parenthesised.notna(), numbered_with_name)
     result = result.where(result.notna(), pure_number)
     result = result.where(result.notna(), cleaned)
 

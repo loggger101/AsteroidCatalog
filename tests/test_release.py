@@ -43,7 +43,9 @@ def _write_build(tmp_path, df):
     build = tmp_path / "build"
     build.mkdir()
     df.to_csv(build / "asteroid_catalog.csv", index=False, lineterminator="\r\n")
-    pd.DataFrame({"designation": ["x"], "reason": ["no orbit"]}).to_csv(
+    # The format validate.py writes: one row per reason, not per body.
+    pd.DataFrame({"reason": ["no orbit", "no diameter"], "rejected_count": [270, 3],
+                  "examples": ["['x']", "['y']"]}).to_csv(
         build / REJECTED_CSV, index=False, lineterminator="\r\n")
     return build
 
@@ -117,7 +119,7 @@ def test_package_writes_what_the_manifest_says(tmp_path):
     assert hashlib.sha256(raw).hexdigest() == m["catalog_csv"]["sha256"]
 
     assert m["release_tag"] == "data-2026-09-23"
-    assert m["rows"] == 6 and m["rejected_rows"] == 1
+    assert m["rows"] == 6 and m["rejected_rows"] == 273, "bodies, not reasons"
     assert m["measured_diameters"] == 2
     assert m["pipeline_version"] == CONFIG.pipeline_version
     assert m["catalog_date"] == "2026-09-23"

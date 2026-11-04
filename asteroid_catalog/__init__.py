@@ -77,7 +77,7 @@ the mining-specific layer is one clearly-labelled column.
 
 # Set before the submodules load, so any of them can import it at the top.
 # The one place the package version is written; pyproject.toml reads it here.
-__version__ = "0.12.0"
+__version__ = "0.13.0"
 
 from ._log import say, warn, set_verbose, is_verbose
 
@@ -115,7 +115,7 @@ from .derive import (
     ALBEDO_BY_SEMI_MAJOR_AXIS_AU_NEO,
     ALBEDO_BEYOND_JUPITER_BY_H,
 )
-from .validate import validate_and_filter
+from .validate import apply_final_gates, validate_and_filter
 from .enrich import enrich_composition
 from .build import build_catalog
 from .query import lookup_asteroid, filter_by_region, filter_by_spectral_group
@@ -142,7 +142,7 @@ __all__ = [
     "JPL_SBDB_URL",
     # the chain
     "merge_sources", "deduplicate_catalog", "derive_missing_diameters",
-    "validate_and_filter", "enrich_composition", "build_catalog",
+    "validate_and_filter", "apply_final_gates", "enrich_composition", "build_catalog",
     # reading a built catalog
     "lookup_asteroid", "filter_by_region", "filter_by_spectral_group",
 ]

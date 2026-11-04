@@ -33,7 +33,7 @@ from .merge import deduplicate_catalog, merge_sources
 from .mp3c import fetch_mp3c
 from .neowise import fetch_neowise
 from .ssodnet import fetch_ssodnet
-from .validate import validate_and_filter
+from .validate import apply_final_gates, validate_and_filter
 
 # `to_csv` defaults its line terminator to os.linesep, which would make a
 # catalog written on Linux differ from the same catalog written on Windows in
@@ -52,7 +52,8 @@ def build_catalog(config: CatalogConfig = CONFIG) -> pd.DataFrame:
       2. Merge sources, re-keyed onto the backbone's designations
       3. Derive a diameter from H where none was measured
       4. Validate & filter (failsafes)
-      5. Enrich with composition data
+      5. Enrich with composition data, then apply the rules that read its
+         final diameter, mass and density
       6. Stamp, sort, and export
 
     Returns the validated, enriched catalog as a DataFrame, and writes the CSV
@@ -106,6 +107,14 @@ def build_catalog(config: CatalogConfig = CONFIG) -> pd.DataFrame:
 
     # ── Step 4: Composition enrichment ──────────────────────────────────────
     catalog = enrich_composition(catalog)
+
+    # ── Step 4a: The rules that read the final diameter ─────────────────────
+    # After enrichment, which can still move a diameter; see apply_final_gates.
+    catalog, late_rejections = apply_final_gates(catalog, config)
+    rejections = pd.concat([rejections, late_rejections], ignore_index=True)
+    if catalog.empty:
+        warn("\nFAIL  Pipeline aborted - no entries passed the final gates")
+        return pd.DataFrame()
 
     # ── Step 4b: Final dedup safety net ─────────────────────────────────────
     # Belt-and-braces: enrichment shouldn't introduce duplicates, but checking

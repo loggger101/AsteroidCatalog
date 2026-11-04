@@ -234,10 +234,10 @@ def test_neowise_repeat_fits_are_weighted_not_dropped():
 
 def test_neowise_body_under_two_designations_is_averaged_in_the_merge():
     """Two NEOWISE designations of one body are two sets of fits of it."""
-    neo = combine_neowise_fits(pd.DataFrame({
+    neo = pd.DataFrame({
         "designation": ["2010 AE84", "2010 NN46", "2010 NN46"],
         "diameter_km": [3.878, 2.887, 2.9], "diameter_sigma_km": [0.113, 0.179, 0.2],
-        "neowise_reference": ["Mas11", "Mas12", "Nug15"]}))
+        "neowise_reference": ["Mas11", "Mas12", "Nug15"], "neowise_n_fits": [1, 1, 1]})
     bb = pd.DataFrame({"designation": ["2010 AE84"], "semi_major_axis_au": [2.5]})
     out = ac.merge_sources({"JPL SBDB": bb, "NEOWISE": neo},
                            links={"2010 NN46": "2010 AE84"})

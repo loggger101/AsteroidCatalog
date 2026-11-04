@@ -98,6 +98,11 @@ _SSODNET_WANTED = [
     "orbital_elements.periapsis_argument.value",
     "orbital_elements.mean_anomaly.value",
     "orbital_elements.orbital_period.value",
+    # The epoch those elements are at, and its time scale where the file says.
+    # Kept as read: the ssoCard for Ceres gives TT, JPL's epochs are TDB, and
+    # neither is converted to the other (merge.ORBIT_FIELDS).
+    "orbital_elements.ref_epoch",
+    "orbital_elements.ref_epoch_timescale",
     "absolute_magnitude.H.value",
     # Spin / rotation: ssoBFT now stores every ranked solution for a body in
     # ONE list column rather than `spins.<1..5>.period.value` scalars.  The
@@ -146,6 +151,8 @@ _SSODNET_RENAME = {
     # IN DAYS, like JPL's `per`, and labelled years until 1.3.0.  Converted in
     # the body of the fetcher.
     "orbital_elements.orbital_period.value":           "orbital_period_yr",
+    "orbital_elements.ref_epoch":                      "element_epoch_jd",
+    "orbital_elements.ref_epoch_timescale":            "element_epoch_timescale",
     "absolute_magnitude.H.value":                      "absolute_magnitude_h",
     # spins.period.value handled separately below; the list is reduced to a
     # single `rotation_period_h` column.
@@ -157,7 +164,7 @@ _SSODNET_NUMERIC = [
     "semi_major_axis_au", "eccentricity", "inclination_deg",
     "perihelion_au", "aphelion_au", "longitude_asc_node_deg",
     "arg_perihelion_deg", "mean_anomaly_deg", "orbital_period_yr",
-    "absolute_magnitude_h", "rotation_period_h",
+    "element_epoch_jd", "absolute_magnitude_h", "rotation_period_h",
 ]
 
 

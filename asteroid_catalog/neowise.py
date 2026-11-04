@@ -376,11 +376,12 @@ def fetch_neowise(config: CatalogConfig) -> pd.DataFrame:
 
     n_rows = len(df)
     df = mask_unfitted_neowise(df)
-    df = combine_neowise_fits(df)
+    # One row per FIT, not per body: the merge pools them once, after re-keying
+    # (see combine_neowise_fits).  This column is what tells it they are fits.
+    df["neowise_n_fits"] = 1
 
     df["source_neowise"] = True
-    say(f"     OK  {n_rows:,} records fetched from NEOWISE V2.0, "
-        f"{len(df):,} bodies after combining repeat fits")
+    say(f"     OK  {n_rows:,} fits fetched from NEOWISE V2.0")
     return df
 
 
@@ -455,14 +456,17 @@ def combine_neowise_fits(df: pd.DataFrame) -> pd.DataFrame:
 
     `neowise_n_fits` records how many fits went in; the text columns join
     their distinct values with "|" so no reference or fit code is lost.
+
+    RUN ONCE, ON RAW FITS, AFTER RE-KEYING (`merge._dedup_source`).  Until 1.11.0
+    the fetcher combined by designation and the merge combined again when two
+    designations turned out to be one body, which used a scatter-inflated sigma
+    as a formal weight and lost the scatter inside each group: fits of 10, 12
+    and 14 km at +/- 1 km, two under one alias, came out at 12.5 instead of 12,
+    13% in mass.  Combining rows that are already means repeats that error.
     """
     if df.empty or "designation" not in df.columns:
         return df
     df = df[df["designation"].notna()].copy()
-    # Re-runnable: the merge calls this again after re-keying, when one body's
-    # fits may arrive as two already-combined rows (two designations).  The
-    # formal sigma of a combined row is its weight, so the maths carries over;
-    # the fit counts add.
     if "neowise_n_fits" not in df.columns:
         df["neowise_n_fits"] = 1
     counts = df.groupby("designation", sort=False).size()

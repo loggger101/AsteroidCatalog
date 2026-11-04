@@ -117,9 +117,16 @@ DENSITY_LIMITS_ANY_GCM3 = (DENSITY_FLOOR_GCM3, _IRON_CEILING)
 # ─────────────────────────────────────────────────────────────────────────────
 # GEOMETRIC ALBEDO
 # ─────────────────────────────────────────────────────────────────────────────
-# A value of 1 or more is a fit that ran into its ceiling, not a surface: JPL
+# THE CEILING IS A QUALITY POLICY FOR RADIOMETRIC FITS, NOT A LAW OF PHYSICS.  A
+# geometric albedo is not an energy budget and can pass 1: Enceladus measures
+# p_V 1.04 +/- 0.15 with a Bond albedo of 0.9 (Buratti & Veverka 1984, Icarus
+# 58, 254), and the E-ring satellites' mean geometric albedos approach or
+# exceed unity (Verbiscer et al. 2007, Science 315, 815).  In these catalogs,
+# though, 1 or more is what a fit that ran into its ceiling looks like: JPL
 # carries 24 albedos of exactly 1.000 (SsODNet gives 0.52-0.91 for the same
-# bodies), and derive.py already refused to size a body from one.  The floor is
+# bodies), and derive.py refuses to size a body from one.  So the screen stays,
+# for that reason; a screened value is named in `albedo_screened_out`, and a
+# real high albedo would have to be vetted by hand.  The floor is
 # only used to judge an albedo the catalog would otherwise have to INVENT (see
 # enrich.py): the darkest whole bodies measured are comet nuclei, 19P/Borrelly
 # at 0.029 +/- 0.006 (Buratti et al. 2004, Icarus 167, 16) and 28P/Neujmin 1
@@ -288,7 +295,11 @@ def albedo_from_h_and_diameter(h, diameter_km) -> np.ndarray:
 
 
 def smallest_diameter_km(diameter_km, h) -> np.ndarray:
-    """The smallest a body can be: its diameter, else its size at albedo 1."""
+    """Its diameter, else its size at the albedo ceiling.
+
+    The second is conditional on that ceiling: H alone sets no universal
+    minimum, since a brighter surface would be smaller still.
+    """
     d = np.asarray(diameter_km, dtype="float64")
     with np.errstate(over="ignore", invalid="ignore"):
         from_h = H_DIAMETER_CONSTANT * np.power(10.0, -np.asarray(h, dtype="float64") / 5.0)

@@ -14,6 +14,63 @@ moving it is not evidence that a number changed.
 
 ---
 
+## 0.13.0 - 2026-11-04 — data contract **1.11.0**
+
+**Thirteen General_Research candidates: a value now travels with what qualifies
+it, and an identity survives its spelling.** Every one was shown on synthetic
+rows. No published release has been rebuilt, so how many real rows move is not
+known, and `data-2026-10-21b` is unchanged. The next `data-*` build carries all
+of this, two new columns (`orbit_provider`, `element_epoch_timescale`) and a
+`rejected_rows` that means something else.
+
+- **rc-268: designations are read by grammar before a leading number.** "1999
+  Kw4" became number 1999 (Hirayama) instead of 1999 KW4 (66391 Moshup), and
+  "3568 ASCII" stayed a whole string that joined nothing. A year of 1800-2099
+  with valid provisional letters, or a survey designation, is normalised in any
+  case first; an all-capital or lower-case numbered name must be letters alone,
+  three or more; "(N)" is a number outright. Anything else stays as it came.
+- **rc-258: a duplicate no longer lends a sigma.** A preferred 1e13 kg with no
+  sigma took the 1e16 of a 1e18 kg row, and the sigma screen then refused the
+  mass. A measured value's sigma and provenance now come from the row that
+  supplied the value; a group with no value has no sigma.
+- **rc-269, rc-270: an orbit is one record.** SsODNet's elements now keep their
+  epoch (`element_epoch_jd`), and `element_epoch_timescale` carries each
+  source's own label, never a conversion: TDB for JPL, blank for SsODNet unless
+  ssoBFT has the column (its ssoCard gives TT for Ceres). No element fills a
+  gap beside another source's epoch: a row takes a source's orbit whole if it
+  has none, or if its own is incomplete and the source's is complete, and
+  otherwise what it lacks stays missing. `orbit_provider` says whose it is.
+- **rc-259: NEOWISE fits are pooled once, from the raw fits, after re-keying.**
+  `fetch_neowise` now returns one row per fit. Combining twice used a scatter-
+  inflated sigma as a weight: fits of 10, 12 and 14 km at +/- 1 km, two under
+  one alias, gave 12.5 rather than 12, 13% in mass.
+- **rc-271: `min_diameter_km` judges the final diameter.** It moved out of
+  `validate_and_filter` into the new `apply_final_gates`, after enrichment,
+  which can move a diameter either way. **A caller of `validate_and_filter`
+  alone no longer gets the floor.**
+- **rc-260: infinity is no measurement.** Non-finite source values are refused
+  before they can pick a provider or reach a screen and are named in
+  `<stem>_screened_out`; validation refuses a non-finite diameter or semi-major
+  axis by name; `apply_final_gates` rejects a diameter, mass or density computed
+  to one, and the release gate checks all of them and a NaN density beside a
+  mass and a diameter. A missing estimate stays missing.
+- **rc-257: a dropped mass takes its sigma with it.** The derived mass that
+  replaced it kept the rejected measurement's sigma. The release gate now
+  refuses a mass sigma beside a mass that was not measured.
+- **rc-272: one list of what "no class" looks like.** `-`, `nan`, `None` and the
+  rest of `_BLANK_CLASSES` passed strict mode and, in `spectral_type_tholen`,
+  blocked the albedo fallback. The raw cell is kept.
+- **rc-283: the albedo ceiling is a quality policy.** The value and every
+  result are unchanged: 1 or more is still screened, as what a fit at its
+  ceiling looks like. It is no longer called physically impossible, since
+  Enceladus measures 1.04 +/- 0.15, and an H-only size bound is described as
+  conditional on it.
+- **rc-229: the manifest's `rejected_rows` counts bodies.** It was the number of
+  rows in the per-reason log: 3 in releases that dropped 273 and 267 bodies. The
+  README row for `rejected_entries.csv` now says what the file holds.
+- **rc-237, rc-256 (docs):** eleven unreviewed `sigma_*` fields, not nine; the
+  mass identity carries its factor of 1e12.
+
 ## 0.12.0 - 2026-10-21 — data contract **1.10.0**
 
 **The owner's calls on four more General_Research candidates, and two more

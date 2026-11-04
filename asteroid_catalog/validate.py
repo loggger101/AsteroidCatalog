@@ -7,11 +7,13 @@ shrinks a catalog is indistinguishable from a fetcher that silently failed.
 
 from typing import Tuple
 
+import numpy as np
 import pandas as pd
 
 from ._log import say, warn
 
 from .config import CatalogConfig
+from .taxonomy import _BLANK_CLASSES
 
 # ─────────────────────────────────────────────────────────────────────────────
 # VALIDATOR  (failsafes)
@@ -50,10 +52,12 @@ def validate_and_filter(
 
     Failsafes applied in order:
       1. No designation                                       → drop
-      2. No diameter, or diameter ≤ 0                         → drop
-      3. Diameter < min_diameter_km                           → drop
-      4. No semi-major axis (a)                               → drop
-      5. If strict mode: no Bus-DeMeo AND no Tholen type      → drop
+      2. No diameter, or a non-finite or ≤ 0 one              → drop
+      3. No semi-major axis (a), or a non-finite or ≤ 0 one   → drop
+      4. If strict mode: no Bus-DeMeo AND no Tholen type      → drop
+
+    `min_diameter_km` is not here: it judges the final diameter, which
+    enrichment can still change (`apply_final_gates`, after enrichment).
 
     Returns:
         (filtered_df, rejection_log_df)
@@ -77,27 +81,29 @@ def validate_and_filter(
     log.append(_log_rejection(df, bad & valid_mask, "Missing designation"))
     valid_mask &= ~bad
 
-    # ── 2/3. Diameter required, positive, and ≥ min_diameter_km ─────────────
+    # ── 2. Diameter required, finite and positive ───────────────────────────
     if "diameter_km" in df.columns:
         diam = pd.to_numeric(df["diameter_km"], errors="coerce")
+
+        bad_inf = pd.Series(np.isinf(diam), index=df.index)
+        log.append(_log_rejection(df, bad_inf & valid_mask, "Non-finite diameter"))
+        valid_mask &= ~bad_inf
 
         bad_missing = diam.isna() | (diam <= 0)
         log.append(_log_rejection(df, bad_missing & valid_mask,
                                   "Missing or non-positive diameter"))
         valid_mask &= ~bad_missing
-
-        bad_small = diam < config.min_diameter_km
-        log.append(_log_rejection(df, bad_small & valid_mask,
-                                  f"diameter < {config.min_diameter_km} km"))
-        valid_mask &= ~bad_small
     else:
         log.append(_log_column_absent("diameter_km column absent",
                                       int(valid_mask.sum())))
         valid_mask[:] = False
 
-    # ── 4. Semi-major axis required ───────────────────────────────────────────
+    # ── 3. Semi-major axis required, finite and positive ─────────────────────
     if "semi_major_axis_au" in df.columns:
         a   = pd.to_numeric(df["semi_major_axis_au"], errors="coerce")
+        bad = pd.Series(np.isinf(a), index=df.index)
+        log.append(_log_rejection(df, bad & valid_mask, "Non-finite semi-major axis"))
+        valid_mask &= ~bad
         bad = a.isna() | (a <= 0)
         log.append(_log_rejection(df, bad & valid_mask, "Missing semi-major axis"))
         valid_mask &= ~bad
@@ -106,7 +112,7 @@ def validate_and_filter(
             "semi_major_axis_au column absent — coordinate mapping disabled", 0))
         say("     WARN  No orbital elements - coordinate mapping will be unavailable")
 
-    # ── 5. Strict spectral type (optional) ───────────────────────────────────
+    # ── 4. Strict spectral type (optional) ───────────────────────────────────
     # Validate runs BEFORE enrich_composition's Tholen fallback, so we have to
     # consult `spectral_type` AND `spectral_type_tholen` here, otherwise a row
     # carrying only a Tholen letter (e.g. JPL `spec_T="G"`) would be wrongly
@@ -116,7 +122,10 @@ def validate_and_filter(
         def _has(col: str) -> pd.Series:
             if col not in df.columns:
                 return pd.Series(False, index=df.index)
-            return ~_blank(df[col])
+            # The taxonomy's own list of how a source spells "no class": "-"
+            # is not a class, whatever the column's dtype makes of it.
+            marker = df[col].astype("string").str.strip().isin(_BLANK_CLASSES)
+            return ~(_blank(df[col]) | marker)
 
         has_bus, has_tholen = _has("spectral_type"), _has("spectral_type_tholen")
 
@@ -148,3 +157,45 @@ def validate_and_filter(
             say(f"         * {row['reason']:55s} -> {row['rejected_count']:,} dropped")
 
     return filtered, rejection_df
+
+
+def apply_final_gates(
+    df: pd.DataFrame,
+    config: CatalogConfig,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """The rules that judge what enrichment settled, run after it.
+
+      1. Diameter, mass or density computed to a non-finite value  → drop
+      2. Diameter < min_diameter_km                                → drop
+
+    Enrichment can replace an H-derived diameter with the one a measured mass
+    gives, in either direction, so the floor read before it let bodies ship
+    under the floor and discarded bodies a mass would have put above it.  A
+    missing estimate (an Unknown class has no density or mass) is not a failed
+    computation and stays.
+
+    Returns:
+        (filtered_df, rejection_log_df)
+    """
+    valid_mask = pd.Series(True, index=df.index)
+    log = []
+
+    for col in ("diameter_km", "estimated_mass_kg", "density_gcm3"):
+        if col in df.columns:
+            bad = pd.Series(np.isinf(pd.to_numeric(df[col], errors="coerce")), index=df.index)
+            log.append(_log_rejection(df, bad & valid_mask, f"Non-finite computed {col}"))
+            valid_mask &= ~bad
+
+    if "diameter_km" in df.columns:
+        diam = pd.to_numeric(df["diameter_km"], errors="coerce")
+        bad = diam < config.min_diameter_km
+        log.append(_log_rejection(df, bad & valid_mask,
+                                  f"diameter < {config.min_diameter_km} km"))
+        valid_mask &= ~bad
+
+    rejection_df = pd.DataFrame([r for r in log if r["rejected_count"] > 0])
+    if not rejection_df.empty:
+        say("\n  Final gates ...")
+        for _, row in rejection_df.iterrows():
+            say(f"         * {row['reason']:55s} -> {row['rejected_count']:,} dropped")
+    return df[valid_mask].copy(), rejection_df
