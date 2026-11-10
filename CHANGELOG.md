@@ -14,6 +14,31 @@ moving it is not evidence that a number changed.
 
 ---
 
+## 0.13.1 - 2026-11-10 — data contract unchanged (**1.11.0**)
+
+**Six General_Research citation candidates: the comments now say which numbers
+are estimates.** No value, column or output changes.
+
+- **rc-344, rc-345: the CI and CM silicate splits are estimates.** King et
+  al. (2015) report Orgueil and Ivuna by volume, not by weight as the module
+  said: phyllosilicate is 0.988 and 0.976 of the two measured silicates, against
+  the model's 0.95. Murchison (Lee & Lindgren 2016, Table 4) gives 0.756 by
+  volume against the CM model's 0.85. Neither figure was converted to a mass
+  share, and one sample does not set a class value.
+- **rc-418: the CI 70 / 30 pyrrhotite-to-pentlandite split is an estimate.**
+  Harrison et al. (2025) find CI sulfide mostly pyrrhotite with rare
+  pentlandite, and give no ratio.
+- **rc-368: the 37 ppm PGM baseline is a model assumption.** It was described
+  as "a mean iron-meteorite figure", which no source supports. Cannon et al.
+  (2023) give a measured iron-meteorite median of 40.78 ppm and a 10th–90th
+  percentile range of 14.70–107.86 ppm. Those figures cover the six PGMs
+  without Au, so they cannot replace a baseline that includes Au.
+- **rc-369: the differentiated classes' PGM factors are scenarios.** Cannon et
+  al. say no remote method places an asteroid within that distribution.
+- **rc-386: the M albedo now cites a comparator.** NEOWISE's Tholen M median is
+  0.125 (n = 33, SD 0.037; Mainzer et al. 2011), within the spread of the
+  catalog's 0.133 (n = 139), so 0.133 stays.
+
 ## 0.13.0 - 2026-11-04 — data contract **1.11.0**
 
 **Thirteen General_Research candidates: a value now travels with what qualifies

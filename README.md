@@ -501,10 +501,13 @@ The module names the source of each split and the ones that have none.
 
 `PGM_ENRICHMENT_BY_TYPE` scales the platinum-group fraction of a metal phase by
 parent-body differentiation history — core fragments enriched, basaltic crust
-depleted — against a ~37 ppm PGM + Au baseline, a mean iron-meteorite figure.
+depleted — against a ~37 ppm PGM + Au baseline, a model assumption for
+iron-meteorite metal: measured irons have a PGM-only median of 41 ppm and a
+10th–90th percentile range of 15–108 (Cannon et al. 2023).
 
 ⚠️ **Neither the baseline nor the differentiated classes' factors trace to a
-publication.** The undifferentiated, metal-bearing classes are computed (1.9.0):
+publication**; the factors are scenarios, since no published method places an
+asteroid within the measured iron-meteorite spread. The undifferentiated, metal-bearing classes are computed (1.9.0):
 PGMs are siderophile, so their little metal holds nearly all of the bulk's.
 CI bulk PGM + Au, 3.438 ppm (Lodders 2010), divided by the metal fraction
 gives 57 ppm for the S complex and Q (1.55×), 43 for K (1.16×) and 69 for L

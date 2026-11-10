@@ -776,7 +776,9 @@ METEORITE_ANALOGUE_GCM3: Dict[str, tuple] = {
 # Multiplier applied to the platinum-group-metal (PGM) yields in Module 2's
 # "nickel-iron" mineral when valuing an asteroid of this spectral type.
 # Baseline 1.0× is the consumer's ~37 ppm total PGM+Au in nickel-iron alloy,
-# a mean-iron-meteorite figure.  It is NOT chondritic metal, which is richer;
+# a MODEL ASSUMPTION standing for iron-meteorite metal (until 0.13.1 this
+# header called it "a mean-iron-meteorite figure", which no source shows; see
+# Cannon et al. below).  It is NOT chondritic metal, which is richer;
 # since 1.9.0 the metal-bearing chondritic classes are computed against it
 # (below the table).
 #
@@ -803,7 +805,15 @@ METEORITE_ANALOGUE_GCM3: Dict[str, tuple] = {
 # iron meteorites vary "up to several hundred ppm", and the Fe-Ni metal of LL
 # chondrites carries 50-220 ppm.  Other compilations agree on the spread:
 # IIIAB irons run 0.17-75 ppm total PGM from the 10th to the 90th percentile,
-# and six irons measured by AMS 16-270 ppm.  So:
+# and six irons measured by AMS 16-270 ppm.  Cannon, Gialich & Acain (2023,
+# PSS 225, 105608, Table 2 p. 4), resampling measured iron-meteorite data:
+# median 40.78 ppm, 10th-90th percentile 14.70-107.86 ppm, of the six PGMs
+# WITHOUT Au, as 100%-metal upper values.  The 37 ppm PGM+Au sits below that
+# median but is not comparable to it term for term, so it stays an assumption
+# (General_Research rc-368).  Nor do they support the class factors: "no known
+# way to remotely identify where an asteroid falls along the wide
+# distributions" (p. 6).  The 2.0 / 1.5 / 0.5 / 0.2 literals are SCENARIOS
+# until a class-matched calibration is published (rc-369).  So:
 #
 #   * "chondritic" and "mean iron meteorite" are NOT the same baseline, as
 #     this header said until 1.9.0.  PGMs are siderophile: in an
@@ -860,7 +870,7 @@ PGM_ENRICHMENT_BY_TYPE: Dict[str, float] = {
 
 # Bulk CI PGM+Au, ppm (Lodders 2010, Table 2): Ru Rh Pd Os Ir Pt Au.
 _CI_BULK_PGM_AU_PPM = 0.686 + 0.139 + 0.558 + 0.493 + 0.469 + 0.947 + 0.146
-_PGM_BASELINE_PPM = 37.0
+_PGM_BASELINE_PPM = 37.0   # PGM+Au, model assumption (rc-368)
 for _cls in ("S", "Sa", "Sk", "Sl", "Sq", "Sr", "Sv", "Q", "K", "L"):
     PGM_ENRICHMENT_BY_TYPE[_cls] = round(
         _CI_BULK_PGM_AU_PPM / TAXONOMY_COMPOSITION[_cls]["metal_fraction"]

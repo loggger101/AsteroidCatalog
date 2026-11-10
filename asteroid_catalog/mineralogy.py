@@ -48,12 +48,27 @@ accessory figures of the body, all rounded):
                          lean is a judgement, not a measurement.
   CI chondrite           C, B, Cb, F: Orgueil and Ivuna by XRD (King, Schofield,
                          Howard & Russell 2015, GCA 165, 148): phyllosilicate
-                         (serpentine + saponite) ~81-84 wt%, magnetite ~6-10,
+                         (serpentine + saponite) ~81-84 VOL%, magnetite ~6-10,
                          sulfide ~5-7, carbonate ~2-5, olivine a few percent.
+                         The paper's modes are by volume (this line said wt%
+                         until 0.13.1).  The silicate split, phyllosilicate
+                         0.95 / olivine 0.05, is an ESTIMATE, not a
+                         conversion: by volume, phyllosilicate is 0.988 of
+                         the two in Orgueil (83.0 / 1.0) and 0.976 in Ivuna
+                         (82.5 / 2.0; Table 1, p. 154), and no volume-to-mass
+                         conversion was made (General_Research rc-344).
   CM chondrite           Cg, Ch, G: Howard, Alexander, Schrader & Dyl (2015,
                          GCA 149, 206): phyllosilicate 70-90 wt%, olivine +
                          pyroxene most of the rest, magnetite and sulfide a few
-                         percent, carbonate ~1-2.
+                         percent, carbonate ~1-2.  The split, phyllosilicate
+                         0.85 / olivine 0.10 / pyroxene 0.05, is an ESTIMATE
+                         inside that range, not computed from a mode.  One
+                         comparator: Murchison, 72.5 vol% phyllosilicate and
+                         23.4 vol% olivine + orthopyroxene, so 0.756 of the
+                         two by volume (Howard et al. 2011 as reproduced in
+                         Lee & Lindgren 2016, MAPS 51, 1003, Table 4, p. 1007).
+                         One CM2.5 sample by volume does not set a class-wide
+                         mass split (General_Research rc-345).
   carbon, C complex      0.70 insoluble macromolecular organic matter to 0.30
                          soluble organics: IOM is 70-99% of the organic carbon
                          in CI/CM chondrites (Alexander et al. 2007, GCA 71,
@@ -91,7 +106,8 @@ accessory figures of the body, all rounded):
                          magnetite is far more abundant than in most CMs and
                          replaces the sulfides, but gives no modal wt%.
 
-WHAT HAS NO SOURCE: every split for A, R, O and T; the silicate split of the
+WHAT HAS NO SOURCE: every split for A, R, O and T; the CI and CM silicate
+splits as numbers (above: the phases are sourced, the shares estimated); the silicate split of the
 X-complex members beyond "enstatite dominates"; the Sa/Sr/Sv/Sk/Sl leans;
 the D, Z, T, P carbon split (organics 0.60 / carbon 0.40, left as it was when
 1.10.0 cut their carbon to Tagish Lake's 0.04);
@@ -169,8 +185,8 @@ _METAL_IRON      = {"nickel-iron": 0.985, "schreibersite": 0.015}
 _METAL_ENSTATITE = {"nickel-iron": 0.97,  "schreibersite": 0.03}
 
 _SIL_OC  = {"olivine": 0.58, "orthopyroxene": 0.24, "pyroxene": 0.06, "plagioclase": 0.12}
-_SIL_CI  = {"phyllosilicates": 0.95, "olivine": 0.05}
-_SIL_CM  = {"phyllosilicates": 0.85, "olivine": 0.10, "pyroxene": 0.05}
+_SIL_CI  = {"phyllosilicates": 0.95, "olivine": 0.05}                    # estimate (rc-344)
+_SIL_CM  = {"phyllosilicates": 0.85, "olivine": 0.10, "pyroxene": 0.05}  # estimate (rc-345)
 _SIL_CV  = {"olivine": 0.75, "pyroxene": 0.20, "plagioclase": 0.05}
 
 _CARBON_CC        = {"carbon": 0.70, "organics": 0.30}
@@ -406,7 +422,13 @@ del _row_name
 #                         (~9%) the lever rule between 6.5 and 30 wt% returns.
 #   CI / CM / Tagish Lake the sulfide is pyrrhotite with lesser pentlandite
 #                         (King et al. 2015; Howard et al. 2015); CK (Cgh) and
-#                         the oxidised CV (K) are pentlandite-rich.
+#                         the oxidised CV (K) are pentlandite-rich.  For CI,
+#                         Harrison et al. (2025, MAPS 60, 506, p. 510) find
+#                         Orgueil's and Ivuna's Fe sulfide (0.3-0.4 area%)
+#                         predominantly pyrrhotite, pentlandite rare (<10 um
+#                         blebs), with rare cubanite, and give no ratio: the
+#                         CI 70 / 30 below is an estimate (General_Research
+#                         rc-418).
 #   enstatite chondrite   Xe (EH): troilite ~5, niningerite ~2, oldhamite ~0.7
 #                         and daubreelite ~0.3 wt% of the body, within the 8%
 #                         of sulfide the row already carries (Keil 1968, JGR
@@ -452,7 +474,7 @@ _ALLOY_OCTAHEDRITE = {"kamacite": 0.89, "taenite": 0.11}     # ~9 wt% Ni: no cha
 _ALLOY_OC       = {"kamacite": 0.55, "taenite": 0.38, "tetrataenite": 0.07}
 _ALLOY_IRON     = {"kamacite": 0.88, "taenite": 0.11, "cohenite": 0.01}
 
-_SULFIDE_CI = {"pyrrhotite": 0.70, "pentlandite": 0.30}
+_SULFIDE_CI = {"pyrrhotite": 0.70, "pentlandite": 0.30}      # estimate: no source gives a ratio
 _SULFIDE_CM = {"pyrrhotite": 0.65, "pentlandite": 0.35}      # also Tagish Lake
 _SULFIDE_NI = {"pentlandite": 0.50, "pyrrhotite": 0.50}      # CK, oxidised CV
 _SULFIDE_EH = {"troilite": 0.625, "niningerite": 0.25, "oldhamite": 0.0875,

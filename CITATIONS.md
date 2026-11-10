@@ -141,9 +141,9 @@ produced this way is tagged in `diameter_source` and flagged in
 
 `PGM_ENRICHMENT_BY_TYPE` is a **valuation layer, not an observation**; what it
 does is in [README > Composition](README.md#the-precious-metal-layer-is-optional-and-labelled).
-⚠️ Neither its baseline (~37 ppm total PGM + Au in the metal, a mean
-iron-meteorite figure) nor the differentiated classes' factors trace to a
-publication. Since 1.9.0 the S complex, Q, K and L are computed: CI bulk PGM
+⚠️ Neither its baseline (~37 ppm total PGM + Au in the metal, a model
+assumption standing for iron-meteorite metal) nor the differentiated classes'
+factors trace to a publication; the factors are scenarios. Since 1.9.0 the S complex, Q, K and L are computed: CI bulk PGM
 + Au (Lodders 2010, Table 2) over each class's metal fraction, over the
 baseline. Kargel (1994, section 3) is the second route: LL-chondrite metal
 carries 50–220 ppm precious metals (the S complex computes to 57), while iron
@@ -175,6 +175,11 @@ otherwise; volumes and pages are Crossref's.
 - Mainzer, A., et al. (2011), *Thermal model calibration for minor planets
   observed with WISE/NEOWISE*, ApJ 736, 100 — ±10% diameter and ±25% albedo
   against radar and spacecraft: the merge's agreement tolerances.
+- Mainzer, A., et al. (2011), *NEOWISE studies of spectrophotometrically
+  classified asteroids: preliminary results*, ApJ 741, 90 — Table 1, Tholen M:
+  median p_V 0.125, n = 33, SD 0.037, beside the catalog's 0.133 (n = 139);
+  visible-selected samples bias class albedos upward. A comparator, not a
+  replacement (General_Research rc-386, R520; not re-read here).
 - Pravec, P., et al. (2012), *Absolute magnitudes of asteroids and a revision
   of asteroid albedo estimates from WISE thermal observations*, Icarus 221,
   365 — catalog H too bright by 0.4–0.5 mag near H ≈ 14: the H tolerance, and
@@ -312,6 +317,13 @@ otherwise; volumes and pages are Crossref's.
 - Kargel, J. S. (1994), *Metalliferous asteroids as potential sources of
   precious metals*, JGR 99(E10), 21129 — LL-chondrite metal 1.2–5.3% carrying
   50–220 ppm precious metals: the PGM caveat.
+- Cannon, K. M., Gialich, M., and Acain, J. (2023), *Precious and structural
+  metals on asteroids*, Planet. Space Sci. 225, 105608 (CC BY-NC-ND) — Table
+  2: measured iron-meteorite PGM (six PGMs, no Au) median 40.78 ppm, 10th–90th
+  percentile 14.70–107.86 ppm; p. 6, no remote way to place an asteroid in
+  that distribution. Why the 37 ppm baseline is called an assumption and the
+  class factors scenarios (General_Research rc-368, rc-369). Read by
+  General_Research (R502, R503), not re-read here.
 
 **Mineral phases (`comp_phases`, 1.7.0; `comp_phases_detailed`, 1.8.0)**
 
@@ -325,9 +337,21 @@ gives them, and the module lists what has no source at all.
   split, troilite and chromite.
 - King, A. J., Schofield, P. F., Howard, K. T., and Russell, S. S. (2015), GCA
   165, 148 — Orgueil and Ivuna by XRD: the CI phases, and pyrrhotite with
-  lesser pentlandite as their sulfide.
+  lesser pentlandite as their sulfide. Its modes are by volume (Table 1,
+  p. 154: phyllosilicate 83.0 and 82.5 vol%, olivine 1.0 and 2.0); the
+  0.95 / 0.05 silicate split is an estimate, not a conversion (General_Research
+  rc-344, R478).
 - Howard, K. T., Alexander, C. M. O'D., Schrader, D. L., and Dyl, K. A.
-  (2015), GCA 149, 206 — the CM phases.
+  (2015), GCA 149, 206 — the CM phases. The 0.85 / 0.10 / 0.05 silicate split
+  is an estimate; Lee, M. R., and Lindgren, P. (2016), MAPS 51, 1003, Table 4,
+  reproduce Murchison's XRD modes (Howard et al. 2011), 72.5 vol%
+  phyllosilicate and 23.4 olivine + orthopyroxene, as a one-sample comparator
+  (General_Research rc-345, R479).
+- Harrison et al. (2025), *Iron and copper sulfides in asteroid Ryugu:
+  comparison to CI and CY chondrites*, MAPS 60, 506 (CC BY) — p. 510: CI
+  sulfide mostly pyrrhotite, pentlandite rare, no ratio given. Why the CI
+  70 / 30 sulfide split is called an estimate (General_Research rc-418,
+  R552).
 - Alexander, C. M. O'D., et al. (2007), GCA 71, 4380 — insoluble vs soluble
   organic carbon.
 - Mittlefehldt, D. W. (2015), Chemie der Erde 75, 155 — the HED phases.
