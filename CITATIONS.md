@@ -141,9 +141,9 @@ produced this way is tagged in `diameter_source` and flagged in
 
 `PGM_ENRICHMENT_BY_TYPE` is a **valuation layer, not an observation**; what it
 does is in [README > Composition](README.md#the-precious-metal-layer-is-optional-and-labelled).
-⚠️ Neither its baseline (~37 ppm total PGM + Au in the metal, a mean
-iron-meteorite figure) nor the differentiated classes' factors trace to a
-publication. Since 1.9.0 the S complex, Q, K and L are computed: CI bulk PGM
+⚠️ Neither its baseline (~37 ppm total PGM + Au in the metal, a model
+assumption standing for iron-meteorite metal) nor the differentiated classes'
+factors trace to a publication; the factors are scenarios. Since 1.9.0 the S complex, Q, K and L are computed: CI bulk PGM
 + Au (Lodders 2010, Table 2) over each class's metal fraction, over the
 baseline. Kargel (1994, section 3) is the second route: LL-chondrite metal
 carries 50–220 ppm precious metals (the S complex computes to 57), while iron
@@ -175,6 +175,11 @@ otherwise; volumes and pages are Crossref's.
 - Mainzer, A., et al. (2011), *Thermal model calibration for minor planets
   observed with WISE/NEOWISE*, ApJ 736, 100 — ±10% diameter and ±25% albedo
   against radar and spacecraft: the merge's agreement tolerances.
+- Mainzer, A., et al. (2011), *NEOWISE studies of spectrophotometrically
+  classified asteroids: preliminary results*, ApJ 741, 90 — Table 1, Tholen M:
+  median p_V 0.125, n = 33, SD 0.037, beside the catalog's 0.133 (n = 139);
+  visible-selected samples bias class albedos upward. A comparator, not a
+  replacement (General_Research rc-386, R520; not re-read here).
 - Pravec, P., et al. (2012), *Absolute magnitudes of asteroids and a revision
   of asteroid albedo estimates from WISE thermal observations*, Icarus 221,
   365 — catalog H too bright by 0.4–0.5 mag near H ≈ 14: the H tolerance, and
@@ -277,7 +282,33 @@ otherwise; volumes and pages are Crossref's.
   chondrites*, MAPS 41, 1899 — CI chondrites 3.5–3.9 wt% C.
 - Lauretta, D. S., et al. (2024), *Asteroid (101955) Bennu in the laboratory*,
   MAPS, doi:10.1111/maps.14227 — Bennu 4.5–4.7 wt% C, Ryugu ~4.0: the
-  C-complex carbon fraction.
+  C-complex carbon fraction. Also p. 2481: the sample holds 0.84–0.95 wt% H,
+  at most 7.5–8.5 wt% H2O, beside the B row's 0.20 ice (under review,
+  General_Research rc-334).
+- Kaplan et al. (2026), *Water and hydroxyl on asteroid Bennu*, MAPS (early
+  view), and King, A. J., et al. (2026), MAPS 61, 1077, p. 1088 — Bennu's
+  hydration mostly OH, interlayer water up to ~2 wt%: the same review
+  (rc-334). Read by General_Research, not re-read here.
+- Smith, C. L., et al. (2004), MAPS 39, 2009, p. 2028 — CV chondrites
+  0.3–1.8 wt% C, mean 0.77: beside K's unsourced 0.08 (under review, rc-350).
+- DeMeo, F. E., and Carry, B. (2015), *The compositional structure of the
+  asteroid belt*, Asteroids IV, 13 — pp. 16–18, the X complex is
+  compositionally degenerate (rc-346); Table 1, Gaffey's S subclasses against
+  Bus-DeMeo labels, with no mass shares (rc-419).
+- Kwon, Y. G., et al. (2022), A&A 666, A173 — large T-types match CI better
+  than Tagish Lake, whose carbon T borrows (rc-353).
+- Scott, E. R. D., et al. (2015), Asteroids IV, 573, p. 578 — A-type olivine
+  ~70–90% (magnesian) to monomineralic (ferroan) (rc-351).
+- Abell, P. A., and Gaffey, M. J. (2000), LPSC XXXI — 349 Dembowska OPX:OL
+  45:55 (rc-348).
+- Cloutis, E. A., et al. (2006), MAPS 41, 1147, p. 1159 — 3628 Božněmcová,
+  clinopyroxene- and plagioclase-rich (rc-352).
+- Lindgren, P., et al. (2020), GCA 289, 69, Table 2 — ALH 83100 pyrrhotite 0.9,
+  pentlandite 1.2 vol% (rc-380).
+- Grady, M. M., et al. (2002), MAPS 37, 713 — ~2% of Tagish Lake's organic
+  matter solvent soluble, against the model's 0.60 (rc-384).
+  These nine were read by General_Research as comparators for unsourced
+  numbers; none supplies a replacement, and none is re-read here.
 - Glavin, D. P., et al. (2025), *Abundant ammonia and nitrogen-rich soluble
   organic matter in samples from asteroid (101955) Bennu*, Nat. Astron. 9,
   199 — Bennu's total C re-measured on their own extracts, 4.5–4.7 wt%; and
@@ -301,7 +332,9 @@ otherwise; volumes and pages are Crossref's.
 - Yokoyama, T., et al. (2023), *Samples returned from the asteroid Ryugu are
   similar to Ivuna-type carbonaceous meteorites*, Science 379, eabn7850 —
   Ryugu total C 4.63 ± 0.23 wt%. Read by General_Research (R73) from the
-  author's version; not re-read here.
+  author's version; not re-read here. Also p. 8: 6.84 wt% H2O, 6.54 of it
+  structural OH: the comparator for the C row's 0.15 ice fraction, which
+  stands for bound water (General_Research rc-367, R501).
 - Mahlke, M., Carry, B., and Mattei, P.-A. (2022), *Asteroid taxonomy from
   cluster analysis of spectrometry and albedo*, A&A 665, A26 — the scheme
   SsODNet prefers, so its classes (Z, and the P, M and E labels) reach the
@@ -312,6 +345,13 @@ otherwise; volumes and pages are Crossref's.
 - Kargel, J. S. (1994), *Metalliferous asteroids as potential sources of
   precious metals*, JGR 99(E10), 21129 — LL-chondrite metal 1.2–5.3% carrying
   50–220 ppm precious metals: the PGM caveat.
+- Cannon, K. M., Gialich, M., and Acain, J. (2023), *Precious and structural
+  metals on asteroids*, Planet. Space Sci. 225, 105608 (CC BY-NC-ND) — Table
+  2: measured iron-meteorite PGM (six PGMs, no Au) median 40.78 ppm, 10th–90th
+  percentile 14.70–107.86 ppm; p. 6, no remote way to place an asteroid in
+  that distribution. Why the 37 ppm baseline is called an assumption and the
+  class factors scenarios (General_Research rc-368, rc-369). Read by
+  General_Research (R502, R503), not re-read here.
 
 **Mineral phases (`comp_phases`, 1.7.0; `comp_phases_detailed`, 1.8.0)**
 
@@ -325,9 +365,21 @@ gives them, and the module lists what has no source at all.
   split, troilite and chromite.
 - King, A. J., Schofield, P. F., Howard, K. T., and Russell, S. S. (2015), GCA
   165, 148 — Orgueil and Ivuna by XRD: the CI phases, and pyrrhotite with
-  lesser pentlandite as their sulfide.
+  lesser pentlandite as their sulfide. Its modes are by volume (Table 1,
+  p. 154: phyllosilicate 83.0 and 82.5 vol%, olivine 1.0 and 2.0); the
+  0.95 / 0.05 silicate split is an estimate, not a conversion (General_Research
+  rc-344, R478).
 - Howard, K. T., Alexander, C. M. O'D., Schrader, D. L., and Dyl, K. A.
-  (2015), GCA 149, 206 — the CM phases.
+  (2015), GCA 149, 206 — the CM phases. The 0.85 / 0.10 / 0.05 silicate split
+  is an estimate; Lee, M. R., and Lindgren, P. (2016), MAPS 51, 1003, Table 4,
+  reproduce Murchison's XRD modes (Howard et al. 2011), 72.5 vol%
+  phyllosilicate and 23.4 olivine + orthopyroxene, as a one-sample comparator
+  (General_Research rc-345, R479).
+- Harrison et al. (2025), *Iron and copper sulfides in asteroid Ryugu:
+  comparison to CI and CY chondrites*, MAPS 60, 506 (CC BY) — p. 510: CI
+  sulfide mostly pyrrhotite, pentlandite rare, no ratio given. Why the CI
+  70 / 30 sulfide split is called an estimate (General_Research rc-418,
+  R552).
 - Alexander, C. M. O'D., et al. (2007), GCA 71, 4380 — insoluble vs soluble
   organic carbon.
 - Mittlefehldt, D. W. (2015), Chemie der Erde 75, 155 — the HED phases.
@@ -340,6 +392,11 @@ gives them, and the module lists what has no source at all.
   (magnetite far more abundant than in most CMs). The magnetite ~5, sulfide
   ~3 and carbonate ~3 wt% have no source; the module lists them so. Both
   papers read by General_Research (R155, R160; rc-085), not re-read here.
+  Comparators for those amounts, neither a class value (General_Research
+  rc-343): Izawa, M. R. M., et al. (2010), MAPS 45, 675, Table 3 — Tagish
+  Lake samples range magnetite 6–17, siderite 4–24, pyrrhotite 10–18 wt%;
+  Schrader, D. L., et al. (2024), GCA 380, 48, Table 2 — one carbonate-rich
+  sample, Ca-carbonate 3.20, magnetite 4.59, Fe sulfide 1.86 vol%.
 - Jones, R. H., McCubbin, F. M., Dreeland, L., Guan, Y., Burger, P. V., and
   Shearer, C. K. (2014), GCA 132, 120 — merrillite and chlorapatite in LL
   chondrites: the 1.8.0 phosphates.

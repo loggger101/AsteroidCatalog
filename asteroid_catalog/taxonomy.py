@@ -116,6 +116,13 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "metal_fraction":    0.01,
         "silicate_fraction": 0.30,
         "carbon_fraction":   0.04,
+        # An estimate, read as bound water.  UNDER REVIEW (General_Research
+        # rc-334): Bennu, a B-type, returned 0.84-0.95 wt% H (Lauretta et al.
+        # 2024, MAPS 59, 2453, p. 2481), at most 7.5-8.5 wt% H2O even if all
+        # of it were water, 2.4-2.7x below 0.20; the sample's hydration is
+        # mostly OH (Kaplan et al. 2026, MAPS) and its interlayer water up to
+        # ~2 wt% (King et al. 2026, MAPS 61, 1077, p. 1088).  Returned
+        # regolith is not the interior or the class, so the value stays.
         "ice_fraction":      0.20,
         "notes": "Bluest C-complex; possible metamorphic overprint.  v1.5.0: "
                  "carbon 0.30 -> 0.04, as C.  Density 1.30 is the small-body "
@@ -130,6 +137,11 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "metal_fraction":    0.01,
         "silicate_fraction": 0.35,
         "carbon_fraction":   0.04,
+        # A class estimate standing for BOUND water (mineralogy maps it to
+        # "water"), not free ice.  Comparator: the returned Ryugu sample holds
+        # 6.84 wt% H2O, 6.54 of it structural OH and 0.30 interlayer
+        # (Yokoyama et al. 2023, Science 379, eabn7850, p. 8) -- one CI-like
+        # body, not a class mean, so 0.15 stays (General_Research rc-367).
         "ice_fraction":      0.15,
         "notes": "Most common asteroid type; CI/CM chondrite analogs.  v1.5.0: "
                  "carbon 0.25 -> 0.04: CI chondrites carry 3.5-3.9 wt% C, the "
@@ -323,6 +335,11 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "minerals": ["enstatite", "nickel-iron", "troilite"],
         "density_est_gcm3":  2.90,
         "metal_fraction":    0.25,
+        # Unsourced, as are Xk's 0.45 and so the X and Xc mixtures (0.44,
+        # 0.47).  The X complex is compositionally degenerate across albedos
+        # of a few percent to 50% and a spectrum gives no bulk silicate mass
+        # (DeMeo & Carry 2015, Asteroids IV, pp. 16-18; General_Research
+        # rc-346).  No replacement is known.
         "silicate_fraction": 0.65,
         "carbon_fraction":   0.01,
         "ice_fraction":      0.00,
@@ -340,7 +357,7 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "minerals": ["nickel-iron", "troilite", "enstatite"],
         "density_est_gcm3":  3.80,
         "metal_fraction":    0.45,
-        "silicate_fraction": 0.45,
+        "silicate_fraction": 0.45,         # unsourced: see Xe (rc-346)
         "carbon_fraction":   0.01,
         "ice_fraction":      0.00,
         "notes": "v1.5.0: swapped with Xe.  13 of 24 Tholen M-types are Xk "
@@ -397,6 +414,10 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "density_est_gcm3":  2.50,
         "metal_fraction":    0.08,
         "silicate_fraction": 0.72,
+        # Unsourced, and UNDER REVIEW (General_Research rc-350): CV chondrites
+        # carry 0.3-1.8 wt% C, mean 0.77 (Smith et al. 2004, MAPS 39, 2009,
+        # p. 2028, after Kerridge 1985 and Pearson 2003), a tenth of this.
+        # No CO figure has been read, so the value stays.
         "carbon_fraction":   0.08,
         "ice_fraction":      0.00,
         "notes": "Intermediate C and S features; moderate albedo",
@@ -458,6 +479,10 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "density_est_gcm3":  1.80,
         "metal_fraction":    0.05,
         "silicate_fraction": 0.40,
+        # Borrowed from the D-types' Tagish Lake.  Large T-types match CI
+        # better than Tagish Lake in brightness and slope (Kwon et al. 2022,
+        # A&A 666, A173, pp. 11-12), though a spectral match gives no carbon
+        # figure (General_Research rc-353).
         "carbon_fraction":   0.04,
         "ice_fraction":      0.10,
         "notes": "Featureless red; possibly primitive body.  v1.10.0: carbon "
@@ -776,7 +801,9 @@ METEORITE_ANALOGUE_GCM3: Dict[str, tuple] = {
 # Multiplier applied to the platinum-group-metal (PGM) yields in Module 2's
 # "nickel-iron" mineral when valuing an asteroid of this spectral type.
 # Baseline 1.0× is the consumer's ~37 ppm total PGM+Au in nickel-iron alloy,
-# a mean-iron-meteorite figure.  It is NOT chondritic metal, which is richer;
+# a MODEL ASSUMPTION standing for iron-meteorite metal (until 0.13.1 this
+# header called it "a mean-iron-meteorite figure", which no source shows; see
+# Cannon et al. below).  It is NOT chondritic metal, which is richer;
 # since 1.9.0 the metal-bearing chondritic classes are computed against it
 # (below the table).
 #
@@ -803,7 +830,15 @@ METEORITE_ANALOGUE_GCM3: Dict[str, tuple] = {
 # iron meteorites vary "up to several hundred ppm", and the Fe-Ni metal of LL
 # chondrites carries 50-220 ppm.  Other compilations agree on the spread:
 # IIIAB irons run 0.17-75 ppm total PGM from the 10th to the 90th percentile,
-# and six irons measured by AMS 16-270 ppm.  So:
+# and six irons measured by AMS 16-270 ppm.  Cannon, Gialich & Acain (2023,
+# PSS 225, 105608, Table 2 p. 4), resampling measured iron-meteorite data:
+# median 40.78 ppm, 10th-90th percentile 14.70-107.86 ppm, of the six PGMs
+# WITHOUT Au, as 100%-metal upper values.  The 37 ppm PGM+Au sits below that
+# median but is not comparable to it term for term, so it stays an assumption
+# (General_Research rc-368).  Nor do they support the class factors: "no known
+# way to remotely identify where an asteroid falls along the wide
+# distributions" (p. 6).  The 2.0 / 1.5 / 0.5 / 0.2 literals are SCENARIOS
+# until a class-matched calibration is published (rc-369).  So:
 #
 #   * "chondritic" and "mean iron meteorite" are NOT the same baseline, as
 #     this header said until 1.9.0.  PGMs are siderophile: in an
@@ -860,7 +895,7 @@ PGM_ENRICHMENT_BY_TYPE: Dict[str, float] = {
 
 # Bulk CI PGM+Au, ppm (Lodders 2010, Table 2): Ru Rh Pd Os Ir Pt Au.
 _CI_BULK_PGM_AU_PPM = 0.686 + 0.139 + 0.558 + 0.493 + 0.469 + 0.947 + 0.146
-_PGM_BASELINE_PPM = 37.0
+_PGM_BASELINE_PPM = 37.0   # PGM+Au, model assumption (rc-368)
 for _cls in ("S", "Sa", "Sk", "Sl", "Sq", "Sr", "Sv", "Q", "K", "L"):
     PGM_ENRICHMENT_BY_TYPE[_cls] = round(
         _CI_BULK_PGM_AU_PPM / TAXONOMY_COMPOSITION[_cls]["metal_fraction"]

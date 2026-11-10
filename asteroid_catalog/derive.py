@@ -111,7 +111,10 @@ ALBEDO_BY_SPECTRAL_TYPE: Dict[str, float] = {
     "L":    0.2030,   # n=1,781
     "Ld":   0.1730,   # n=25
     "Ls":   0.2220,   # n=258
-    "M":    0.1330,   # n=139
+    "M":    0.1330,   # n=139; NEOWISE Tholen M: median 0.125, n=33, SD 0.037
+                      # (Mainzer et al. 2011, ApJ 741, 90, Table 1), within its
+                      # spread; their sample is visible-selected, which they say
+                      # biases class albedos upward (rc-386)
     "O":    0.1345,   # n=10
     "P":    0.0520,   # n=255
     "Q":    0.2520,   # n=335
