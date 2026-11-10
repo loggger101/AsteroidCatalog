@@ -16,8 +16,8 @@ moving it is not evidence that a number changed.
 
 ## 0.13.1 - 2026-11-10 — data contract unchanged (**1.11.0**)
 
-**Eight General_Research candidates: the comments now say which numbers are
-estimates, and cite what they can be compared with.** No value, column or
+**Eighteen General_Research candidates: the comments now say which numbers
+are estimates, and cite what they can be compared with.** No value, column or
 output changes.
 
 - **rc-344, rc-345: the CI and CM silicate splits are estimates.** King et
@@ -46,6 +46,24 @@ output changes.
   al. (2010) find Tagish Lake's lithologies span magnetite 6–17 wt%. Schrader
   et al. (2024) point-count one carbonate-rich sample by volume. The 5 / 3 / 3
   wt% amounts stay unsourced.
+- **Ten value reviews are annotated, and the values stay.** Each number now
+  sits beside the comparator that questions it:
+  - **rc-334:** B ice is 0.20, but Bennu's hydrogen allows at most 0.085 as
+    water.
+  - **rc-350:** K carbon is 0.08, against 0.3–1.8 wt% C for CV chondrites.
+  - **rc-384:** the D, Z, P and T soluble-organic share is 0.60, against ~2%
+    in one Tagish Lake chip.
+  - **rc-353:** T borrows Tagish Lake's carbon, but large T-types look more
+    like CI.
+  - **rc-346:** the X-complex silicate fractions have no source.
+  - **rc-351, rc-348, rc-352:** the A, R and O silicate splits have one
+    spectral comparator each.
+  - **rc-419:** the Sa, Sr and Sv leans are labelled scenarios.
+  - **rc-380:** the CM sulfide split sits beside ALH 83100's 43 / 57 by
+    volume.
+
+  No source gives a like-for-like replacement for any of them. They remain open
+  in General_Research.
 
 ## 0.13.0 - 2026-11-04 — data contract **1.11.0**
 

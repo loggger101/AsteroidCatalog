@@ -116,6 +116,13 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "metal_fraction":    0.01,
         "silicate_fraction": 0.30,
         "carbon_fraction":   0.04,
+        # An estimate, read as bound water.  UNDER REVIEW (General_Research
+        # rc-334): Bennu, a B-type, returned 0.84-0.95 wt% H (Lauretta et al.
+        # 2024, MAPS 59, 2453, p. 2481), at most 7.5-8.5 wt% H2O even if all
+        # of it were water, 2.4-2.7x below 0.20; the sample's hydration is
+        # mostly OH (Kaplan et al. 2026, MAPS) and its interlayer water up to
+        # ~2 wt% (King et al. 2026, MAPS 61, 1077, p. 1088).  Returned
+        # regolith is not the interior or the class, so the value stays.
         "ice_fraction":      0.20,
         "notes": "Bluest C-complex; possible metamorphic overprint.  v1.5.0: "
                  "carbon 0.30 -> 0.04, as C.  Density 1.30 is the small-body "
@@ -328,6 +335,11 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "minerals": ["enstatite", "nickel-iron", "troilite"],
         "density_est_gcm3":  2.90,
         "metal_fraction":    0.25,
+        # Unsourced, as are Xk's 0.45 and so the X and Xc mixtures (0.44,
+        # 0.47).  The X complex is compositionally degenerate across albedos
+        # of a few percent to 50% and a spectrum gives no bulk silicate mass
+        # (DeMeo & Carry 2015, Asteroids IV, pp. 16-18; General_Research
+        # rc-346).  No replacement is known.
         "silicate_fraction": 0.65,
         "carbon_fraction":   0.01,
         "ice_fraction":      0.00,
@@ -345,7 +357,7 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "minerals": ["nickel-iron", "troilite", "enstatite"],
         "density_est_gcm3":  3.80,
         "metal_fraction":    0.45,
-        "silicate_fraction": 0.45,
+        "silicate_fraction": 0.45,         # unsourced: see Xe (rc-346)
         "carbon_fraction":   0.01,
         "ice_fraction":      0.00,
         "notes": "v1.5.0: swapped with Xe.  13 of 24 Tholen M-types are Xk "
@@ -402,6 +414,10 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "density_est_gcm3":  2.50,
         "metal_fraction":    0.08,
         "silicate_fraction": 0.72,
+        # Unsourced, and UNDER REVIEW (General_Research rc-350): CV chondrites
+        # carry 0.3-1.8 wt% C, mean 0.77 (Smith et al. 2004, MAPS 39, 2009,
+        # p. 2028, after Kerridge 1985 and Pearson 2003), a tenth of this.
+        # No CO figure has been read, so the value stays.
         "carbon_fraction":   0.08,
         "ice_fraction":      0.00,
         "notes": "Intermediate C and S features; moderate albedo",
@@ -463,6 +479,10 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "density_est_gcm3":  1.80,
         "metal_fraction":    0.05,
         "silicate_fraction": 0.40,
+        # Borrowed from the D-types' Tagish Lake.  Large T-types match CI
+        # better than Tagish Lake in brightness and slope (Kwon et al. 2022,
+        # A&A 666, A173, pp. 11-12), though a spectral match gives no carbon
+        # figure (General_Research rc-353).
         "carbon_fraction":   0.04,
         "ice_fraction":      0.10,
         "notes": "Featureless red; possibly primitive body.  v1.10.0: carbon "

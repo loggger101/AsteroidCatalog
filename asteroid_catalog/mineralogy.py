@@ -197,6 +197,11 @@ _SIL_CM  = {"phyllosilicates": 0.85, "olivine": 0.10, "pyroxene": 0.05}  # estim
 _SIL_CV  = {"olivine": 0.75, "pyroxene": 0.20, "plagioclase": 0.05}
 
 _CARBON_CC        = {"carbon": 0.70, "organics": 0.30}
+# _CARBON_PRIMITIVE is a SCENARIO, under review (General_Research rc-384): in
+# one pristine Tagish Lake chip "around 2% of the organic material is
+# thermally labile and solvent soluble" (Grady et al. 2002, MAPS 37, 713,
+# abstract), a thirtieth of the 0.60 here.  One carbonate-rich chip is not a
+# class, and the paper's fractions may not match these phase definitions.
 _CARBON_PRIMITIVE = {"organics": 0.60, "carbon": 0.40}
 _CARBON_PLAIN     = {"carbon": 1.0}
 
@@ -236,6 +241,9 @@ PHASE_SHARES: Dict[str, Dict[str, Dict[str, float]]] = {
     "Q":   _row(_METAL_PLAIN, _SIL_OC, _CARBON_PLAIN),
     "Sk":  _row(_METAL_PLAIN, _SIL_OC, _CARBON_PLAIN),
     "Sl":  _row(_METAL_PLAIN, _SIL_OC, _CARBON_PLAIN),
+    # Sa, Sr, Sv: the leans are scenarios.  DeMeo & Carry (2015, Asteroids IV,
+    # Table 1, p. 17) tie these labels to Gaffey's olivine-to-orthopyroxene
+    # classes but give no mass shares (General_Research rc-419).
     "Sa":  _row(_METAL_PLAIN,
                 {"olivine": 0.75, "orthopyroxene": 0.12, "pyroxene": 0.03,
                  "plagioclase": 0.10}, _CARBON_PLAIN),
@@ -260,6 +268,15 @@ PHASE_SHARES: Dict[str, Dict[str, Dict[str, float]]] = {
     "Z":   _row(_METAL_PLAIN, {"silicates": 1.0}, _CARBON_PRIMITIVE, _ICE_COMET),
     "T":   _row(_METAL_PLAIN, {"silicates": 1.0}, _CARBON_PRIMITIVE, _ICE_COMET),
     # ── the rest ────────────────────────────────────────────────────────────
+    # A, R, O: unsourced splits, each under review with one spectral
+    # comparator, none a bulk mass split.
+    #   A (rc-351): magnesian A-types ~70-90% olivine, ferroan ones consistent
+    #     with olivine alone (Scott et al. 2015, Asteroids IV, p. 578).
+    #   R (rc-348): 349 Dembowska's surface OPX:OL 45:55 +/- ~20% (Abell &
+    #     Gaffey 2000, LPSC XXXI), against 33:67 here.
+    #   O (rc-352): 3628 Boznemcova, assigned O, fits 55-75 wt% clinopyroxene,
+    #     20-33 plagioclase, 0-20 olivine (Cloutis et al. 2006, MAPS 41, 1147,
+    #     p. 1159), where the row holds olivine and orthopyroxene alone.
     "A":   _row(_METAL_PLAIN, {"olivine": 0.95, "orthopyroxene": 0.05}, _CARBON_PLAIN),
     "R":   _row(_METAL_PLAIN, {"olivine": 0.60, "orthopyroxene": 0.30,
                                "pyroxene": 0.05, "plagioclase": 0.05}, _CARBON_PLAIN),
@@ -482,6 +499,10 @@ _ALLOY_OC       = {"kamacite": 0.55, "taenite": 0.38, "tetrataenite": 0.07}
 _ALLOY_IRON     = {"kamacite": 0.88, "taenite": 0.11, "cohenite": 0.01}
 
 _SULFIDE_CI = {"pyrrhotite": 0.70, "pentlandite": 0.30}      # estimate: no source gives a ratio
+# _SULFIDE_CM is an assumption.  Comparator (General_Research rc-380): unheated
+# ALH 83100, a CM2.1, has pyrrhotite 0.9 and pentlandite 1.2 vol% (Lindgren et
+# al. 2020, GCA 289, 69, Table 2, p. 74), 43 / 57 by volume -- one highly
+# altered meteorite, by volume, so not a class mass split.
 _SULFIDE_CM = {"pyrrhotite": 0.65, "pentlandite": 0.35}      # also Tagish Lake
 _SULFIDE_NI = {"pentlandite": 0.50, "pyrrhotite": 0.50}      # CK, oxidised CV
 _SULFIDE_EH = {"troilite": 0.625, "niningerite": 0.25, "oldhamite": 0.0875,

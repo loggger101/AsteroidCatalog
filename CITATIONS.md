@@ -282,7 +282,33 @@ otherwise; volumes and pages are Crossref's.
   chondrites*, MAPS 41, 1899 — CI chondrites 3.5–3.9 wt% C.
 - Lauretta, D. S., et al. (2024), *Asteroid (101955) Bennu in the laboratory*,
   MAPS, doi:10.1111/maps.14227 — Bennu 4.5–4.7 wt% C, Ryugu ~4.0: the
-  C-complex carbon fraction.
+  C-complex carbon fraction. Also p. 2481: the sample holds 0.84–0.95 wt% H,
+  at most 7.5–8.5 wt% H2O, beside the B row's 0.20 ice (under review,
+  General_Research rc-334).
+- Kaplan et al. (2026), *Water and hydroxyl on asteroid Bennu*, MAPS (early
+  view), and King, A. J., et al. (2026), MAPS 61, 1077, p. 1088 — Bennu's
+  hydration mostly OH, interlayer water up to ~2 wt%: the same review
+  (rc-334). Read by General_Research, not re-read here.
+- Smith, C. L., et al. (2004), MAPS 39, 2009, p. 2028 — CV chondrites
+  0.3–1.8 wt% C, mean 0.77: beside K's unsourced 0.08 (under review, rc-350).
+- DeMeo, F. E., and Carry, B. (2015), *The compositional structure of the
+  asteroid belt*, Asteroids IV, 13 — pp. 16–18, the X complex is
+  compositionally degenerate (rc-346); Table 1, Gaffey's S subclasses against
+  Bus-DeMeo labels, with no mass shares (rc-419).
+- Kwon, Y. G., et al. (2022), A&A 666, A173 — large T-types match CI better
+  than Tagish Lake, whose carbon T borrows (rc-353).
+- Scott, E. R. D., et al. (2015), Asteroids IV, 573, p. 578 — A-type olivine
+  ~70–90% (magnesian) to monomineralic (ferroan) (rc-351).
+- Abell, P. A., and Gaffey, M. J. (2000), LPSC XXXI — 349 Dembowska OPX:OL
+  45:55 (rc-348).
+- Cloutis, E. A., et al. (2006), MAPS 41, 1147, p. 1159 — 3628 Božněmcová,
+  clinopyroxene- and plagioclase-rich (rc-352).
+- Lindgren, P., et al. (2020), GCA 289, 69, Table 2 — ALH 83100 pyrrhotite 0.9,
+  pentlandite 1.2 vol% (rc-380).
+- Grady, M. M., et al. (2002), MAPS 37, 713 — ~2% of Tagish Lake's organic
+  matter solvent soluble, against the model's 0.60 (rc-384).
+  These nine were read by General_Research as comparators for unsourced
+  numbers; none supplies a replacement, and none is re-read here.
 - Glavin, D. P., et al. (2025), *Abundant ammonia and nitrogen-rich soluble
   organic matter in samples from asteroid (101955) Bennu*, Nat. Astron. 9,
   199 — Bennu's total C re-measured on their own extracts, 4.5–4.7 wt%; and
