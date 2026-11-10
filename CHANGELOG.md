@@ -16,8 +16,9 @@ moving it is not evidence that a number changed.
 
 ## 0.13.1 - 2026-11-10 — data contract unchanged (**1.11.0**)
 
-**Six General_Research citation candidates: the comments now say which numbers
-are estimates.** No value, column or output changes.
+**Eight General_Research candidates: the comments now say which numbers are
+estimates, and cite what they can be compared with.** No value, column or
+output changes.
 
 - **rc-344, rc-345: the CI and CM silicate splits are estimates.** King et
   al. (2015) report Orgueil and Ivuna by volume, not by weight as the module
@@ -38,6 +39,13 @@ are estimates.** No value, column or output changes.
 - **rc-386: the M albedo now cites a comparator.** NEOWISE's Tholen M median is
   0.125 (n = 33, SD 0.037; Mainzer et al. 2011), within the spread of the
   catalog's 0.133 (n = 139), so 0.133 stays.
+- **rc-367: the C row's 0.15 ice fraction stands for bound water.** The
+  returned Ryugu sample holds 6.84 wt% H2O, mostly structural OH (Yokoyama et
+  al. 2023). One body does not give a class mean, so the 0.15 stays.
+- **rc-343: the D, Z and P accessory amounts get two comparators.** Izawa et
+  al. (2010) find Tagish Lake's lithologies span magnetite 6–17 wt%. Schrader
+  et al. (2024) point-count one carbonate-rich sample by volume. The 5 / 3 / 3
+  wt% amounts stay unsourced.
 
 ## 0.13.0 - 2026-11-04 — data contract **1.11.0**
 

@@ -105,6 +105,13 @@ accessory figures of the body, all rounded):
                          Brown et al. (2000, Science 290, 320), which says
                          magnetite is far more abundant than in most CMs and
                          replaces the sulfides, but gives no modal wt%.
+                         Two modal comparators, neither a class amount
+                         (General_Research rc-343): Izawa et al. (2010, MAPS
+                         45, 675, Table 3) find the lithologies differ
+                         widely, magnetite 6-17 wt%, siderite 4-24, pyrrhotite
+                         10-18; Schrader et al. (2024, GCA 380, 48, Table 2)
+                         point-count one carbonate-rich sample at Ca-carbonate
+                         3.20, magnetite 4.59 and Fe sulfide 1.86 VOL%.
 
 WHAT HAS NO SOURCE: every split for A, R, O and T; the CI and CM silicate
 splits as numbers (above: the phases are sourced, the shares estimated); the silicate split of the
@@ -199,7 +206,7 @@ _ICE_COMET = {"water": 0.892, "carbon dioxide": 0.102, "ammonia": 0.006}
 _ACC_OC = {"troilite": 0.055, "chromite": 0.005}
 _ACC_CI = {"magnetite": 0.07, "troilite": 0.05, "carbonates": 0.03}
 _ACC_CM = {"troilite": 0.03, "magnetite": 0.02, "carbonates": 0.01}
-_ACC_TL = {"magnetite": 0.05, "troilite": 0.03, "carbonates": 0.03}   # Tagish Lake's phases; amounts unsourced
+_ACC_TL = {"magnetite": 0.05, "troilite": 0.03, "carbonates": 0.03}   # Tagish Lake's phases; amounts unsourced (rc-343 comparators above)
 
 
 def _row(metal, silicate, carbon, ice=None):

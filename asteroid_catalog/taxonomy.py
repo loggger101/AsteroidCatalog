@@ -130,6 +130,11 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "metal_fraction":    0.01,
         "silicate_fraction": 0.35,
         "carbon_fraction":   0.04,
+        # A class estimate standing for BOUND water (mineralogy maps it to
+        # "water"), not free ice.  Comparator: the returned Ryugu sample holds
+        # 6.84 wt% H2O, 6.54 of it structural OH and 0.30 interlayer
+        # (Yokoyama et al. 2023, Science 379, eabn7850, p. 8) -- one CI-like
+        # body, not a class mean, so 0.15 stays (General_Research rc-367).
         "ice_fraction":      0.15,
         "notes": "Most common asteroid type; CI/CM chondrite analogs.  v1.5.0: "
                  "carbon 0.25 -> 0.04: CI chondrites carry 3.5-3.9 wt% C, the "

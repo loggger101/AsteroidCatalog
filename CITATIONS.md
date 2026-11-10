@@ -306,7 +306,9 @@ otherwise; volumes and pages are Crossref's.
 - Yokoyama, T., et al. (2023), *Samples returned from the asteroid Ryugu are
   similar to Ivuna-type carbonaceous meteorites*, Science 379, eabn7850 —
   Ryugu total C 4.63 ± 0.23 wt%. Read by General_Research (R73) from the
-  author's version; not re-read here.
+  author's version; not re-read here. Also p. 8: 6.84 wt% H2O, 6.54 of it
+  structural OH: the comparator for the C row's 0.15 ice fraction, which
+  stands for bound water (General_Research rc-367, R501).
 - Mahlke, M., Carry, B., and Mattei, P.-A. (2022), *Asteroid taxonomy from
   cluster analysis of spectrometry and albedo*, A&A 665, A26 — the scheme
   SsODNet prefers, so its classes (Z, and the P, M and E labels) reach the
@@ -364,6 +366,11 @@ gives them, and the module lists what has no source at all.
   (magnetite far more abundant than in most CMs). The magnetite ~5, sulfide
   ~3 and carbonate ~3 wt% have no source; the module lists them so. Both
   papers read by General_Research (R155, R160; rc-085), not re-read here.
+  Comparators for those amounts, neither a class value (General_Research
+  rc-343): Izawa, M. R. M., et al. (2010), MAPS 45, 675, Table 3 — Tagish
+  Lake samples range magnetite 6–17, siderite 4–24, pyrrhotite 10–18 wt%;
+  Schrader, D. L., et al. (2024), GCA 380, 48, Table 2 — one carbonate-rich
+  sample, Ca-carbonate 3.20, magnetite 4.59, Fe sulfide 1.86 vol%.
 - Jones, R. H., McCubbin, F. M., Dreeland, L., Guan, Y., Burger, P. V., and
   Shearer, C. K. (2014), GCA 132, 120 — merrillite and chlorapatite in LL
   chondrites: the 1.8.0 phosphates.
