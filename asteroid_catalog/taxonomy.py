@@ -104,6 +104,28 @@ import pandas as pd
 # suggests the less-red, P-like Trojans hold more subsurface ice than the
 # red, D-like ones, the reverse of these rows' order; nothing here measures
 # either, which is why neither moves.
+#
+# WHAT ice_fraction MEANS, and what its zeros mean (General_Research rc-444
+# to rc-449, rc-468 to rc-471).  It is the body's bulk mass fraction of water
+# in any form, ice or bound, which mineralogy.py carries as the water phase.
+# It is not a surface reading, and not a measured share a miner can reach.
+# Every value, the zeros included, is an unverified scenario:
+#   Cb, Cg, Cgh, Ch, F, G   Beck et al. 2021 (Icarus 357, 114125) put
+#       C-complex surfaces at 4.5 wt% surface-equivalent water, +/-4 wt% in
+#       calibration: one population, surface only, no subtype value.
+#   T 0.10   Kwon et al. 2022 (A&A 666, A173) see OH and no ice band on two
+#       large T-types, and infer early ice since heated away.
+#   D and Z 0.25, P 0.15   Jones et al. 1990 (Icarus 88, p. 187): D-types
+#       'may have had' ~50% ice, and P and D may keep interior ice; no
+#       fraction for either.
+#   X 0.05, Xc 0.04   set beside the P/M/E mixture by object count (P 0.15,
+#       M and E 0), not computed from it; a count mix is not a mass mix.
+#   0 for the S complex, Q, M and E   no interior water credited, which is
+#       not a claim that the surface is anhydrous: 3 um bands show on many
+#       S-types (McAdam et al. 2024, PSJ 5, 254), on over 35% of 27 M-types
+#       (Rivkin et al. 2000, Icarus 145, 351) and on E-type 44 Nysa (Rivkin
+#       et al. 1995, Icarus 117, 90): OH or H2O of uncertain origin, with no
+#       bulk fraction.
 
 TAXONOMY_COMPOSITION: Dict[str, dict] = {
 
@@ -511,6 +533,11 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
         "group": "X-complex",
         "composition": "Metallic (Tholen): metal-silicate mix, core-fragment affinity",
         "minerals": ["nickel-iron", "troilite", "enstatite"],
+        # 3.9 is Psyche's density, a prior for M bodies with no mass, not a
+        # fitted class value.  Measured M-types differ: Psyche 3.70-4.20,
+        # Kalliope 3.35-4.36, Klotho 4.16 +/- 0.62 g/cm3 (Zhang et al. 2023,
+        # A&A 671, A77, Table 5), with no class distribution
+        # (General_Research rc-496).
         "density_est_gcm3":  3.90,
         "metal_fraction":    0.50,
         "silicate_fraction": 0.45,
