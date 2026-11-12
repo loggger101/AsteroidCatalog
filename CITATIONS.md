@@ -408,6 +408,18 @@ gives them, and the module lists what has no source at all.
   split: metal falls from H to LL while bulk Ni barely moves, so the metal of
   an LL-leaning S-type is Ni-rich, taenite and tetrataenite rather than
   kamacite.
+- Comparators named in 0.13.2's comments, none a class value
+  (General_Research rc-444 to rc-496): Beck, P., et al. (2021), Icarus 357,
+  114125 (C-complex surface water); Kwon, Y. G., et al. (2022), A&A 666, A173
+  (T-types); Jones, T. D., et al. (1990), Icarus 88, 172 (P and D ice);
+  McAdam, M., et al. (2024), PSJ 5, 254 (S-type 3 µm bands); Rivkin, A. S.,
+  et al. (2000), Icarus 145, 351 and (1995), Icarus 117, 90 (M and E
+  hydration); Dunn, T. L., et al. (2010), MAPS 45, 123, Table 5 (ordinary
+  chondrite modes); Martin et al. (2013), GCA 120, Table 2 (CV and CK
+  maps); de Kleer, K., et al. (2026) (L-type JWST spectra); Li, S., and
+  Milliken, R. E. (2015) (HED modes); Howard, K. T., et al. (2009), LPSC 40,
+  1235 (CV3 sulfide); Zhang et al. (2023), A&A 671, A77, Table 5 (M-type
+  densities).
 
 **Rotation and the outer Solar System**
 

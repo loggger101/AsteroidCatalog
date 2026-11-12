@@ -14,6 +14,29 @@ moving it is not evidence that a number changed.
 
 ---
 
+## 0.13.2 - 2026-11-12 — data contract unchanged (**1.11.0**)
+
+**Seventeen General_Research citation candidates: the comments say what the
+ice fractions mean and which shares are scenarios.** No value, column or output
+changes. `taxonomy.py` and `mineralogy.py` parse to identical ASTs.
+
+- **rc-444 to rc-449, rc-468 to rc-471: what `ice_fraction` is.** It is a
+  bulk mass fraction of water in any form, not a surface reading or a reachable
+  share, and every value is an unverified scenario. The comparators are Beck et
+  al. 2021 for the C subtypes, Kwon et al. 2022 for T, and Jones et al. 1990 for
+  D, Z and P. X and Xc are not computed from their count mixtures. The zeros
+  credit no interior water, but they are not a claim of an anhydrous surface:
+  3 µm bands appear on S-types (McAdam et al. 2024), M-types (Rivkin et al.
+  2000) and 44 Nysa (Rivkin et al. 1995).
+- **rc-461, rc-462, rc-464, rc-466, rc-467: silicate shares are scenarios.**
+  This covers Cgh, K, L, the ordinary-chondrite vector and V. Each is beside
+  its nearest modal comparator (Martin et al. 2013; de Kleer et al. 2026; Dunn
+  et al. 2010; Li & Milliken 2015).
+- **rc-460, rc-480: the CK/CV sulfide split and T's accessories are
+  scenarios.**
+- **rc-496: M's 3.9 g/cm³ is Psyche's density used as a prior.** Zhang et al.
+  2023 list other measured M-types, but no class distribution.
+
 ## 0.13.1 - 2026-11-10 — data contract unchanged (**1.11.0**)
 
 **Eighteen General_Research candidates: the comments now say which numbers

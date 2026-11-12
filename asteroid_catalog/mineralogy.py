@@ -191,9 +191,19 @@ _METAL_PLAIN     = {"nickel-iron": 1.0}
 _METAL_IRON      = {"nickel-iron": 0.985, "schreibersite": 0.015}
 _METAL_ENSTATITE = {"nickel-iron": 0.97,  "schreibersite": 0.03}
 
+# _SIL_OC is a scenario shared by S, Sq, Q, Sk and Sl, with no derivation.
+# Comparator (General_Research rc-466): Dunn et al. 2010 (MAPS 45, 123,
+# Table 5) give XRD whole-rock modes for 48 equilibrated H, L and LL falls,
+# by group, with high-Ca pyroxene and troilite as their own phases; mapping
+# those groups onto Bus-DeMeo classes is a judgement.
 _SIL_OC  = {"olivine": 0.58, "orthopyroxene": 0.24, "pyroxene": 0.06, "plagioclase": 0.12}
 _SIL_CI  = {"phyllosilicates": 0.95, "olivine": 0.05}                    # estimate (rc-344)
 _SIL_CM  = {"phyllosilicates": 0.85, "olivine": 0.10, "pyroxene": 0.05}  # estimate (rc-345)
+# _SIL_CV (K) is a scenario, as are Cgh's, L's and V's shares below: none
+# has a numerical derivation.  One mapped CV3, NWA 5772, is olivine 17%,
+# low-Ca pyroxene 25% and phyllosilicate-rich matrix 47% (Martin et al.
+# 2013, GCA 120, Table 2), one sample in categories that do not map onto
+# these (General_Research rc-462).
 _SIL_CV  = {"olivine": 0.75, "pyroxene": 0.20, "plagioclase": 0.05}
 
 _CARBON_CC        = {"carbon": 0.70, "organics": 0.30}
@@ -232,6 +242,9 @@ PHASE_SHARES: Dict[str, Dict[str, Dict[str, float]]] = {
     "Ch":  _row(_METAL_PLAIN, _SIL_CM, _CARBON_CC, _ICE_BOUND),
     "G":   _row(_METAL_PLAIN, _SIL_CM, _CARBON_CC, _ICE_BOUND),
     # CH/CK: the row names olivine first; CK chondrites are olivine-rich.
+    # 50/40/10 is a scenario.  One mapped CK4, NWA 5798, is olivine 54%,
+    # low- and high-Ca pyroxene 15% and 5%, and matrix 9%, recrystallised to
+    # olivine (Martin et al. 2013, Table 2): a sample, not a class (rc-461).
     "Cgh": _row(_METAL_PLAIN,
                 {"phyllosilicates": 0.50, "olivine": 0.40, "pyroxene": 0.10},
                 _CARBON_CC, _ICE_BOUND),
@@ -282,6 +295,11 @@ PHASE_SHARES: Dict[str, Dict[str, Dict[str, float]]] = {
                                "pyroxene": 0.05, "plagioclase": 0.05}, _CARBON_PLAIN),
     "O":   _row(_METAL_PLAIN, {"olivine": 0.50, "orthopyroxene": 0.50}, _CARBON_PLAIN),
     "K":   _row(_METAL_PLAIN, _SIL_CV, _CARBON_CC),
+    # L and V are scenarios.  L: JWST spectra of five spinel-rich L-types
+    # resemble oxidised CV3 Allende but give no silicate shares (de Kleer et
+    # al. 2026) (rc-464).  V: 14 eucrites and 13 diogenites span
+    # orthopyroxene 5-98% and plagioclase 0-61% (Li & Milliken 2015), and no
+    # eucrite/diogenite mixture or volume-to-mass step is recorded (rc-467).
     "L":   _row(_METAL_PLAIN, {"olivine": 0.60, "pyroxene": 0.30,
                                "plagioclase": 0.10}, _CARBON_PLAIN),
     "V":   _row(_METAL_PLAIN, {"pyroxene": 0.45, "orthopyroxene": 0.15,
@@ -301,6 +319,10 @@ ACCESSORY_PHASES: Dict[str, Dict[str, float]] = {
     "Xe": {"troilite": 0.08},
     "E":  {"troilite": 0.01},
     "P": _ACC_TL, "D": _ACC_TL, "Z": _ACC_TL,
+    # T's 8% troilite and 3% magnetite are scenario shares: T has no
+    # meteorite analogue, Kwon et al. 2022's CI-like spectra give no wt%, and
+    # the coarse T row's mineral list omits magnetite (General_Research
+    # rc-480).
     "T":  {"troilite": 0.08, "magnetite": 0.03},            # the row names troilite
     "A":  {"chromite": 0.01, "troilite": 0.01},
     "R":  {"troilite": 0.01, "chromite": 0.005},
@@ -504,6 +526,10 @@ _SULFIDE_CI = {"pyrrhotite": 0.70, "pentlandite": 0.30}      # estimate: no sour
 # al. 2020, GCA 289, 69, Table 2, p. 74), 43 / 57 by volume -- one highly
 # altered meteorite, by volume, so not a class mass split.
 _SULFIDE_CM = {"pyrrhotite": 0.65, "pentlandite": 0.35}      # also Tagish Lake
+# _SULFIDE_NI is a scenario.  CV3 modes give total sulfide only, reduced
+# 2.4-5.1 and oxidised 2.9-8.1 vol%, and use its Ni content to sort the
+# subgroups (Howard et al. 2009, LPSC 40, 1235): no pyrrhotite-to-
+# pentlandite ratio (General_Research rc-460).
 _SULFIDE_NI = {"pentlandite": 0.50, "pyrrhotite": 0.50}      # CK, oxidised CV
 _SULFIDE_EH = {"troilite": 0.625, "niningerite": 0.25, "oldhamite": 0.0875,
                "daubreelite": 0.0375}
