@@ -50,6 +50,14 @@ from .taxonomy import _BLANK_CLASSES, _bus_demeo_case, composition_entry
 #       The CB chondrites reach 5.66 (Bencubbin), but they are 60-70% metal
 #       and are not what a C-complex spectrum is matched to.
 #
+#       ⚠️  3.6 IS NOT THE DENSEST CO/CV GRAIN DENSITY MEASURED, SO IT IS A
+#       PROVISIONAL SCREEN.  Macke et al. (2011) give CO grain densities of
+#       2.99-3.78 over 33 stones (p. 1854; Lance CO3.5 3.78 +/- 0.04, Table 1)
+#       and a Type 3 average of 3.63, maximum 3.74 (Table 2).  Those are
+#       meteorite grains, not asteroid bulk densities, so they are not a
+#       replacement either; which analogue each group maps to is the open
+#       question (General_Research rc-610).
+#
 #       ⚠️  K IS THE CLASS THIS CEILING FITS MOST TIGHTLY.  The only K-type
 #       whose density Carry (2012, Planet. Space Sci. 73, 98, Table 3) has to
 #       20% is 15 Eunomia at 3.54 +/- 0.20, 0.3 sigma under 3.6.  A K-type mass
@@ -60,7 +68,12 @@ from .taxonomy import _BLANK_CLASSES, _bus_demeo_case, composition_entry
 #                              silicate (~3.3) and its metal (iron 7.87), in
 #                              proportion to the metal it carries, which is
 #                              why the release gate still uses 8.0
-#                              (DENSITY_LIMITS_ANY_GCM3).  But the densest
+#                              (DENSITY_LIMITS_ANY_GCM3): ~8 g/cm3, a
+#                              non-porous ~90/10 Fe-Ni core fragment, is
+#                              Rubin & Burbine's approximate upper limit
+#                              for any asteroid (2026, Eur. Phys. J. Plus
+#                              141, 175, sec. 2.2), rounded here; the named
+#                              groups keep their stricter screens.  But the densest
 #                              asteroid MEASURED is 22 Kalliope, 4.40 +/- 0.46
 #                              (Ferrais et al. 2022, A&A 662, A71); the other
 #                              M-types measured by adaptive optics run
@@ -154,7 +167,7 @@ ALBEDO_FLOOR = 0.01
 # ssoBFT albedos this catalog merges were derived with this constant too.
 H_DIAMETER_CONSTANT = 1329.0
 AU_KM = 1.495978707e8          # IAU 2012 Resolution B2, exact
-V_SUN = -26.762
+V_SUN = -26.762                # Campins, Rieke & Lebofsky 1985, AJ 90, 896, p. 898
 
 # A MEASURED DIAMETER MUST BE THE SIZE OF THE BODY WHOSE H IT SITS BESIDE.
 # Together they imply an albedo, and it must be one a surface can have, to
@@ -194,7 +207,7 @@ IMPLIED_ALBEDO_RANGE = (ALBEDO_FLOOR * 10 ** (-0.4 * H_DIAMETER_TOLERANCE_MAG),
 # The size used is the smallest the body could be: its measured diameter, or,
 # with none, the diameter it would have at albedo 1 (H alone bounds it).
 SPIN_LIMIT_MIN_DIAMETER_KM = 10.0
-G_SI = 6.67430e-11
+G_SI = 6.67430e-11             # m^3 kg^-1 s^-2, CODATA 2022 (NIST SP 961, p. 1)
 
 # From the Jupiter Trojans outward (a > 4.6 AU), an untyped body is taken as
 # D: icy and organic-rich past Jupiter, whatever its albedo says, and D is the

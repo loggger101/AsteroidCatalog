@@ -206,7 +206,11 @@ ALBEDO_BY_SEMI_MAJOR_AXIS_AU_NEO: Tuple[Tuple[float, float, float, str], ...] = 
 # BEYOND JUPITER, BY H, NOT ONE VALUE.  Past 5.5 AU the brighter bodies are
 # the BIG ones, and big trans-Neptunian objects are icier and brighter: over
 # the 193 measured, the median runs 0.147 at H 3-6 (n=64) down to 0.0585 past
-# H 8 (n=86), the size-albedo trend of the Herschel "TNOs are Cool" survey.
+# H 8 (n=86), the size-albedo trend of the Herschel "TNOs are Cool" survey
+# (Santos-Sanz et al. 2012, A&A 541, A92, Table 6: p_V falls with H, rho =
+# -0.88, over 15 scattered-disk and detached objects, a sample its p. 3 says
+# favours bright, low-H targets).  That is a qualitative comparator only: the
+# medians below are this catalog's own release samples, not the paper's.
 # One value (0.088) sized 532037 Chiminigagua (H 3.09) at 1,219 km against
 # ~740 measured, and made it the eighth-heaviest body in the catalog.  The
 # `Centaur / TNO` row of ALBEDO_BY_SEMI_MAJOR_AXIS_AU is the fallback for a body

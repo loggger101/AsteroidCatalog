@@ -108,7 +108,11 @@ with no publication behind them, and the module says so.
 
 - PDS Small Bodies Node bundle `urn:nasa:pds:ast.bus-demeo.taxonomy`
 - Tholen classes are also accepted and mapped, for the bodies where that is
-  the only classification available.
+  the only classification available. The original scheme:
+
+> Tholen, D. J. (1984). *Asteroid taxonomy from cluster analysis of
+> photometry.* Ph.D. dissertation, University of Arizona.
+> <https://repository.arizona.edu/handle/10150/187738> (hdl:10150/187738)
 
 ⚠️ **The fractions do not sum to 1, and must not be normalised**; see
 [README > Composition](README.md#composition).
@@ -125,6 +129,18 @@ The constant is 2 AU × 10^(V_sun/5) with the Sun's V = −26.762 ± 0.017
 
 > Pravec, P., and Harris, A. W. (2007). *Binary asteroid population. 1.
 > Angular momentum content.* Icarus, 190, 250–259.
+
+Its two components come from:
+
+> Campins, H., Rieke, G. H., and Lebofsky, M. J. (1985). *Absolute
+> calibration of photometry at 1 through 5 microns.* The Astronomical
+> Journal, 90, 896. <https://doi.org/10.1086/113799> — V_sun = −26.762 ±
+> 0.017 (p. 898).
+
+> International Astronomical Union (2012). *Resolution B2 on the
+> re-definition of the astronomical unit of length.* XXVIII General Assembly.
+> <https://syrte.obspm.fr/IAU_resolutions/Res_IAU2012_B2.pdf> — 1 AU =
+> 149,597,870,700 m exactly: `physics.AU_KM`.
 
 Two more routes give the same constant. The IRAS survey's own Eq. (31) is
 D = 10^(3.1236 − 0.2H − 0.5 log p), and 10^3.1236 = 1329.2 (Fowler & Chillemi
@@ -188,11 +204,44 @@ otherwise; volumes and pages are Crossref's.
 - Buratti, B. J., et al. (2004), *Deep Space 1 photometry of the nucleus of
   Comet 19P/Borrelly*, Icarus 167, 16 — p_V 0.029 ± 0.006, the darkest
   measured whole body: `ALBEDO_FLOOR`.
+- Buratti, B., and Veverka, J. (1984), *Voyager photometry of Rhea, Dione,
+  Tethys, Enceladus and Mimas*, Icarus 58(2), 254–264,
+  <https://doi.org/10.1016/0019-1035(84)90042-3> — Enceladus p_V 1.04 ±
+  0.15, Bond albedo 0.9 ± 0.1 (publisher abstract); and Verbiscer, A.,
+  French, R., Showalter, M., and Helfenstein, P. (2007), *Enceladus: cosmic
+  graffiti artist caught in the act*, Science 315(5813), 815,
+  <https://doi.org/10.1126/science.1134681> — E-ring satellites' mean
+  geometric albedos "approximate or exceed unity". Why `ALBEDO_CEILING` is
+  called a policy and not physics. They show a geometric albedo above 1 is
+  physically possible; they do not show that a radiometric catalog fit at or
+  above 1.0 is valid, which is what the ceiling screens (General_Research
+  rc-780).
+- Santos-Sanz, P., Lellouch, E., Fornasier, S., et al. (2012), *"TNOs are
+  Cool": A survey of the trans-Neptunian region IV. Size/albedo
+  characterization of 15 scattered disk and detached objects observed with
+  Herschel-PACS*, A&A 541, A92, <https://doi.org/10.1051/0004-6361/201118541>
+  — Table 6, p. 12: p_V falls with H across its 15 scattered-disk and
+  detached objects (ρ = −0.88). This is the size-albedo trend
+  `derive.ALBEDO_BEYOND_JUPITER_BY_H` mentions, as a sample-specific
+  comparator only: the sample is small, and p. 3 says target selection
+  favoured bright (low-H) objects. The bins' values are release medians, not
+  taken from it (General_Research rc-779).
 - Berthier, J., et al. (2023), A&A 671, A151 (the SsODNet citation above) —
   also Eq. (5), the same 1329 km relation; Fig. 5, X-complex densities bimodal
   by albedo (P sub-class, mean p_V 0.044, below 2000 kg/m³; M, 0.129, above),
   the first route to the X split;
   and ssoBFT at publication, 591 fields for 1,223,984 bodies.
+- Campins et al. (1985) and IAU 2012 Resolution B2, in section 2 above — V_sun
+  and the AU inside the 1329 km constant (General_Research rc-781).
+- Trilling, D. E., et al. (2010), *ExploreNEOs. I. Description and first
+  results from the Warm Spitzer Near-Earth Object Survey*, AJ 140(3),
+  770–784, <https://doi.org/10.1088/0004-6256/140/3/770> (arXiv:1007.1009) —
+  arXiv v1 printed p. 7: S asteroids in general have albedos above 0.15, C asteroids below
+  0.10. Context for `enrich._class_from_albedo`'s 0.10 split, which is a coarse
+  fallback convention: the paper leaves 0.10–0.15 unassigned, and does not
+  support calling every p_V ≥ 0.10 body S. The 84.0% / 85.2% accuracies in the
+  docstring are this catalog's own check, not the paper's (General_Research
+  rc-695).
 
 **Densities**
 
@@ -247,13 +296,32 @@ otherwise; volumes and pages are Crossref's.
   km³/s², volume 5.75 × 10⁶ km³, 4172 ± 145 kg/m³ (Crossref abstract; the GM
   over the volume reproduces the density). With Siltala & Granvik and
   SsODNet's 4.14, the Psyche range 3.8–4.2 in the M and Xk rows.
+- Elkins-Tanton, Asphaug, Bell III, et al. (2020),
+  *Observations, meteorites, and models: A preflight assessment of the
+  composition and formation of (16) Psyche*, JGR Planets 125, e2019JE006296,
+  <https://doi.org/10.1029/2019JE006296> — the Psyche density and
+  metal-content scope the M row's note cites: between ~30 and ~60 vol% metal
+  (conclusions, PDF p. 19). A preflight review of one body, not a class value
+  (General_Research rc-665).
+- Rubin and Burbine (2026), *No exotic matter in asteroids*,
+  Eur. Phys. J. Plus 141, 175, <https://doi.org/10.1140/epjp/s13360-026-07415-z>
+  — §2.2, p. 175: ~8 g/cm³, a non-porous Fe-Ni core fragment (~90 wt% Fe,
+  ~10 wt% Ni), is the approximate upper limit on an asteroid's density.
+  `physics._IRON_CEILING`, the release gate's 8.0, is that rounded
+  composition limit; the named groups are screened by their stricter 3.6 and
+  5.0 ceilings (General_Research rc-609).
 - Ferrais, M., et al. (2022), *M-type (22) Kalliope: A tiny Mercury*, A&A 662,
   A71 — 4.40 ± 0.46 g/cm³, the densest asteroid measured: the 5.0 ceiling.
 - Consolmagno, G. J., Britt, D. T., and Macke, R. J. (2008), *The significance
   of meteorite density and porosity*, Chemie der Erde 68, 1; Macke, R. J., et
   al. (2011), *Density, porosity, and magnetic susceptibility of carbonaceous
   chondrites*, MAPS 46, 1842 — carbonaceous grain densities, CI 2.42 to CB
-  5.66: the 3.6 carbonaceous ceiling.
+  5.66: the 3.6 carbonaceous ceiling. ⚠️ Macke et al. measure CO grain
+  densities of 2.99–3.78 over 33 stones (p. 1854; Lance CO3.5 3.78 ± 0.04,
+  Table 1), and a Type 3 average of 3.63, maximum 3.74 (Table 2), so 3.6 is
+  not the densest CO/CV grain density. It is kept as a provisional screen:
+  these are meteorite grain densities, not asteroid bulk densities, and they
+  do not by themselves give a replacement (General_Research rc-610).
 - Macke, R. J., et al. (2010), *Enstatite chondrite density, magnetic
   susceptibility, and porosity*, MAPS 45, 1513 — bulk 3.55, grain 3.66: the Xe
   estimate.
@@ -295,8 +363,9 @@ otherwise; volumes and pages are Crossref's.
   asteroid belt*, Asteroids IV, 13 — pp. 16–18, the X complex is
   compositionally degenerate (rc-346); Table 1, Gaffey's S subclasses against
   Bus-DeMeo labels, with no mass shares (rc-419).
-- Kwon, Y. G., et al. (2022), A&A 666, A173 — large T-types match CI better
-  than Tagish Lake, whose carbon T borrows (rc-353).
+- Kwon, Y. G., Hasegawa, Fornasier, Ishiguro and Agarwal (2022), *Probing the surface environment of large T-type asteroids*, A&A
+  666, A173, <https://doi.org/10.1051/0004-6361/202243816> — large T-types
+  match CI better than Tagish Lake, whose carbon T borrows (rc-353).
 - Scott, E. R. D., et al. (2015), Asteroids IV, 573, p. 578 — A-type olivine
   ~70–90% (magnesian) to monomineralic (ferroan) (rc-351).
 - Abell, P. A., and Gaffey, M. J. (2000), LPSC XXXI — 349 Dembowska OPX:OL
@@ -408,18 +477,54 @@ gives them, and the module lists what has no source at all.
   split: metal falls from H to LL while bulk Ni barely moves, so the metal of
   an LL-leaning S-type is Ni-rich, taenite and tetrataenite rather than
   kamacite.
-- Comparators named in 0.13.2's comments, none a class value
-  (General_Research rc-444 to rc-496): Beck, P., et al. (2021), Icarus 357,
-  114125 (C-complex surface water); Kwon, Y. G., et al. (2022), A&A 666, A173
-  (T-types); Jones, T. D., et al. (1990), Icarus 88, 172 (P and D ice);
-  McAdam, M., et al. (2024), PSJ 5, 254 (S-type 3 µm bands); Rivkin, A. S.,
-  et al. (2000), Icarus 145, 351 and (1995), Icarus 117, 90 (M and E
-  hydration); Dunn, T. L., et al. (2010), MAPS 45, 123, Table 5 (ordinary
-  chondrite modes); Martin et al. (2013), GCA 120, Table 2 (CV and CK
-  maps); de Kleer, K., et al. (2026) (L-type JWST spectra); Li, S., and
-  Milliken, R. E. (2015) (HED modes); Howard, K. T., et al. (2009), LPSC 40,
-  1235 (CV3 sulfide); Zhang et al. (2023), A&A 671, A77, Table 5 (M-type
-  densities).
+- Comparators named in 0.13.2's comments (General_Research rc-444 to
+  rc-496). Each keeps the sample or surface scope it was cited for: none is
+  a class value, and none establishes a class-level bulk composition or water
+  fraction. Full references since 0.13.3 (General_Research rc-797, rc-798,
+  rc-799, rc-804):
+  - Beck, P., et al. (2021), *"Water" abundance at the surface of C-complex
+    main-belt asteroids*, Icarus 357, 114125,
+    <https://doi.org/10.1016/j.icarus.2020.114125> — C-complex surface water.
+  - Kwon, Y. G., et al. (2022), *Probing the surface environment of large
+    T-type asteroids*, A&A 666, A173 (above) — T-types.
+  - Jones, T. D., et al. (1990), *The composition and origin of the C, P, and
+    D asteroids: Water as a tracer of thermal evolution in the outer belt*,
+    Icarus 88(1), 172–192, <https://doi.org/10.1016/0019-1035(90)90184-B> —
+    P and D ice.
+  - McAdam, M., et al. (2024), *Detection of hydration on nominally anhydrous
+    S-complex main belt asteroids*, PSJ 5, 254,
+    <https://doi.org/10.3847/PSJ/ad888d> — S-type 3 µm bands.
+  - Rivkin, A. S., et al. (2000), *The nature of M-class asteroids from 3-µm
+    observations*, Icarus 145(2), 351–368,
+    <https://doi.org/10.1006/icar.2000.6354>; and Rivkin, A. S., et al.
+    (1995), *3-µm spectrophotometric survey of M- and E-class asteroids*,
+    Icarus 117(1), 90–100, <https://doi.org/10.1006/icar.1995.1144> — M and E
+    hydration.
+  - Dunn, T. L., et al. (2010), *Analysis of ordinary chondrites using powder
+    X-ray diffraction: 1. Modal mineral abundances*, MAPS 45(1), 123–134,
+    <https://doi.org/10.1111/j.1945-5100.2009.01011.x>, Table 5 — ordinary
+    chondrite modes.
+  - Martin et al. (2013), *REE and Hf distribution among mineral phases in the
+    CV–CK clan*, GCA 120, 496–513,
+    <https://doi.org/10.1016/j.gca.2013.07.006>, Table 2 — CV and CK maps.
+  - de Kleer, K., Ehlmann, Jacobson, Wong, Tissot, Martin, Lane and King
+    (2026), *The surface mineralogy of the spinel-rich asteroids from
+    mid-infrared spectroscopy with JWST*, PSJ 7, 36,
+    <https://doi.org/10.3847/PSJ/ae374e> — surface spectra of five L-types;
+    it gives no bulk spinel or CAI share.
+  - Li, S., and Milliken, R. E. (2015), *Estimating the modal mineralogy of
+    eucrite and diogenite meteorites using visible–near infrared reflectance
+    spectroscopy*, MAPS 50(11), 1821–1850,
+    <https://doi.org/10.1111/maps.12513> — sample-level eucrite and diogenite
+    modes; it does not derive the V-type mass vector.
+  - Howard, K. T., Benedix, Bland and Cressey (2009), *Modal mineralogy of CV3
+    chondrites by PSD-XRD: Mineralogic insights into a complex evolutionary
+    history*, 40th LPSC, Abstract 1235,
+    <https://www.lpi.usra.edu/meetings/lpsc2009/pdf/1235.pdf> — CV3 sulfide.
+  - Zhang, P., Li, Y., Zhang, J., et al. (2023), *Compositional indication of
+    E- and M-type asteroids by VIS-NIR reflectance spectra of meteorites*, A&A
+    671, A77, <https://doi.org/10.1051/0004-6361/202245207>, Table 5 — M-type
+    densities.
 
 **Rotation and the outer Solar System**
 
@@ -428,6 +533,11 @@ gives them, and the module lists what has no source at all.
 - Holsapple, K. A. (2007), *Spin limits of Solar System bodies: From the small
   fast-rotators to 2003 EL61*, Icarus 187, 500 — gravity dominates strength
   above ~10 km.
+- National Institute of Standards and Technology (2024), *CODATA recommended
+  values of the fundamental physical constants: 2022*, NIST SP 961,
+  <https://physics.nist.gov/cuu/pdf/wall_2022.pdf> — p. 1: Newtonian
+  constant of gravitation G = 6.674 30(15) × 10⁻¹¹ m³ kg⁻¹ s⁻², the
+  `physics.G_SI` used by `min_rotation_period_h` (General_Research rc-681).
 - Emery, J. P., Burr, D. M., and Cruikshank, D. P. (2011), *Near-infrared
   spectroscopy of Trojan asteroids: evidence for two compositional groups*,
   AJ 141, 25 — the Trojans' D-type majority.
