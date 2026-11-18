@@ -97,8 +97,12 @@ def _class_from_albedo(p: pd.Series) -> np.ndarray:
 
     Checked 1.4.0 against the 65,159 bodies of the 2026-09-23 release that
     carry both a source class and a measured albedo.  Split at 0.10, C versus
-    stony is right for 84.0% (the best split, 0.13, reaches 85.2%, not worth
-    moving a boundary the literature uses).  The third bucket, p >= 0.35 ->
+    stony is right for 84.0% (the best split, 0.13, reaches 85.2%; both are
+    this catalog's own check over those bodies, not a published accuracy).
+    0.10 is a coarse fallback convention, not a taxonomy boundary: Trilling et
+    al. (2010, AJ 140, 770; arXiv:1007.1009 printed p. 7) describe C asteroids
+    as generally below 0.10 and S above 0.15, which leaves 0.10-0.15 unassigned
+    and does not make every brighter body S.  The third bucket, p >= 0.35 ->
     V, was right for 22%: 916 of 4,191 such bodies are V and 2,473 are
     S-complex, and V carries basaltic crust's metal fraction and a 0.2x
     PGM factor.  Bright bodies are S now.

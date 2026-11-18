@@ -14,6 +14,33 @@ moving it is not evidence that a number changed.
 
 ---
 
+## 0.13.3 - 2026-11-18 — data contract unchanged (**1.11.0**)
+
+**Thirteen General_Research citation candidates: the bibliography is
+complete for what the code already cites.** Comments, CITATIONS and the
+changelog only; no value, column or output changes. Ignoring comments and
+docstrings, `physics.py`, `derive.py` and `enrich.py` parse to identical ASTs.
+
+- **Full references for abbreviated or missing entries** (rc-665, rc-666,
+  rc-781, rc-797, rc-798, rc-799, rc-804): Elkins-Tanton et al. 2020 for the
+  M row's Psyche note; Tholen's 1984 dissertation, for the Tholen classes the
+  catalog maps; Campins et al. 1985 and IAU 2012 Resolution B2, the V_sun and
+  AU inside the 1329 km constant; and titles and DOIs for the twelve
+  comparators 0.13.2 listed by author and year.
+- **Constants cited where they are set** (rc-681): `G_SI` is CODATA 2022
+  (NIST SP 961); `V_SUN` names Campins et al. 1985.
+- **Albedo** (rc-779, rc-780, rc-695): Santos-Sanz et al. 2012 is the "TNOs
+  are Cool" trend `ALBEDO_BEYOND_JUPITER_BY_H` mentions, a 15-object
+  comparator, not the source of its release medians. Buratti & Veverka 1984
+  and Verbiscer et al. 2007 show an albedo above 1 is possible, not that a
+  fit at 1.0 is valid. `_class_from_albedo`'s 0.10 is a coarse convention
+  beside Trilling et al. 2010, whose C < 0.10 and S > 0.15 leave 0.10–0.15
+  unassigned; its 84.0% and 85.2% are this catalog's own check.
+- **Density ceilings** (rc-609, rc-610): the release gate's 8.0 is Rubin &
+  Burbine 2026's approximate ~8 g/cm³ limit for a non-porous Fe-Ni core
+  fragment, rounded. The carbonaceous 3.6 is called a provisional screen:
+  Macke et al. 2011 measure CO grain densities up to 3.78.
+
 ## 0.13.2 - 2026-11-12 — data contract unchanged (**1.11.0**)
 
 **Seventeen General_Research citation candidates: the comments say what the
