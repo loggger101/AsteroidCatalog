@@ -14,6 +14,16 @@ moving it is not evidence that a number changed.
 
 ---
 
+## 0.13.6 - 2026-11-19 — data contract unchanged (**1.11.0**)
+
+**Two comet and asteroid references completed, and one transcription
+fixed.** 9P/Tempel 1's density comparator reads 0.47 +0.78/−0.23 g/cm³, as
+Thomas et al. (2013) print it (470 +780/−230 kg/m³, p. 455); it had read
+−0.24, the lower end of the interval (General_Research rc-847). That paper
+and Thomas et al. (2000), the source ssoBFT names for its Eros diameter, get
+full entries in CITATIONS section 3 (rc-848, rc-841). Comments, CITATIONS
+and the changelog only; the 0.25 g/cm³ floor and every value are unchanged.
+
 ## 0.13.5 - 2026-11-19 — data contract unchanged (**1.11.0**)
 
 **`condition_code` cites the MPC's own definition of U** (General_Research

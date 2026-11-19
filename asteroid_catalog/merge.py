@@ -289,7 +289,8 @@ def _adopt_whole_orbits(merged: pd.DataFrame, src_name: str) -> None:
 # Pairing a mass with its own source's diameter (above) assumes that diameter
 # is the one the mass was divided by.  For 433 Eros it is not: ssoBFT carries
 # NEAR's mass (Yeomans et al. 2000) beside a 17.6 km diameter it attributes to
-# Thomas et al. 2000, which is no volume-equivalent sphere, so the catalog
+# Thomas et al. 2000 (Icarus 145, 348; CITATIONS.md section 3,
+# General_Research rc-841), which is no volume-equivalent sphere, so the catalog
 # published 2.34 g/cm3 where NEAR's own volume gives 2.67 (General_Research
 # rc-174).  A body listed here takes the diameter of the sphere with its
 # shape model's measured volume, D = (6 V / pi)^(1/3); its density then

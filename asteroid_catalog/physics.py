@@ -97,8 +97,10 @@ from .taxonomy import _BLANK_CLASSES, _bus_demeo_case, composition_entry
 #
 # The floor is the same for everyone: the most porous small bodies measured are
 # comet nuclei, 67P at 0.533 +/- 0.006 (Paetzold et al. 2016, Nature 530, 63)
-# and 9P/Tempel 1 at 0.47 +0.78/-0.24 (Thomas et al. 2013, Icarus, from the
-# Deep Impact ejecta), ~75% empty space around grains as light as water ice.
+# and 9P/Tempel 1 at 0.47 +0.78/-0.23, so no lower than 0.24 (Thomas et al.
+# 2013, Icarus 222, p. 455: 470 +780/-230 kg/m3; General_Research rc-847),
+# from the Deep Impact ejecta, ~75% empty space around grains as light as
+# water ice.
 # Carry (2012) averages the comets known to 20% at 0.54 +/- 0.09.  0.25
 # leaves margin under all of them.
 #
