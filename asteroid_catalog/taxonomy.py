@@ -96,6 +96,21 @@ import pandas as pd
 # hydrated minerals, not as ice, so an inner-belt C-type's ice_fraction is a
 # guess about its interior, not a reading of its analogue.
 #
+# Each of those is a SCENARIO (General_Research rc-555, rc-641, rc-648,
+# rc-649):
+#   * all 27 silicate fractions (B, C, Cb, Cg, Cgh, Ch, S, Sa, Sk, Sl, Sq,
+#     Sr, Sv, A, D, Z, K, L, O, Q, R, V, M, E, P, F, G): a row's analogue or
+#     taxonomy in its notes is not a derivation of its bulk silicate share;
+#   * carbon for Xe and Xk (0.01 each), and so for X and Xc (0.02), which
+#     mix P, M and E;
+#   * T's metal 0.05 and silicate 0.40: T has no meteorite analogue, and
+#     Kwon et al. 2022 call it "relatively ill-constrained as an independent
+#     group", their CI match a surface spectrum, not a bulk fraction;
+#   * the eight zero ice fractions (A, K, L, O, R, V, Xe, Xk).  As every
+#     ice_fraction here, zero means no bulk water credited in any form,
+#     accreted ice and bound or hydrated water alike; it is not a claim
+#     that the surface is anhydrous, and not a minable-water figure.
+#
 # D 0.25 and P 0.15 ice stay, as dehydrated outer-belt analogues, and 1.10.0
 # declines the cometary 0.3-0.4 (General_Research rc-013): 67P's bulk water,
 # 28-52 wt%, is a comet's interior, and JWST's spectra of the Lucy Trojans
@@ -415,6 +430,11 @@ TAXONOMY_COMPOSITION: Dict[str, dict] = {
                  "v1.10.0: carbon 0.30 -> 0.04, Tagish Lake's 4.1 wt% (Glavin "
                  "et al. 2025); 0.30 was a comet's.",
     },
+    # Z's 1.20 g/cm3 is D's density used as a proxy, as its composition is:
+    # Mahlke et al. (2022, A&A 665, A26, sec. 4.2.2) class Z by its spectrum,
+    # redder than D, and measure no density.  SiMDA's D median (N=3, 1.27)
+    # is a D figure, not a Z measurement; no Z density exists to replace it
+    # (General_Research rc-546).
     "Z": {
         "group": "D-type",
         "composition": "Very red primitive: organics, anhydrous silicates, possible ices",

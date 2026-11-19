@@ -273,12 +273,20 @@ PHASE_SHARES: Dict[str, Dict[str, Dict[str, float]]] = {
                               "olivine": 0.10}, _CARBON_PLAIN),
     "Xe":  _row(_METAL_ENSTATITE, {"enstatite": 0.90, "plagioclase": 0.10},
                 _CARBON_PLAIN),
+    # E's 95 / 3 / 2 is a SCENARIO: no source gives the conditional mass split.
+    # Its comparator is the aubrites, whose whole rock is 75-98 vol% enstatite
+    # with variable minor phases (Grady, Pratesi & Moggi Cecchi, Atlas of
+    # Meteorites, ch. 11), by volume, not mass, and the aubrite-to-E mapping is
+    # an analogy (General_Research rc-615).
     "E":   _row(_METAL_PLAIN, {"enstatite": 0.95, "plagioclase": 0.03,
                                "olivine": 0.02}, _CARBON_PLAIN),
     "P":   _row(_METAL_PLAIN, {"silicates": 1.0}, _CARBON_PRIMITIVE, _ICE_COMET),
     # ── primitive outer bodies ──────────────────────────────────────────────
     "D":   _row(_METAL_PLAIN, {"silicates": 1.0}, _CARBON_PRIMITIVE, _ICE_COMET),
     "Z":   _row(_METAL_PLAIN, {"silicates": 1.0}, _CARBON_PRIMITIVE, _ICE_COMET),
+    # T's single "silicates" bucket is an intentional aggregate: nothing
+    # T-matched gives mineral shares, and Kwon et al. 2022's CI-like spectra
+    # are a surface comparison, not a modal one (General_Research rc-650).
     "T":   _row(_METAL_PLAIN, {"silicates": 1.0}, _CARBON_PRIMITIVE, _ICE_COMET),
     # ── the rest ────────────────────────────────────────────────────────────
     # A, R, O: unsourced splits, each under review with one spectral
@@ -306,6 +314,14 @@ PHASE_SHARES: Dict[str, Dict[str, Dict[str, float]]] = {
                                "plagioclase": 0.37, "olivine": 0.03}, _CARBON_PLAIN),
 }
 
+# SCENARIO ALLOWANCES, each an absolute body fraction with no class-matched
+# modal derivation and an unquantified uncertainty (General_Research rc-563,
+# rc-564, rc-565, rc-567, rc-569): A's chromite 0.01 and troilite 0.01; R's
+# troilite 0.01 and chromite 0.005; O's troilite 0.02; Cgh's magnetite 0.05
+# and troilite 0.02, where "CK: magnetite-rich" names the species and not the
+# amount; and the magnetite 0.02 (Sk) and spinel 0.03 (Sl) added to the
+# ordinary-chondrite vector, which Dunn et al. 2010's Table 5 modes (olivine,
+# pyroxenes, plagioclase, troilite) do not give.
 ACCESSORY_PHASES: Dict[str, Dict[str, float]] = {
     "B": _ACC_CI, "C": _ACC_CI, "Cb": _ACC_CI, "F": _ACC_CI,
     "Cg": _ACC_CM, "Ch": _ACC_CM, "G": _ACC_CM,
