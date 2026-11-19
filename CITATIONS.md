@@ -473,6 +473,11 @@ gives them, and the module lists what has no source at all.
   (niningerite, oldhamite, daubreelite): Xe's 1.8.0 split.
 - Keil, K. (2010), Chemie der Erde 70, 295 — aubrites, and their oldhamite:
   E's 1.8.0 split.
+- Grady, M., Pratesi, G., and Moggi Cecchi, V. (2013), *Aubrites*, ch. 11 of
+  *Atlas of Meteorites*, Cambridge University Press, 261-271,
+  <https://doi.org/10.1017/9781139016308.012> — enstatite 75-98 vol% of
+  aubrite whole rock: the comparator for E's scenario 95 / 3 / 2 silicate
+  split, by volume and by analogy (General_Research rc-615).
 - Jarosewich (1990), above — the metal fractions behind the 1.8.0 alloy
   split: metal falls from H to LL while bulk Ni barely moves, so the metal of
   an LL-leaning S-type is Ni-rich, taenite and tetrataenite rather than

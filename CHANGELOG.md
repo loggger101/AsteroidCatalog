@@ -14,6 +14,26 @@ moving it is not evidence that a number changed.
 
 ---
 
+## 0.13.4 - 2026-11-18 — data contract unchanged (**1.11.0**)
+
+**Twelve General_Research citation candidates: which composition numbers are
+scenarios, said where they are set.** Comments, CITATIONS and the changelog
+only; no value, column or output changes. `taxonomy.py` and `mineralogy.py`
+parse to identical ASTs.
+
+- **Coarse fractions** (rc-555, rc-641, rc-648, rc-649): all 27 silicate
+  fractions, the X-complex carbon, T's metal and silicate, and the eight
+  zero ice fractions are scenarios; a zero credits no bulk water in any form
+  and is not a claim of an anhydrous surface.
+- **Z's density** (rc-546): 1.20 g/cm³ is D's used as a proxy; SiMDA's D
+  median is not a Z measurement.
+- **Accessory allowances** (rc-563, rc-564, rc-565, rc-567, rc-569): A, R,
+  O, Cgh, and the magnetite and spinel added to Sk and Sl, are scenario
+  allowances with no class-matched modal derivation.
+- **Silicate splits** (rc-615, rc-650): E's 95 / 3 / 2 is a scenario beside
+  the aubrites' 75-98 vol% enstatite (Grady et al. 2013); T's single
+  "silicates" bucket is an intentional aggregate.
+
 ## 0.13.3 - 2026-11-18 — data contract unchanged (**1.11.0**)
 
 **Thirteen General_Research citation candidates: the bibliography is
