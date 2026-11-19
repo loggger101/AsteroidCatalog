@@ -270,6 +270,13 @@ otherwise; volumes and pages are Crossref's.
   SBDB quotes it from this paper (diameter 16.84 ± 0.06, "sphere having the
   measured volume", density 2.67 ± 0.03), and the mass as SsODNet's ssoCard
   cites it; the paper itself not re-read here. General_Research rc-174.
+- Thomas, P. C., et al. (2000), *The Shape of Eros from NEAR Imaging Data*,
+  Icarus 145(2), 348-350, <https://doi.org/10.1006/icar.2000.6406> (SsODNet
+  BibRef 2000Icar..145..348T) — the source ssoBFT gives for its 17.6 km Eros
+  diameter, which is not a volume-equivalent sphere and which the catalog
+  replaces with Yeomans et al.'s volume (`merge.SHAPE_MODEL_VOLUMES`). Cited
+  as ssoBFT attributes it; the paper itself not read here (General_Research
+  rc-841).
 - Park, R. S., et al. (2025), *A small core in Vesta inferred from Dawn's
   observations*, Nat. Astron. 9, 824 (CC BY) — p. 830: Vesta's volume (7.49
   ± 0.01) × 10⁷ km³ from the SPC shape, mass 2.59028 × 10²⁰ kg, bulk density
@@ -332,8 +339,13 @@ otherwise; volumes and pages are Crossref's.
   estimate.
 - Pätzold, M., et al. (2016), *A homogeneous nucleus for comet
   67P/Churyumov–Gerasimenko from its gravity field*, Nature 530, 63 — 0.533 ±
-  0.006 g/cm³; Thomas, P. C., et al. (2013), Icarus — 9P/Tempel 1, 0.47
-  +0.78/−0.24: the density floor.
+  0.006 g/cm³; Thomas, P., A'Hearn, M., Veverka, J., et al. (2013), *The
+  nucleus of Comet 9P/Tempel 1: Shape and geology from two flybys*, Icarus
+  222(2), 453-466, <https://doi.org/10.1016/j.icarus.2012.02.037> (NASA NTRS
+  20140010174) — 9P/Tempel 1, 470 +780/−230 kg/m³ (p. 455), so 0.47
+  +0.78/−0.23 g/cm³ and a lower end of 0.24: the density floor. Until 0.13.6
+  this read −0.24, the lower end written as the uncertainty (General_Research
+  rc-847, rc-848).
 - Lauretta, D. S., et al. (2019), *The unexpected surface of asteroid (101955)
   Bennu*, Nature 568, 55 — 1.190 ± 0.013 g/cm³; Fujiwara, A., et al. (2006),
   *The rubble-pile asteroid Itokawa as observed by Hayabusa*, Science 312,
