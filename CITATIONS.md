@@ -59,7 +59,12 @@ diameter, albedo, taxonomy, the element epoch and the orbit-quality fields.
 
 ⚠️ `condition_code` is the **MPC orbit uncertainty parameter U**, and its
 definition belongs to the Minor Planet Center rather than to JPL. It runs 0
-(well determined) to 9 (barely constrained).
+(well determined) to 9 (barely constrained). The MPC defines it, and how it is
+computed, in "Uncertainty Parameter U and Orbit Quality Codes"
+(`https://docs.minorplanetcenter.net/mpc-ops-docs/orbits/uncertainty-parameter/`),
+which also cautions against reading U as a prediction of a near-Earth object's
+future positional uncertainty. The JPL field table above remains the reference
+for the column itself.
 
 ### MP3C (Observatoire de la Côte d'Azur)
 

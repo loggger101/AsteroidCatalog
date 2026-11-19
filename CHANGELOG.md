@@ -14,6 +14,14 @@ moving it is not evidence that a number changed.
 
 ---
 
+## 0.13.5 - 2026-11-19 — data contract unchanged (**1.11.0**)
+
+**`condition_code` cites the MPC's own definition of U** (General_Research
+rc-809): CITATIONS section 1 links the MPC's "Uncertainty Parameter U and Orbit
+Quality Codes" page beside the JPL field table, with its caution that U does
+not predict a near-Earth object's future positional uncertainty. Comments,
+CITATIONS and the changelog only; `jpl.py` parses to an identical AST.
+
 ## 0.13.4 - 2026-11-18 — data contract unchanged (**1.11.0**)
 
 **Twelve General_Research citation candidates: which composition numbers are

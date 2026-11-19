@@ -76,7 +76,9 @@ _JPL_FIELDS = [
     # ── Orbit quality ────────────────────────────────────────────────────────
     # 🚨  THE RANKING IS DERIVED FROM ORBITAL ELEMENTS AND HAD NO IDEA WHICH
     # ELEMENTS WERE ANY GOOD.  `condition_code` is the MPC orbit-uncertainty
-    # parameter U, 0 (well determined) to 9 (barely constrained).  Delta-v, and
+    # parameter U, 0 (well determined) to 9 (barely constrained), as the MPC
+    # defines it (CITATIONS.md section 1 links the MPC's page, which also warns
+    # that U does not predict an NEA's future positional uncertainty).  Delta-v, and
     # therefore the entire economic ranking, is computed from a, e and i; a
     # body with U = 9 from a four-day arc has elements that are provisional.
     #
