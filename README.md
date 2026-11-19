@@ -297,7 +297,10 @@ Since 1.4.0, source by source and before precedence picks a value:
   than its one-sigma error. The densest of the 77 masses known to 5% in
   `data-2026-09-26` are Kalliope (4.18) and Psyche (4.14). The release
   gate still enforces iron's 8.0 as the absolute bound. A mass whose sigma is as large as itself
-  is no determination and is refused too.
+  is refused too: a policy requiring a one-sigma interval that stays above
+  zero, not a claim that the estimate says nothing. These screens and the
+  cross-source agreement tolerances are data-quality policies; `physics.py`
+  and `merge.py` give each one's measured sensitivity.
 - **SsODNet is preferred for mass.** JPL's `GM` covers 17 bodies, carries no
   uncertainty, and is superseded for Hygiea and Interamnia.
 - **A mass is published beside its own source's diameter,** so `density_gcm3`

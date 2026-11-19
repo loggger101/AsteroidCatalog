@@ -152,6 +152,23 @@ def deduplicate_catalog(
 #   rotation 2%                a period is precise enough that 2% catches the
 #                              half/double-period ambiguity
 #
+# THESE ARE POLICY THRESHOLDS, not calibrated on paired residuals (General_
+# Research rc-814, rc-817, rc-818, rc-819).  Mainzer et al. report per-fit
+# minima of about 10% in diameter and 20% in albedo, so albedo's 25% is a
+# margin over that, and the shared NEOWISE inputs make agreement weaker
+# evidence still.  What each flags as disagreeing, on the published
+# data-2026-11-13 catalog's spreads (General_Research R991):
+#   H 0.30 mag      6.7% of 1,563,550 pairs (0.20: 13.9%, 0.50: 1.5%); 44% at
+#                   H 10-14, 24% at 14-16, 3-4% fainter than 16
+#   diameter 10%    3.3% of 148,026 pairs (5%: 6.7%, 20%: 1.2%); 25% under
+#                   1 km and 45% over 100 km
+#   albedo 25%      61% of 146,389 pairs, median spread 31% (40%: 33%, 50%:
+#                   20%): it flags most pairs, so a flag is weak signal
+#   mass 25%        42% of 431 pairs, median spread 18% (50%: 26%, 100%: 11%)
+#   rotation 2%     15.0% of 31,096 pairs (0.5%: 18.1%, 10%: 12.6%); 7.2%
+#                   differ by a factor of 2 or more, the half/double-period
+#                   ambiguity it is there to catch, and 44% over 100 h
+#
 # `<stem>_spread` is published so a caller can apply their own.
 #
 # ⚠️  PRECEDENCE PICKS AMONG POSSIBLE VALUES ONLY  (data contract 1.4.0).  Until
@@ -165,7 +182,13 @@ def deduplicate_catalog(
 #   albedo              1 or more is a fit at its ceiling (a quality policy,
 #                       see physics.py), under 0.01 darker than any whole body
 #                       measured
-#   estimated_mass_kg   a sigma as large as the value is no determination; a
+#   estimated_mass_kg   a sigma as large as the value is refused, a POLICY:
+#                       it requires a strictly positive one-sigma lower
+#                       bound, and says only that the interval reaches zero,
+#                       not that the estimate carries no information
+#                       (General_Research rc-820; at sigma >= 0.5 / 0.75 /
+#                       1.0 / 1.5 / 2.0 x value the mass screen refuses 165 /
+#                       55 / 49 / 46 / 46 masses, R991); a
 #                       mass that puts the body outside its group's possible
 #                       bulk density, with the source's own diameter and with
 #                       the catalog's, is not this body's mass

@@ -14,6 +14,18 @@ moving it is not evidence that a number changed.
 
 ---
 
+## 0.13.8 - 2026-11-19 — data contract unchanged (**1.11.0**)
+
+**The merge screens and agreement tolerances are labelled policies, with
+their sensitivity measured** (General_Research rc-605, rc-606, rc-607,
+rc-608, rc-814, rc-817, rc-818, rc-819, rc-820). A 2026-11-19 build with all
+four sources was re-screened at nearby thresholds, and the published
+data-2026-11-13 spreads were counted at nearby tolerances; `physics.py` and
+`merge.py` give the results beside each constant. Two findings: the albedo
+floor sits just under a steep rise (178 refusals at 0.01, 1,968 at 0.02), and
+the 25% albedo agreement tolerance flags 61% of pairs. Comments, README
+and changelog only; every threshold, value and output is unchanged.
+
 ## 0.13.7 - 2026-11-19 — data contract unchanged (**1.11.0**)
 
 **Nine composition rules named for what they are** (General_Research
