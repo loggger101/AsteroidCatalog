@@ -104,6 +104,21 @@ from .taxonomy import _BLANK_CLASSES, _bus_demeo_case, composition_entry
 # Carry (2012) averages the comets known to 20% at 0.54 +/- 0.09.  0.25
 # leaves margin under all of them.
 #
+# BOTH LIMITS ARE DATA-QUALITY SCREENS, NOT PHYSICAL BOUNDS.  The 0.25 floor
+# is a conservative screen set under the measured comets, not a universal
+# limit argued for every taxonomic group (General_Research rc-606); the 5.0
+# ceiling is the measured record, as said above, not an impossibility
+# (rc-608).  The mass screen as a whole refuses 49 source masses (MP3C 28,
+# SsODNet 20, JPL 1) and leaves 16 rows with no mass.
+# SENSITIVITY, measured on a 2026-11-19 build at 0.13.7 (all four sources,
+# 1,582,348 merged rows; General_Research R991): floor 0.10 / 0.20 / 0.25 / 0.35 / 0.50 refuses
+# 45 / 48 / 49 / 51 / 60 masses; the 5.0 ceiling at 4.5 / 5.0 / 5.5 / 6.0 /
+# 8.0 refuses 57 / 49 / 44 / 41 / 40.  38 source masses put their body over
+# 5.0 with that source's own diameter, and a small stated sigma does not
+# mark them sound: MP3C's 8 Flora reads 6.41 at 0.9%, 129 Antigone 11.8 at
+# 2%.  The Kalliope comparator holds: ssoBFT's mass over its own diameter is
+# 4.18, Psyche 4.14.
+#
 # The table is keyed on TAXONOMY_COMPOSITION's `group`, so a class inherits its
 # group's limits and a class added there needs no entry here unless it opens a
 # new group; `test_every_taxonomy_group_has_density_limits` checks that.
@@ -149,6 +164,14 @@ DENSITY_LIMITS_ANY_GCM3 = (DENSITY_FLOOR_GCM3, _IRON_CEILING)
 # NEOWISE fits.  Since 1.4.0 a MEASURED albedo under the floor is refused as
 # well: the 2026-09-23 release carried 43, down to 0.0007 (2010 HK22), darker
 # than any whole body ever measured.
+#
+# The floor is a DATA-QUALITY POLICY, and since 1.4.0 it refuses measured
+# values as well as guarding invented ones (General_Research rc-607).
+# SENSITIVITY, measured on a 2026-11-19 build at 0.13.7 (all four sources,
+# 1,582,348 merged rows; General_Research R991): it refuses 178 measured albedos at 0.01
+# (JPL 47, NEOWISE 45, MP3C 47, SsODNet 39), 101 at 0.005, 1,968 at 0.02 and
+# 20,376 at 0.03.  0.01 sits just under a steep rise, which is why it is not
+# raised to the darkest comet's 0.029.
 ALBEDO_CEILING = 1.0
 ALBEDO_FLOOR = 0.01
 
@@ -183,6 +206,14 @@ V_SUN = -26.762                # Campins, Rieke & Lebofsky 1985, AJ 90, 896, p. 
 # another body (a mislinked detection: 2010 BK37 is 1.95 km beside an H of
 # 23.97, p_V 0.0001) or is a failed fit (303876, SsODNet 14.6 km at p_V
 # 0.0027 with every source agreeing on H); 18 in the 2026-09-23 release.
+# 0.75 mag is a FIT-QUALITY POLICY: the mean H bias it is set over says
+# nothing of the scatter, and no paired H-diameter residual study sets it.
+# It is a different rule from merge.py's 0.30 mag cross-source H agreement
+# (General_Research rc-605).
+# SENSITIVITY, measured on a 2026-11-19 build at 0.13.7 (all four sources,
+# 1,582,348 merged rows; General_Research R991): at 0.25 / 0.5 / 0.75 / 1.0 / 1.5 mag it
+# refuses 104 / 85 / 72 / 61 / 45 source diameters (72: MP3C 29, SsODNet 16,
+# NEOWISE 15, JPL 12), leaving 33 / 27 / 23 / 19 / 14 rows unsized.
 H_DIAMETER_TOLERANCE_MAG = 0.75
 IMPLIED_ALBEDO_RANGE = (ALBEDO_FLOOR * 10 ** (-0.4 * H_DIAMETER_TOLERANCE_MAG),
                         ALBEDO_CEILING * 10 ** (0.4 * H_DIAMETER_TOLERANCE_MAG))
