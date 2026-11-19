@@ -219,6 +219,15 @@ _ICE_BOUND = {"water": 1.0}                         # bound water, hydrated clas
 _ICE_COMET = {"water": 0.892, "carbon dioxide": 0.102, "ammonia": 0.006}
 
 _ACC_OC = {"troilite": 0.055, "chromite": 0.005}
+# _ACC_CI and _ACC_CM are SCENARIOS in body-mass units with no recorded
+# volume-to-mass conversion or class mapping.  CI: King et al. 2015 (GCA 165,
+# p. 148 and Table 1) give modal VOLUME percentages, magnetite 6-10, sulphides
+# 4-7 and carbonates <3 (Orgueil 6.7 / 5.7 / 3.3 vol%), and one CI vector is
+# carried to all of B, C, Cb and F (General_Research rc-566).  CM: King,
+# Schofield & Russell 2017 (MAPS 52, p. 1197) give CM1 magnetite 2-3,
+# Fe-sulfide <5 and calcite <2 vol%, varying with petrologic subtype; one
+# vector is carried to Cg, Ch and G, and Fe-sulfide is read as troilite
+# (rc-570).  The vol% figures are comparators, not a mass replacement.
 _ACC_CI = {"magnetite": 0.07, "troilite": 0.05, "carbonates": 0.03}
 _ACC_CM = {"troilite": 0.03, "magnetite": 0.02, "carbonates": 0.01}
 _ACC_TL = {"magnetite": 0.05, "troilite": 0.03, "carbonates": 0.03}   # Tagish Lake's phases; amounts unsourced (rc-343 comparators above)
@@ -321,7 +330,15 @@ PHASE_SHARES: Dict[str, Dict[str, Dict[str, float]]] = {
 # and troilite 0.02, where "CK: magnetite-rich" names the species and not the
 # amount; and the magnetite 0.02 (Sk) and spinel 0.03 (Sl) added to the
 # ordinary-chondrite vector, which Dunn et al. 2010's Table 5 modes (olivine,
-# pyroxenes, plagioclase, troilite) do not give.
+# pyroxenes, plagioclase, troilite) do not give.  Also scenarios: M's and
+# Xk's troilite 0.02, with no class- or analogue-matched amount (Zhang et al.
+# 2023, A&A 671, A77, link M-types to enstatite chondrites and irons
+# qualitatively; rc-571); and K's spinel 0.03 and L's 0.05, which no bulk
+# source sets and no step maps from CAI spectra to body mass: de Kleer et
+# al. 2026 find five L-types' JWST spectra need no CAI enhancement above
+# CV3 while saying lab data cannot constrain CAI amounts, and CAIs are at
+# most a few percent of a chondrite, spinel tens of percent of a CAI
+# (rc-572).
 ACCESSORY_PHASES: Dict[str, Dict[str, float]] = {
     "B": _ACC_CI, "C": _ACC_CI, "Cb": _ACC_CI, "F": _ACC_CI,
     "Cg": _ACC_CM, "Ch": _ACC_CM, "G": _ACC_CM,
@@ -551,6 +568,12 @@ _SULFIDE_EH = {"troilite": 0.625, "niningerite": 0.25, "oldhamite": 0.0875,
                "daubreelite": 0.0375}
 _SULFIDE_AUBRITE = {"troilite": 0.60, "oldhamite": 0.30, "daubreelite": 0.10}
 
+# A SCENARIO vector: one LL-derived split carried to every S-complex subtype
+# and Q, in body-mass units.  Jones, McCubbin & Guan 2016 (Am. Mineral. 101,
+# pp. 2460-2461) put type 4-6 H/L/LL phosphates mostly at 0.4-0.5 VOL%, with
+# apatite/merrillite ratios varying by group (H 0.4-1.5, L 0.25-1.0, LL
+# 0.1-0.5) and lower totals in type 4; no class-matched mass fraction or
+# volume-to-mass step is recorded (General_Research rc-568).
 _PHOSPHATE_OC = {"merrillite": 0.004, "chlorapatite": 0.002}
 
 

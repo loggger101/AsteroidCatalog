@@ -1072,6 +1072,12 @@ X_SPLIT_ROWS = ("X", "Xc")
 # mass (tests/test_traps.py recomputes them; tools/density_evidence.py
 # recounts them on any build).  The measured sample over-represents dark
 # bodies (derive.py), so the bodies with no albedo may lean more M than this.
+# So the split is a PRIOR, not a measured composition of the no-albedo X
+# bodies: no population-matched basis shows they divide as the measured
+# ones do.  Its reach: X's 2.29 g/cm3 sits between P's 1.2 and M's 3.9, and
+# every 10 points of count share moved from P to M adds 0.27; the metal
+# fraction spans P's 0.02 to M's 0.50 and the PGM factor 1.0 to 2.0 across
+# the same range (General_Research rc-481).
 X_SPLIT_COUNTS = {"X": (4741, 3022, 350), "Xc": (40, 27, 7)}
 
 
@@ -1093,9 +1099,13 @@ def split_x_by_albedo(keys: pd.Series, albedo: pd.Series) -> pd.Series:
 def pgm_enrichment_for_type(spec_type) -> float:
     """Return the PGM enrichment multiplier for a Bus-DeMeo / Tholen type.
 
-    Default 1.0 (chondritic) for unknown / unlisted types.  Falls back to
-    first-character match (e.g. unknown sub-type 'Mq' → 'M' → 2.0) so
-    minor sub-type variants inherit the parent class's enrichment.
+    Default 1.0 for unknown / unlisted types: the model's 37 ppm PGM + Au
+    baseline, which stands for iron-meteorite metal, not a chondritic
+    abundance.  Falls back to first-character match (e.g. unknown sub-type
+    'Mq' → 'M' → 2.0) so minor sub-type variants inherit the parent class's
+    enrichment.  Both rules are SCENARIOS: no class-matched evidence sets
+    the default or shows that a prefix shares its parent's enrichment
+    (General_Research rc-685).
     """
     if spec_type is None or (isinstance(spec_type, float) and pd.isna(spec_type)):
         return 1.0

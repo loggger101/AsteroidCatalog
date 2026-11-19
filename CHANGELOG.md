@@ -14,6 +14,19 @@ moving it is not evidence that a number changed.
 
 ---
 
+## 0.13.7 - 2026-11-19 — data contract unchanged (**1.11.0**)
+
+**Nine composition rules named for what they are** (General_Research
+rc-481, rc-566, rc-568, rc-570, rc-571, rc-572, rc-580, rc-581, rc-685).
+The CI and CM accessory vectors, the ordinary-chondrite phosphate split,
+M's and Xk's troilite and K's and L's spinel are scenarios in body-mass
+units, with the volume-percent comparators beside them. The X-complex
+P/M/E split is a prior, and its reach on density, metal and PGM is
+stated. The 4.6 AU D rule and the 5.5 AU icy override are heuristics, with
+the rows each reaches. The unknown-type PGM default is the 37 ppm metal
+baseline, no longer called chondritic. Comments and one docstring only;
+every value and output is unchanged.
+
 ## 0.13.6 - 2026-11-19 — data contract unchanged (**1.11.0**)
 
 **Two comet and asteroid references completed, and one transcription
