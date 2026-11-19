@@ -227,6 +227,14 @@ G_SI = 6.67430e-11             # m^3 kg^-1 s^-2, CODATA 2022 (NIST SP 961, p. 1)
 # literature calls them P/D bimodal (Gil-Hutton & Brunini 2008), and a
 # Tholen P is a dark X or C in the later taxonomies the sources use.  See
 # enrich.py.
+# 4.6 AU is a HEURISTIC, not a cited dynamical boundary, and semimajor axis
+# alone does not identify a Trojan: in data-2026-10-21b, 266 orbit-inferred
+# D rows lie at 4.6-5.05 AU, below the commonly stated 5.05-5.35 AU Trojan
+# span, against 14,570 inside it.  D is a scenario for the
+# untyped bodies; Gaia DR3's selected Hilda sample is 47.3% D, 21.4% Z,
+# 15.4% P and other classes (El-Bez-Sebastien et al. 2026, Icarus 449,
+# 116950, sec. 5), so one class past a single threshold is a simplification
+# (General_Research rc-580).
 OUTER_SOLAR_SYSTEM_AU = 4.6
 OUTER_SOLAR_SYSTEM_CLASS = "D"
 
@@ -238,6 +246,12 @@ OUTER_SOLAR_SYSTEM_CLASS = "D"
 # averages the TNOs known to 20% at 1.06 +/- 0.75).  Beyond this, composition is taken
 # from OUTER_SOLAR_SYSTEM_CLASS whatever the label; `spectral_type` keeps the
 # source's label.
+# The override is a HEURISTIC about bulk composition, which the TNO evidence
+# behind it does not establish: Fernandez-Valenzuela et al. 2021 find 86% of
+# 100 TNOs' SURFACES consistent with some water ice.  In data-2026-10-21b it
+# reaches 8,382 rows, every one given comp_class D: 8,340 orbit-labelled and
+# 31 whose sourced non-D label it overrides (S 15, C 10, and one each of Cb,
+# Z, K, L, Bk and Ld) (General_Research rc-581).
 ICY_COMPOSITION_AU = 5.5
 
 
