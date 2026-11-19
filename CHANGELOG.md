@@ -14,6 +14,12 @@ moving it is not evidence that a number changed.
 
 ---
 
+## 0.13.9 - 2026-11-19 — data contract unchanged (**1.11.0**)
+
+**The screen sensitivity figures cite the right round.** 0.13.8 pointed them at
+General_Research R991; they are R993's, and the comments now name its
+extracted-data file (General_Research rc-862). Comments and changelog only.
+
 ## 0.13.8 - 2026-11-19 — data contract unchanged (**1.11.0**)
 
 **The merge screens and agreement tolerances are labelled policies, with

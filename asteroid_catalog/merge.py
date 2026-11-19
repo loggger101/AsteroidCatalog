@@ -157,7 +157,8 @@ def deduplicate_catalog(
 # minima of about 10% in diameter and 20% in albedo, so albedo's 25% is a
 # margin over that, and the shared NEOWISE inputs make agreement weaker
 # evidence still.  What each flags as disagreeing, on the published
-# data-2026-11-13 catalog's spreads (General_Research R991):
+# data-2026-11-13 catalog's spreads (General_Research R993, domain 01
+# extracted_data/r993_asteroidcatalog_screen_agreement_sensitivity.csv):
 #   H 0.30 mag      6.7% of 1,563,550 pairs (0.20: 13.9%, 0.50: 1.5%); 44% at
 #                   H 10-14, 24% at 14-16, 3-4% fainter than 16
 #   diameter 10%    3.3% of 148,026 pairs (5%: 6.7%, 20%: 1.2%); 25% under
@@ -188,7 +189,7 @@ def deduplicate_catalog(
 #                       not that the estimate carries no information
 #                       (General_Research rc-820; at sigma >= 0.5 / 0.75 /
 #                       1.0 / 1.5 / 2.0 x value the mass screen refuses 165 /
-#                       55 / 49 / 46 / 46 masses, R991); a
+#                       55 / 49 / 46 / 46 masses, R993); a
 #                       mass that puts the body outside its group's possible
 #                       bulk density, with the source's own diameter and with
 #                       the catalog's, is not this body's mass

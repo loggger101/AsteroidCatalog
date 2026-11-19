@@ -104,6 +104,11 @@ from .taxonomy import _BLANK_CLASSES, _bus_demeo_case, composition_entry
 # Carry (2012) averages the comets known to 20% at 0.54 +/- 0.09.  0.25
 # leaves margin under all of them.
 #
+# The SENSITIVITY figures below and at ALBEDO_FLOOR and
+# H_DIAMETER_TOLERANCE_MAG are General_Research R993's, in domain 01
+# extracted_data/r993_asteroidcatalog_screen_agreement_sensitivity.csv; they
+# were cited to R991 in 0.13.8 (General_Research rc-862).
+#
 # BOTH LIMITS ARE DATA-QUALITY SCREENS, NOT PHYSICAL BOUNDS.  The 0.25 floor
 # is a conservative screen set under the measured comets, not a universal
 # limit argued for every taxonomic group (General_Research rc-606); the 5.0
@@ -111,7 +116,7 @@ from .taxonomy import _BLANK_CLASSES, _bus_demeo_case, composition_entry
 # (rc-608).  The mass screen as a whole refuses 49 source masses (MP3C 28,
 # SsODNet 20, JPL 1) and leaves 16 rows with no mass.
 # SENSITIVITY, measured on a 2026-11-19 build at 0.13.7 (all four sources,
-# 1,582,348 merged rows; General_Research R991): floor 0.10 / 0.20 / 0.25 / 0.35 / 0.50 refuses
+# 1,582,348 merged rows; General_Research R993): floor 0.10 / 0.20 / 0.25 / 0.35 / 0.50 refuses
 # 45 / 48 / 49 / 51 / 60 masses; the 5.0 ceiling at 4.5 / 5.0 / 5.5 / 6.0 /
 # 8.0 refuses 57 / 49 / 44 / 41 / 40.  38 source masses put their body over
 # 5.0 with that source's own diameter, and a small stated sigma does not
@@ -168,7 +173,7 @@ DENSITY_LIMITS_ANY_GCM3 = (DENSITY_FLOOR_GCM3, _IRON_CEILING)
 # The floor is a DATA-QUALITY POLICY, and since 1.4.0 it refuses measured
 # values as well as guarding invented ones (General_Research rc-607).
 # SENSITIVITY, measured on a 2026-11-19 build at 0.13.7 (all four sources,
-# 1,582,348 merged rows; General_Research R991): it refuses 178 measured albedos at 0.01
+# 1,582,348 merged rows; General_Research R993): it refuses 178 measured albedos at 0.01
 # (JPL 47, NEOWISE 45, MP3C 47, SsODNet 39), 101 at 0.005, 1,968 at 0.02 and
 # 20,376 at 0.03.  0.01 sits just under a steep rise, which is why it is not
 # raised to the darkest comet's 0.029.
@@ -211,7 +216,7 @@ V_SUN = -26.762                # Campins, Rieke & Lebofsky 1985, AJ 90, 896, p. 
 # It is a different rule from merge.py's 0.30 mag cross-source H agreement
 # (General_Research rc-605).
 # SENSITIVITY, measured on a 2026-11-19 build at 0.13.7 (all four sources,
-# 1,582,348 merged rows; General_Research R991): at 0.25 / 0.5 / 0.75 / 1.0 / 1.5 mag it
+# 1,582,348 merged rows; General_Research R993): at 0.25 / 0.5 / 0.75 / 1.0 / 1.5 mag it
 # refuses 104 / 85 / 72 / 61 / 45 source diameters (72: MP3C 29, SsODNet 16,
 # NEOWISE 15, JPL 12), leaving 33 / 27 / 23 / 19 / 14 rows unsized.
 H_DIAMETER_TOLERANCE_MAG = 0.75
