@@ -14,6 +14,18 @@ moving it is not evidence that a number changed.
 
 ---
 
+## 0.13.11 - 2026-11-19 — data contract unchanged (**1.11.0**)
+
+**The octahedrite metal split is labelled a generic fallback, with what it is
+worth.** The seventeen classes whose metal has no source (the C complex, P,
+D, Z, T, A, R, O, K and L) keep kamacite 0.89 / taenite 0.11 of their
+nickel-iron. The comment and README now say it is a fallback and give its
+sensitivity at spacevalue 0.8.6, quotes metals-2026-10-26: the alloy's
+contained element value is $5.15/kg against $4.59 all kamacite and $6.89 at a
+0.45 taenite share (-11% / +34%) delivered to Earth, and unchanged at
+cislunar, where every alloy phase has one structural price. General_Research
+rc-699. Comments and docs only; mineralogy.py parses to an identical AST.
+
 ## 0.13.10 - 2026-11-19 — data contract unchanged (**1.11.0**)
 
 **A release says which MP3C database it read and whether the MPC's

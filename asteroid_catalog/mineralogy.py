@@ -547,6 +547,21 @@ del _row_name
 #
 # The composition of each alloy belongs to whoever prices it; this table says
 # only how much of each a class holds.
+#
+# ⚠️  `_ALLOY_OCTAHEDRITE` IS A GENERIC FALLBACK, NOT A CLASS MEASUREMENT
+# (General_Research rc-699).  B, C, Cb, F, Cg, Ch, G, Cgh, P, D, Z, T, A, R, O,
+# K and L all take it because no source gives their metal's kamacite /
+# taenite split; it keeps each class's coarse nickel-iron fraction and only
+# names the alloy the coarse column assumed.  What the choice is worth, at
+# spacevalue 0.8.6 with quotes metals-2026-10-26, as the contained element
+# value of 1 kg of the alloy (yields times element prices; no recovery):
+# all kamacite (the 1.8.0 choice) $4.59, the 0.89 / 0.11 fallback $5.15, a
+# taenite share of 0.45 (the ordinary-chondrite mix's non-kamacite part)
+# $6.89, so -11% to +34% on the metal delivered to Earth.  At cislunar every
+# alloy phase carries one structural price ($4,835/kg), and the split moves
+# nothing.  On a body only the alloy's share of the value moves, in
+# proportion to the class's metal fraction (1% of B, 5% of A); the
+# General_Research record of rc-699 holds the computation.
 
 _ALLOY_KAMACITE    = {"kamacite": 1.0}
 _ALLOY_OCTAHEDRITE = {"kamacite": 0.89, "taenite": 0.11}     # ~9 wt% Ni: no change
