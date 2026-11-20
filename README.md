@@ -77,7 +77,7 @@ build, frozen. Releases are never overwritten or rebuilt under the same tag.
 | `asteroid_catalog.parquet` | the same rows, typed: designations are strings, flag columns nullable booleans |
 | `rejected_entries.csv` | why validation dropped rows: one row per reason, with a count and examples |
 | `taxonomy.json` | the tables this build read, so its `comp_*` columns can be re-derived without installing the package: `TAXONOMY_COMPOSITION`, `PGM_ENRICHMENT_BY_TYPE`, `DENSITY_LIMITS_GCM3` (which measured masses and densities it accepted), `DENSITY_EVIDENCE` (from 1.5.0), `METEORITE_ANALOGUE_GCM3` (1.6.0), `PHASE_GROUP`, `PHASE_SHARES` and `ACCESSORY_PHASES` (1.7.0), and `PHASE_DETAIL` and `DETAIL_ACCESSORIES` (1.8.0) |
-| `manifest.json` | release tag, `catalog_date`, `pipeline_version`, package version and commit, row count, bodies per source, and a sha256 for every asset and for the CSV inside the gzip |
+| `manifest.json` | release tag, `catalog_date`, `pipeline_version`, package version and commit, row count, bodies per source, the MP3C database version and whether the MPC's designation links were used (`build_info`), and a sha256 for every asset and for the CSV inside the gzip |
 
 Download by tag, so you always get the same file:
 

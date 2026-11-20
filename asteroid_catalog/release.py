@@ -68,6 +68,12 @@ REJECTED_CSV = "rejected_entries.csv"
 TAXONOMY_JSON = "taxonomy.json"
 MANIFEST = "manifest.json"
 NOTES = "RELEASE_NOTES.md"
+# Written by build.py beside the catalog: the MP3C database version and the
+# MPC identity-link use, which the rows cannot carry (General_Research
+# rc-772, rc-778).  Copied into the manifest as `build_info`.
+BUILD_INFO = "build_info.json"
+MPC_ACKNOWLEDGEMENT = ("This research has made use of data and/or services provided by the "
+                       "International Astronomical Union's Minor Planet Center.")
 
 # The names the merge writes into each row's `sources` column.
 SOURCE_NAMES = ["JPL SBDB", "SsODNet", "NEOWISE", "MP3C"]
@@ -331,7 +337,49 @@ def _notes(m: dict) -> str:
         "CITATIONS.md.",
         "",
     ]
+    lines += _build_info_lines(m.get("build_info"))
     return "\n".join(lines)
+
+
+def _build_info_lines(info: Optional[dict]) -> List[str]:
+    """Release-note lines for what `BUILD_INFO` recorded.
+
+    The MPC supplied designation links, not measurements, so it is named
+    here and never among the `known to` source counts.
+    """
+    if not info or info.get("not_recorded"):
+        return ["MP3C database version and MPC identity-link use: not recorded "
+                "for this build.", ""]
+    out = []
+    db = info.get("mp3c_database") or {}
+    if db.get("version"):
+        out.append("MP3C database version `%s` (created %s, revision `%s`), "
+                   "as `SELECT * FROM mp3c_main.version` returned it."
+                   % (db["version"], db.get("date_created") or "not given",
+                      db.get("mp3c_gen_db_revision") or "not given"))
+    else:
+        out.append("MP3C database version: %s." % (db.get("note") or "not recorded"))
+    links = info.get("mpc_identity_links") or {}
+    if links.get("used"):
+        out += ["", "Designation links from the Minor Planet Center placed "
+                "supplement rows ({:,} links read). Acknowledge it:".format(
+                    int(links.get("links") or 0)),
+                "", "> " + MPC_ACKNOWLEDGEMENT]
+    elif links.get("enabled"):
+        out.append("MPC designation links were enabled but not read; none were used.")
+    else:
+        out.append("MPC designation links were not used.")
+    return out + [""]
+
+
+def read_build_info(build_dir: str) -> dict:
+    """`BUILD_INFO` from a build directory, or a record that it is absent."""
+    path = os.path.join(build_dir, BUILD_INFO)
+    if not os.path.exists(path):
+        return {"not_recorded": True,
+                "note": "no %s in the build directory" % BUILD_INFO}
+    with open(path, encoding="utf-8") as fh:
+        return json.load(fh)
 
 
 def package_release(build_dir: str, out_dir: str, tag: str,
@@ -387,6 +435,7 @@ def package_release(build_dir: str, out_dir: str, tag: str,
         "measured_diameters": measured_diameters(df),
         "rejected_rows": int(n_rejected),
         "sources": source_counts(df),
+        "build_info": read_build_info(build_dir),
         "catalog_csv": _file_entry(catalog_path),
         "files": files,
     }
