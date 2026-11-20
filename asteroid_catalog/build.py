@@ -16,6 +16,7 @@ itself; these are the places that name one:
      flags.
 """
 
+import json
 import os
 from datetime import datetime
 from typing import Dict
@@ -32,6 +33,7 @@ from .jpl import fetch_jpl_sbdb
 from .merge import deduplicate_catalog, merge_sources
 from .mp3c import fetch_mp3c
 from .neowise import fetch_neowise
+from .release import BUILD_INFO
 from .ssodnet import fetch_ssodnet
 from .validate import apply_final_gates, validate_and_filter
 
@@ -40,6 +42,33 @@ from .validate import apply_final_gates, validate_and_filter
 # every line, for no data reason.  CRLF is what the Windows builds always
 # wrote, so pinning it changed nothing there (see .gitattributes).
 _CSV_LINE_END = "\r\n"
+
+# WHAT A BUILD READ THAT ITS ROWS CANNOT SAY (General_Research rc-772, rc-778).
+# Written beside the catalog and carried into the release manifest by
+# `release.package_release`: the MP3C database version, which MP3C asks users
+# to record (CITATIONS.md section 1), and whether the MPC's designation links
+# were used, which CITATIONS.md asks users to acknowledge.  Identity links are
+# kept apart from the measurement-source counts on purpose: the MPC supplies
+# no measured value.
+BUILD_INFO_FILENAME = BUILD_INFO
+
+
+def build_info(sources: Dict[str, pd.DataFrame], links, config: CatalogConfig) -> dict:
+    """What `BUILD_INFO_FILENAME` records for one build."""
+    mp3c = sources.get("MP3C")
+    if not config.use_mp3c or mp3c is None or mp3c.empty:
+        mp3c_db = {"version": None, "note": "MP3C not used in this build"}
+    else:
+        mp3c_db = mp3c.attrs.get("mp3c_database") or {
+            "version": None, "note": "unavailable: the version was not read"}
+    return {
+        "mp3c_database": mp3c_db,
+        "mpc_identity_links": {
+            "enabled": bool(config.use_mpc_identifications),
+            "used": bool(links),
+            "links": len(links) if links else 0,
+        },
+    }
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -138,6 +167,10 @@ def build_catalog(config: CatalogConfig = CONFIG) -> pd.DataFrame:
     os.makedirs(config.output_dir, exist_ok=True)
     catalog.to_csv(catalog_path, index=False, lineterminator=_CSV_LINE_END)
     say(f"\n       Catalog saved  -> {catalog_path}")
+    info_path = os.path.join(config.output_dir, BUILD_INFO_FILENAME)
+    with open(info_path, "w", encoding="utf-8", newline="\n") as fh:
+        json.dump(build_info(sources, links, config), fh, indent=2)
+        fh.write("\n")
 
     if not rejections.empty:
         rejections.to_csv(rejected_path, index=False, lineterminator=_CSV_LINE_END)

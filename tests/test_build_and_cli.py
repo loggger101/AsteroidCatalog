@@ -37,6 +37,26 @@ def test_a_library_build_creates_its_output_directory(offline, tmp_path):
     assert (out / "asteroid_catalog.csv").exists()
 
 
+def test_a_build_records_what_its_rows_cannot(offline, tmp_path):
+    """build_info.json: MP3C's database version (here, MP3C not used) and
+    whether the MPC's designation links were used (General_Research rc-772,
+    rc-778)."""
+    import json
+    out = tmp_path / "out"
+    ac.build_catalog(ac.CatalogConfig(output_dir=str(out)))
+    info = json.loads((out / build.BUILD_INFO_FILENAME).read_text(encoding="utf-8"))
+    assert info["mp3c_database"]["version"] is None
+    assert info["mpc_identity_links"]["used"] is False
+
+
+def test_build_info_takes_the_version_mp3c_returned():
+    mp3c = pd.DataFrame({"designation": ["1"], "source_mp3c": True})
+    mp3c.attrs["mp3c_database"] = {"version": "3.2.0-beta.1"}
+    info = build.build_info({"MP3C": mp3c}, {"a": "1"}, ac.CatalogConfig())
+    assert info["mp3c_database"] == {"version": "3.2.0-beta.1"}
+    assert info["mpc_identity_links"] == {"enabled": True, "used": True, "links": 1}
+
+
 def test_a_failed_build_creates_nothing(monkeypatch, tmp_path):
     for name in ("fetch_jpl_sbdb", "fetch_ssodnet", "fetch_neowise", "fetch_mp3c"):
         monkeypatch.setattr(build, name, lambda config: pd.DataFrame())

@@ -75,7 +75,9 @@ mass and H per body, plus collisional family and proper elements.
   `mp3c_main.body` and `mp3c_main.name`
 - Documentation: `https://mp3c.oca.eu/doc/tap/`
 - The service asks that you record the database version you used:
-  `SELECT * FROM mp3c_main.version`
+  `SELECT * FROM mp3c_main.version`. Each build reads it and writes it to
+  `build_info.json`; a release carries it in `manifest.json` (`build_info`)
+  and in its release notes, or says it could not be read.
 
 MP3C asks to be acknowledged by name rather than through a single paper;
 `https://mp3c.oca.eu/citations/` lists publications that have done so.
@@ -93,6 +95,11 @@ widely used for MPC data (check the MPC's current policy before publishing):
 
 > This research has made use of data and/or services provided by the
 > International Astronomical Union's Minor Planet Center.
+
+Whether a build used the links, and how many it read, is in its
+`build_info.json` and a release's `manifest.json` (`build_info`), kept apart
+from the per-source body counts because the MPC supplies no measured value.
+A release whose build used them prints this acknowledgement in its notes.
 
 ---
 

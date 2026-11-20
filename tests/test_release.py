@@ -16,7 +16,8 @@ import pytest
 from asteroid_catalog import CONFIG
 from asteroid_catalog.cli import main
 from asteroid_catalog.release import (
-    CATALOG_GZ, CATALOG_PARQUET, MANIFEST, NOTES, REJECTED_CSV, TAXONOMY_JSON,
+    BUILD_INFO, CATALOG_GZ, CATALOG_PARQUET, MANIFEST, MPC_ACKNOWLEDGEMENT, NOTES,
+    REJECTED_CSV, TAXONOMY_JSON,
     check_release, gzip_deterministic, package_release, source_counts,
 )
 
@@ -181,3 +182,32 @@ def test_data_version_matches_the_config():
     """
     import asteroid_catalog as ac
     assert ac.DATA_VERSION == ac.CONFIG.pipeline_version
+
+
+def test_the_manifest_carries_what_the_build_read(tmp_path):
+    """The MP3C database version and the MPC's designation links travel with
+    the release (General_Research rc-772, rc-778), apart from the
+    measurement-source counts."""
+    build = _write_build(tmp_path, _catalog())
+    info = {"mp3c_database": {"version": "3.2.0-beta.1",
+                              "date_created": "2024-02-13T09:44:37",
+                              "mp3c_gen_db_revision": "2acaa66e"},
+            "mpc_identity_links": {"enabled": True, "used": True, "links": 1234}}
+    (build / BUILD_INFO).write_text(json.dumps(info), encoding="utf-8")
+    out = tmp_path / "dist"
+    m = package_release(str(build), str(out), "t", floors=FLOORS)
+    assert m["build_info"] == info
+    assert "MPC" not in m["sources"]
+    notes = (out / NOTES).read_text(encoding="utf-8")
+    assert "MP3C database version `3.2.0-beta.1`" in notes
+    assert "1,234 links" in notes and MPC_ACKNOWLEDGEMENT in notes
+
+
+def test_a_build_without_build_info_says_so(tmp_path):
+    build = _write_build(tmp_path, _catalog())
+    out = tmp_path / "dist"
+    m = package_release(str(build), str(out), "t", floors=FLOORS)
+    assert m["build_info"]["not_recorded"] is True
+    notes = (out / NOTES).read_text(encoding="utf-8")
+    assert "not recorded for this build" in notes
+    assert MPC_ACKNOWLEDGEMENT not in notes

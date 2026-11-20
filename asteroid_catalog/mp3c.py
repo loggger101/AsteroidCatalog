@@ -48,6 +48,24 @@ _MP3C_NUMBERS_ADQL = (
     "WHERE name LIKE '_____' AND priority = 3"
 )
 
+# The database version MP3C asks users to record (CITATIONS.md section 1;
+# General_Research rc-772).  Read once per build and carried, by build.py,
+# into build_info.json and the release manifest.  Values are not touched.
+_MP3C_VERSION_ADQL = (
+    "SELECT version, date_created, mp3c_gen_db_revision FROM mp3c_main.version"
+)
+_MP3C_VERSION_FIELDS = ("version", "date_created", "mp3c_gen_db_revision")
+
+
+def _mp3c_version(config: CatalogConfig) -> dict:
+    """The `mp3c_main.version` row, or a record saying it could not be read."""
+    v = _tap_csv(_MP3C_VERSION_ADQL, 10, config, "version")
+    if v.empty or "version" not in v.columns:
+        return {"version": None, "note": "unavailable: the version query failed"}
+    row = v.iloc[0]
+    return {k: (None if k not in v.columns or pd.isna(row[k]) else str(row[k]))
+            for k in _MP3C_VERSION_FIELDS}
+
 _MP3C_RENAME = {
     "diameter":     "diameter_km",
     "diameter_err": "diameter_sigma_km",
@@ -166,6 +184,7 @@ def fetch_mp3c(config: CatalogConfig) -> pd.DataFrame:
     df["family"] = df["family"].astype("string").str.strip().replace({"": pd.NA})
 
     df["source_mp3c"] = True
+    df.attrs["mp3c_database"] = _mp3c_version(config)
     say(f"     OK  {len(df):,} records fetched from MP3C "
         f"({int(df['diameter_km'].notna().sum()):,} with a diameter)")
     return df

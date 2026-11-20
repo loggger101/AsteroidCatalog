@@ -14,6 +14,19 @@ moving it is not evidence that a number changed.
 
 ---
 
+## 0.13.10 - 2026-11-19 — data contract unchanged (**1.11.0**)
+
+**A release says which MP3C database it read and whether the MPC's
+designation links were used.** Each build now queries
+`mp3c_main.version`, as MP3C asks users to record, and writes it with the
+MPC identity-link use (enabled, used, number of links) to `build_info.json`
+beside the catalog. `package` copies that into `manifest.json` as
+`build_info`, kept apart from the measurement-source counts, and the release
+notes print the MP3C version and, when the links were used, the MPC
+acknowledgement from CITATIONS.md. A build directory without the file is
+packaged as "not recorded". General_Research rc-772, rc-778. No row value
+changes.
+
 ## 0.13.9 - 2026-11-19 — data contract unchanged (**1.11.0**)
 
 **The screen sensitivity figures cite the right round.** 0.13.8 pointed them at
