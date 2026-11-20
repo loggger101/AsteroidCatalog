@@ -148,6 +148,15 @@ class CatalogConfig:
     # rows then join nothing, as before 1.3.0.
     use_mpc_identifications: bool = True
 
+    # ─── SSODNET PROPERTY REFERENCES  (package 0.13.13) ──────────────────────
+    # IMCCE asks that the reference behind each SsODNet property be published
+    # where possible (CITATIONS.md section 1).  For every body whose mass or
+    # density comes from SsODNet (~540), the build reads its ssoCard (~14
+    # requests, ~12 MB) and writes `ssodnet_property_refs.csv` beside the
+    # catalog; see ssodnet_refs.py for why the map stops there.  No value
+    # changes.  False skips the requests.
+    use_ssodnet_property_refs: bool = True
+
     # ─── QUALITY GATES  (validate_and_filter, apply_final_gates) ────────────────────
     # `min_diameter_km` drops anything whose FINAL diameter, after enrichment
     # has reconciled it with a measured mass, is below this.  Default 0.001 km =

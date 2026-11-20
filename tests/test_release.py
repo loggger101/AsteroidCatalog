@@ -17,6 +17,7 @@ from asteroid_catalog import CONFIG
 from asteroid_catalog.cli import main
 from asteroid_catalog.release import (
     BUILD_INFO, CATALOG_GZ, CATALOG_PARQUET, MANIFEST, MP3C_ACKNOWLEDGEMENT, MPC_ACKNOWLEDGEMENT, NOTES,
+    SSODNET_REFS_CSV,
     REJECTED_CSV, TAXONOMY_JSON,
     check_release, gzip_deterministic, package_release, source_counts,
 )
@@ -221,3 +222,20 @@ def test_mp3c_is_not_credited_when_it_contributed_nothing(tmp_path):
     floors = dict(FLOORS, MP3C=0)
     package_release(str(build), str(out), "t", floors=floors)
     assert MP3C_ACKNOWLEDGEMENT not in (out / NOTES).read_text(encoding="utf-8")
+
+
+def test_the_release_ships_the_map(tmp_path):
+    build = _write_build(tmp_path, _catalog())
+    pd.DataFrame([{"ssodnet_id": "Ceres", "status": "resolved"}]).to_csv(
+        build / SSODNET_REFS_CSV, index=False)
+    (build / "build_info.json").write_text(json.dumps({
+        "mp3c_database": {"version": None, "note": "MP3C not used in this build"},
+        "mpc_identity_links": {"enabled": False, "used": False, "links": 0},
+        "ssodnet_property_refs": {"bodies": 1, "rows": 1, "status": {"resolved": 1}}}),
+        encoding="utf-8")
+    out = tmp_path / "dist"
+    m = package_release(str(build), str(out), "t", floors=FLOORS)
+    assert SSODNET_REFS_CSV in m["files"]
+    assert (out / SSODNET_REFS_CSV).exists()
+    assert "names the paper behind each SsODNet value for the 1 bodies" in \
+        (out / NOTES).read_text(encoding="utf-8")
