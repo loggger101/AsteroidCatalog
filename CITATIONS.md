@@ -33,6 +33,20 @@ of the article: Berthier et al., 2023." It further asks that, where possible,
 the bibliographic references of the underlying articles be published too, since
 ssoBFT is a compilation of other people's measurements.
 
+The bulk table carries no references; each value's `bibref` is in that body's
+ssoCard, about 23 kB per body. Since 0.13.13 every build reads the ssoCards of
+the bodies whose **mass or density** comes from SsODNet (541 in the 2026-11
+table) and writes `ssodnet_property_refs.csv`: one row per body and imported
+property (diameter, albedo, mass, density, taxonomy, H) with the reference's
+shortbib, bibcode and DOI, the card's value beside the imported one, and a
+status (`resolved`, `no bibref in card`, `card unavailable`, or a flag where
+the live card's value differs from the snapshot). A release ships the file.
+Every other SsODNet value (about 150,000 diameters and albedos and 1.56 M H)
+is not mapped, because that would be some 36 GB of cards per build: its
+reference is in the ssoCard of the row's `ssodnet_id`,
+`https://ssp.imcce.fr/webservices/ssodnet/api/ssocard.php?q=<ssodnet_id>`
+(General_Research rc-768).
+
 - API: `https://ssp.imcce.fr/webservices/ssodnet/api/ssobft`
 - Bulk file: `https://ssp.imcce.fr/data/ssoBFT-latest_Asteroid.parquet`
 

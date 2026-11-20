@@ -19,7 +19,7 @@ itself; these are the places that name one:
 import json
 import os
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Optional
 
 import pandas as pd
 
@@ -35,6 +35,7 @@ from .mp3c import fetch_mp3c
 from .neowise import fetch_neowise
 from .release import BUILD_INFO
 from .ssodnet import fetch_ssodnet
+from .ssodnet_refs import REFS_FILENAME, property_refs, refs_summary
 from .validate import apply_final_gates, validate_and_filter
 
 # `to_csv` defaults its line terminator to os.linesep, which would make a
@@ -53,7 +54,8 @@ _CSV_LINE_END = "\r\n"
 BUILD_INFO_FILENAME = BUILD_INFO
 
 
-def build_info(sources: Dict[str, pd.DataFrame], links, config: CatalogConfig) -> dict:
+def build_info(sources: Dict[str, pd.DataFrame], links, config: CatalogConfig,
+               refs: Optional[pd.DataFrame] = None) -> dict:
     """What `BUILD_INFO_FILENAME` records for one build."""
     mp3c = sources.get("MP3C")
     if not config.use_mp3c or mp3c is None or mp3c.empty:
@@ -68,6 +70,10 @@ def build_info(sources: Dict[str, pd.DataFrame], links, config: CatalogConfig) -
             "used": bool(links),
             "links": len(links) if links else 0,
         },
+        # General_Research rc-768: which SsODNet values have a mapped reference.
+        "ssodnet_property_refs": (
+            dict(refs_summary(refs), file=REFS_FILENAME) if refs is not None
+            else {"bodies": 0, "rows": 0, "note": "not mapped in this build"}),
     }
 
 
@@ -167,9 +173,15 @@ def build_catalog(config: CatalogConfig = CONFIG) -> pd.DataFrame:
     os.makedirs(config.output_dir, exist_ok=True)
     catalog.to_csv(catalog_path, index=False, lineterminator=_CSV_LINE_END)
     say(f"\n       Catalog saved  -> {catalog_path}")
+    refs = None
+    ssodnet = sources.get("SsODNet")
+    if config.use_ssodnet_property_refs and ssodnet is not None and not ssodnet.empty:
+        refs = property_refs(ssodnet, config)
+        refs.to_csv(os.path.join(config.output_dir, REFS_FILENAME), index=False,
+                    lineterminator=_CSV_LINE_END)
     info_path = os.path.join(config.output_dir, BUILD_INFO_FILENAME)
     with open(info_path, "w", encoding="utf-8", newline="\n") as fh:
-        json.dump(build_info(sources, links, config), fh, indent=2)
+        json.dump(build_info(sources, links, config, refs), fh, indent=2)
         fh.write("\n")
 
     if not rejections.empty:

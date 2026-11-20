@@ -14,6 +14,21 @@ moving it is not evidence that a number changed.
 
 ---
 
+## 0.13.13 - 2026-11-19 — data contract unchanged (**1.11.0**)
+
+**The paper behind each SsODNet value, for the bodies it weighs.** IMCCE asks
+that the references under ssoBFT's values be published where possible, and
+the bulk table has none. Each build now reads the ssoCards of the bodies whose
+mass or density comes from SsODNet (541; ~14 batched requests) and writes
+`ssodnet_property_refs.csv`, one row per body and imported property, with the
+reference and a status; `build_info.json` counts it, a release ships it, and
+the notes say what it covers. A body whose ssoBFT `id` arrives garbled (two
+names with click consonants) is found again by number. Every other SsODNet
+value keeps the ssoCard route, which CITATIONS.md gives. Measured on the
+2026-11-19 table: 3,068 property rows, 3,068 resolved once the two are found by
+number, none whose card value differs. `use_ssodnet_property_refs=False` skips
+it. General_Research rc-768. No catalog value changes.
+
 ## 0.13.12 - 2026-11-19 — data contract unchanged (**1.11.0**)
 
 **Release notes acknowledge MP3C by name when it contributed.** MP3C asks to

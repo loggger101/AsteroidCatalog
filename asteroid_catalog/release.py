@@ -65,6 +65,7 @@ CATALOG_CSV = "asteroid_catalog.csv"
 CATALOG_GZ = "asteroid_catalog.csv.gz"
 CATALOG_PARQUET = "asteroid_catalog.parquet"
 REJECTED_CSV = "rejected_entries.csv"
+SSODNET_REFS_CSV = "ssodnet_property_refs.csv"   # = ssodnet_refs.REFS_FILENAME
 TAXONOMY_JSON = "taxonomy.json"
 MANIFEST = "manifest.json"
 NOTES = "RELEASE_NOTES.md"
@@ -378,6 +379,15 @@ def _build_info_lines(info: Optional[dict]) -> List[str]:
         out.append("MPC designation links were enabled but not read; none were used.")
     else:
         out.append("MPC designation links were not used.")
+    refs = info.get("ssodnet_property_refs") or {}
+    if refs.get("rows"):
+        resolved = int((refs.get("status") or {}).get("resolved", 0))
+        out += ["", "`{}` names the paper behind each SsODNet value for the {:,} "
+                "bodies with an SsODNet mass or density ({:,} of {:,} property rows "
+                "resolved from their ssoCards). Every other SsODNet value's "
+                "reference is in the ssoCard of its `ssodnet_id`.".format(
+                    SSODNET_REFS_CSV, int(refs.get("bodies") or 0), resolved,
+                    int(refs["rows"]))]
     return out + [""]
 
 
@@ -431,6 +441,12 @@ def package_release(build_dir: str, out_dir: str, tag: str,
              TAXONOMY_JSON: _file_entry(os.path.join(out_dir, TAXONOMY_JSON))}
     if os.path.exists(rejected_path):
         files[REJECTED_CSV] = _file_entry(os.path.join(out_dir, REJECTED_CSV))
+    # The SsODNet property-reference map (General_Research rc-768), when the
+    # build wrote one: an asset of its own, never folded into the catalog.
+    refs_path = os.path.join(build_dir, SSODNET_REFS_CSV)
+    if os.path.exists(refs_path):
+        shutil.copyfile(refs_path, os.path.join(out_dir, SSODNET_REFS_CSV))
+        files[SSODNET_REFS_CSV] = _file_entry(os.path.join(out_dir, SSODNET_REFS_CSV))
 
     manifest = {
         "manifest_version": MANIFEST_VERSION,
