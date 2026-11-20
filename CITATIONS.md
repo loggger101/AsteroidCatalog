@@ -80,7 +80,8 @@ mass and H per body, plus collisional family and proper elements.
   and in its release notes, or says it could not be read.
 
 MP3C asks to be acknowledged by name rather than through a single paper;
-`https://mp3c.oca.eu/citations/` lists publications that have done so.
+`https://mp3c.oca.eu/citations/` lists publications that have done so. A
+release to which MP3C contributed bodies says so in its release notes.
 
 ### Minor Planet Center (cross-source identity)
 

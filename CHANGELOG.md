@@ -14,6 +14,14 @@ moving it is not evidence that a number changed.
 
 ---
 
+## 0.13.12 - 2026-11-19 — data contract unchanged (**1.11.0**)
+
+**Release notes acknowledge MP3C by name when it contributed.** MP3C asks to
+be acknowledged by name rather than through a paper; the generated notes
+named only SsODNet and NEOWISE. They now add MP3C's acknowledgement when its
+body count is above zero, and CITATIONS.md says so. General_Research rc-866.
+Source counts and catalog values unchanged.
+
 ## 0.13.11 - 2026-11-19 — data contract unchanged (**1.11.0**)
 
 **The octahedrite metal split is labelled a generic fallback, with what it is
