@@ -484,7 +484,11 @@ json.loads(row["comp_phases_detailed"])
 - **The metal** is kamacite (~6.5 wt% Ni), taenite (~30%) and, in slowly
   cooled chondrites, tetrataenite (~50%); irons add cohenite, (Fe,Ni)₃C. A
   class whose metal has no source keeps the ~9% octahedrite alloy
-  "nickel-iron" always meant (since 1.8.1; K too since 1.9.0).
+  "nickel-iron" always meant (since 1.8.1; K too since 1.9.0). That 0.89 /
+  0.11 kamacite / taenite split is a generic fallback, not a measurement:
+  delivered to Earth, the alloy's contained element value runs from -11%
+  (all kamacite) to +34% (the ordinary-chondrite taenite share) around it,
+  and at cislunar it moves nothing (General_Research rc-699).
   Which class holds which mix is the point: ordinary-chondrite metal is
   Ni-rich because the iron oxidised into the silicate and the nickel stayed
   (Jarosewich 1990), so it is mostly taenite, where an M-type's is an
