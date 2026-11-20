@@ -74,6 +74,10 @@ NOTES = "RELEASE_NOTES.md"
 BUILD_INFO = "build_info.json"
 MPC_ACKNOWLEDGEMENT = ("This research has made use of data and/or services provided by the "
                        "International Astronomical Union's Minor Planet Center.")
+MP3C_ACKNOWLEDGEMENT = ("MP3C, the Minor Planet Physical Properties Catalogue of the "
+                        "Observatoire de la Côte d'Azur, supplied bodies to this "
+                        "release and asks to be acknowledged by name: see CITATIONS.md "
+                        "and https://mp3c.oca.eu/citations/.")
 
 # The names the merge writes into each row's `sources` column.
 SOURCE_NAMES = ["JPL SBDB", "SsODNet", "NEOWISE", "MP3C"]
@@ -337,6 +341,11 @@ def _notes(m: dict) -> str:
         "CITATIONS.md.",
         "",
     ]
+    # MP3C asks to be acknowledged by name rather than through one paper
+    # (CITATIONS.md section 1; General_Research rc-866).  Only when it
+    # contributed a body, so a build without it does not credit it.
+    if int((m.get("sources") or {}).get("MP3C", 0) or 0) > 0:
+        lines += [MP3C_ACKNOWLEDGEMENT, ""]
     lines += _build_info_lines(m.get("build_info"))
     return "\n".join(lines)
 

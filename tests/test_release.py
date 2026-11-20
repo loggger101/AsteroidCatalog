@@ -16,7 +16,7 @@ import pytest
 from asteroid_catalog import CONFIG
 from asteroid_catalog.cli import main
 from asteroid_catalog.release import (
-    BUILD_INFO, CATALOG_GZ, CATALOG_PARQUET, MANIFEST, MPC_ACKNOWLEDGEMENT, NOTES,
+    BUILD_INFO, CATALOG_GZ, CATALOG_PARQUET, MANIFEST, MP3C_ACKNOWLEDGEMENT, MPC_ACKNOWLEDGEMENT, NOTES,
     REJECTED_CSV, TAXONOMY_JSON,
     check_release, gzip_deterministic, package_release, source_counts,
 )
@@ -201,6 +201,7 @@ def test_the_manifest_carries_what_the_build_read(tmp_path):
     notes = (out / NOTES).read_text(encoding="utf-8")
     assert "MP3C database version `3.2.0-beta.1`" in notes
     assert "1,234 links" in notes and MPC_ACKNOWLEDGEMENT in notes
+    assert MP3C_ACKNOWLEDGEMENT in notes, "MP3C contributed, so it is named"
 
 
 def test_a_build_without_build_info_says_so(tmp_path):
@@ -211,3 +212,12 @@ def test_a_build_without_build_info_says_so(tmp_path):
     notes = (out / NOTES).read_text(encoding="utf-8")
     assert "not recorded for this build" in notes
     assert MPC_ACKNOWLEDGEMENT not in notes
+
+
+def test_mp3c_is_not_credited_when_it_contributed_nothing(tmp_path):
+    df = _catalog(sources=["JPL SBDB;SsODNet;NEOWISE"] * 6)
+    build = _write_build(tmp_path, df)
+    out = tmp_path / "dist"
+    floors = dict(FLOORS, MP3C=0)
+    package_release(str(build), str(out), "t", floors=floors)
+    assert MP3C_ACKNOWLEDGEMENT not in (out / NOTES).read_text(encoding="utf-8")
